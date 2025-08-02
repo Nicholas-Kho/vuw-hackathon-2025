@@ -15,7 +15,7 @@ def search_tepapa(text):
     }
     data = {
         "from": 0,
-        "size": 1,
+        "size": 20  ,
         "query": f"{text}"
     }
 
