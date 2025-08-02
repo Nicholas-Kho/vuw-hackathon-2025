@@ -7,10 +7,8 @@ located in `source/backend` (cooked)
 located in `source/frontend/src`
 `app.js` is the file that runs when you `npm run start`
 
-
-
 ## Dependencies:
-virtual environment:
+### virtual environment:
 `python3 -m venv venv`
 `source venv/bin/activate`
 
