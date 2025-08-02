@@ -13,7 +13,7 @@ function App() {
       fetch('/api/search/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: 'Manuhiri' })
+        body: JSON.stringify({})
       })
         .then((res) => res.json()) // <== parses response JSON
         .then((data) => {
