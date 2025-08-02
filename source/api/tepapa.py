@@ -36,16 +36,20 @@ def search_tepapa(text):
 
 def random_obj():
     # random obj ids
-    one_of = [51952, 1280035]
-    selected = random.choice(one_of)
-    url = f'https://data.tepapa.govt.nz/collection/object/{selected}'
-    headers = {
-        'Content-Type': 'application/json',
-        'x-api-key': f'{api_key}'
-    }
-
-    response = requests.get(url, headers=headers)
-    return response.json()
+    max_id = 10280035
+    while True:
+        try:
+            selected = random.randint(0, max_id)
+            url = f'https://data.tepapa.govt.nz/collection/object/{selected}'
+            headers = {
+                'Content-Type': 'application/json',
+                'x-api-key': f'{api_key}'
+            }
+            response = requests.get(url, headers=headers).json()
+            if response['type'] == "Object":
+                return response
+        except:
+            continue
 
 def get_starting_hop():
     obj = random_obj()
@@ -80,7 +84,7 @@ def hopFromObj(oid):
         try:
             filt = list(filter(lambda inner: inner["type"] == "Category", obj[field]))
             inner = random.choice(filt)
-            print("Hopping to ", inner["title"])
+            print("Hopping to ", inner["title"], "   Id: ", inner['id'])
             return (inner["id"], "Category")
         except (KeyError, IndexError) as e:
             continue
@@ -126,11 +130,16 @@ def hopFromCollectionToCollection(cid):
     return None
 
 def manyHops(hop):
-    accumulator = hop
-    for i in range(25, 50):
-        next = hopOnce(accumulator)
-        accumulator = next
-    return accumulator
+    while True:
+        try:
+            accumulator = hop
+            for i in range(25, 50):
+                next = hopOnce(accumulator)
+                accumulator = next
+            return accumulator
+        except TypeError:
+            print("Aborted path")
+            continue
 
 def test():
     sh = get_starting_hop()
