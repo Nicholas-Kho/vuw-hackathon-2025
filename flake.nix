@@ -10,7 +10,7 @@
       let pkgs = import nixpkgs { inherit system; };
       in {
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [ python313Packages.pip ];
+          buildInputs = with pkgs; [ python313Packages.pip nodejs_24 ];
           shellHook = ''
             echo "Entering Python development shell..."
             # Create and activate venv if it doesn't exist
