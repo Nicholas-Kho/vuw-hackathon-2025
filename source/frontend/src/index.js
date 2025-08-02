@@ -2,12 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import Query from './Query';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+root.render( // app is a test, query is the actual thing
   <React.StrictMode>
-    <App />
+    <Query/>
   </React.StrictMode>
 );
 
