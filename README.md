@@ -1,9 +1,9 @@
 # vuw-hackathon-2025
 
-## Backend**
+## Backend
 located in `backend/backend` (cooked)
 
-## Frontend**
+## Frontend
 located in `backend/frontend/src`
 
 
