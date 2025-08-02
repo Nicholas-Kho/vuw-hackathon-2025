@@ -22,5 +22,5 @@ def search_tepapa(text):
     response = requests.post(url, headers=headers, json=data)
 
     print("Status code:", response.status_code)
-    print("Response JSON:", response.json())
+    #print("Response JSON:", response.json())
     return response.json()
