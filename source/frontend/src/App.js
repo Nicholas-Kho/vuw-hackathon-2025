@@ -22,17 +22,6 @@ function App() {
   const handleLinkClick = (word) => {
     setSearchQuery(word);
   };
-  useEffect(() => {
-  fetch('/api/search/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: 'Manuhiri' })
-  })
-    .then((res) => res.json()) // <== parses response JSON
-    .then((data) => {
-      setResults(data);         // <== stores it in React state
-    });
-}, []);
 
   return (
 
