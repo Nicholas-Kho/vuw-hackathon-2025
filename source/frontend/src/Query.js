@@ -16,7 +16,7 @@ function Query() {
     fetch('/api/search/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: 'Nightshade' })
+        body: JSON.stringify({ query: 'myosotis' })
       })
       .then((res) => {
         if (!res.ok) {
@@ -50,7 +50,7 @@ function Query() {
       
       {Array.isArray(results) && results.length === 0 && <p>No results found.</p>}
       {results.map((item, index) => {
-        console.log("Item: "+item);
+        // console.log("Item: "+item);
         const id = item.id ?? "None Found.";
         const imageUrl = getImageUrl(item);
         const title = item.title ?? "Untitled";
@@ -65,6 +65,51 @@ function Query() {
           item.evidenceFor?.atEvent?.eventDate ||
           item._meta?.created?.split("T")[0] ||
           "Date not specified";
+        
+        // Helper to extract title+href pairs from deeply nested items
+        const extractLinks = (obj, linkSet = new Map()) => {
+          const findFirstImageUrl = (node) => {
+            if (Array.isArray(node)) {
+              for (const item of node) {
+                const found = findFirstImageUrl(item);
+                if (found) return found;
+              }
+            } else if (node && typeof node === 'object') {
+              if (node.hasRepresentation?.[0]?.contentUrl) {
+                return node.hasRepresentation[0].contentUrl;
+              }
+              if (node.image?.url) {
+                return node.image.url;
+              }
+
+              for (const value of Object.values(node)) {
+                const found = findFirstImageUrl(value);
+                if (found) return found;
+              }
+            }
+            return null;
+          };
+
+          if (Array.isArray(obj)) {
+            obj.forEach(item => extractLinks(item, linkSet));
+          } else if (obj && typeof obj === 'object') {
+            const title = obj.title;
+            const link = obj.href || obj.iri;
+            const image = findFirstImageUrl(obj);
+
+            if (title && link && !linkSet.has(title)) {
+              linkSet.set(title, { link, image });
+            }
+
+            Object.values(obj).forEach(value => extractLinks(value, linkSet));
+          }
+
+          return linkSet;
+        };
+
+
+        // Build the map from the current item
+        const relatedLinks = extractLinks(item);
         
         return (
           <div key={index} style={{ display: 'flex', marginBottom: '2rem', alignItems: 'flex-start' }}>
@@ -104,8 +149,25 @@ function Query() {
               <p><strong>Creator:</strong> {creator}</p>
               <p><strong>Date:</strong> {createdDate}</p>
               <p>{description}</p>
-
-
+              
+              <h1>Related links</h1>
+              <ul>
+                {[...relatedLinks.entries()].map(([title, { link, image }]) => (
+                  <li key={link} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <img 
+                      src={image || 'no image :('}
+                      alt='no image'
+                      style={{
+                        width: '40px',
+                        height: 'auto',
+                        marginRight: '1rem',
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <a href={link} target="_blank" rel="noopener noreferrer">{title}</a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         );
