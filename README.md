@@ -1,3 +1,5 @@
+# VUW Hackathon 2025 - MuseLinks
+
 ## Backend
 located in `source/backend` (cooked)
 
@@ -24,7 +26,8 @@ virtual environment:
 in `source/api`, create a `.env` file containing the following contents:
 ```
 API_KEY = GYxOLdjYl7z6deFeoKFQYevF8L7eVSVCEkr1h5LA
-API_TOKEN = GYxOLdjYl7z6deFeoKFQYevF8L7eVSVCEkr1h5LA```
+API_TOKEN = GYxOLdjYl7z6deFeoKFQYevF8L7eVSVCEkr1h5LA
+```
 
 ### frontend: nodejs
 `install npm` (ask chatgpt)
