@@ -5,6 +5,7 @@ import "./App.css"
 import Iridescence from './React Components/Iridescence';
 import BlurText from "./React Components/BlurText";
 import Query from "./Query.js"
+import TextSubmit from "./TextSubmit";
 
 const handleAnimationComplete = () => {
   console.log('Animation completed!');
@@ -31,6 +32,7 @@ function App() {
               <nav className="navbar">
     <h1 className="navbar-title">MuseLinks</h1>
   </nav>
+      <TextSubmit/>
 {/*<pre>{JSON.stringify(results, null, 2)}</pre>   from /api/search/ */}
       <div className="container1">
         <div className="sidebar">
