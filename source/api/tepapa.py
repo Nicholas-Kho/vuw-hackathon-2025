@@ -36,7 +36,7 @@ def search_tepapa(text):
 
 def random_obj():
     # random obj ids
-    one_of = [405835, 51952]
+    one_of = [51952, 1280035]
     selected = random.choice(one_of)
     url = f'https://data.tepapa.govt.nz/collection/object/{selected}'
     headers = {
@@ -47,56 +47,95 @@ def random_obj():
     response = requests.get(url, headers=headers)
     return response.json()
 
-# type hop : (id, content_type) where content_type is one of: object, agent, taxon, collection
+def get_starting_hop():
+    obj = random_obj()
+    return (obj["id"], "Object")
 
-# Hop -> Hop
-# getNextHop
-# 
-# Hop -> Maybe Object
-# tryHop2Obj
+# Hop: Either Object or Category
+# We store (Id, type)
+# Depending on type, we decide how to get to the next hop
+# Object -> Check fields "Made of, depicts, intended for, ... etc." for cats.
+# None means no hop found
+# Category -> Get broader/narrower category, or a child object.
 
-def objToHop(objId):
-    url = f'https://data.tepapa.govt.nz/collection/object/{objId}'
+def hopOnce(hop):
+    (id, content_type) = hop
+    match content_type:
+        case "Object":
+            return hopFromObj(id)
+        case "Category":
+            return hopFromCollection(id)
+
+def hopFromObj(oid):
+    url = f'https://data.tepapa.govt.nz/collection/object/{oid}'
     headers = {
         'Content-Type': 'application/json',
         'x-api-key': f'{api_key}'
     }
     response = requests.get(url, headers=headers)
     obj = response.json()
-    fieldsToSearch = ["isTypeOf", "isMadeOf", "depicts", "production"]
-    random.shuffle(fieldsToSearch)
-    while (fieldsToSearch):
-        head = fieldsToSearch.pop()
+    fields_to_try = ["isTypeOf", "productionUsedTechnique", "unknownAssociation", "isAbout", "isMadeOf", "depicts", "influencedBy", "intendedFor", "refersTo"]
+    random.shuffle(fields_to_try)
+    for field in fields_to_try:
         try:
-            res = random.choice(obj[head])
-            return (res["id"], res["type"])
-        except KeyError as e:
+            filt = list(filter(lambda inner: inner["type"] == "Category", obj[field]))
+            inner = random.choice(filt)
+            print("Hopping to ", inner["title"])
+            return (inner["id"], "Category")
+        except (KeyError, IndexError) as e:
             continue
-    return []
+    print("uh oh obj->something")
+    return None
 
-def catToHop(cat):
-    url = f'https://data.tepapa.govt.nz/collection/category/{cat["id"]}/related'
+def hopFromCollection(cid):
+    return random.choice([hopFromCollectionToObj,hopFromCollectionToCollection])(cid)
+
+def hopFromCollectionToObj(cid):
+    url = f'https://data.tepapa.govt.nz/collection/category/{cid}/related'
     headers = {
         'Content-Type': 'application/json',
         'x-api-key': f'{api_key}'
     }
     response = requests.get(url, headers=headers)
-    f = random.choice(response.json()["result"])
-    return (f["id"], "object")
+    resp = response.json()
+    obj = random.choice(resp["results"])
+    print("Hopping to ", obj["title"])
+    return (obj["id"], "Object")
 
-def hopToHop(hop):
-    (id, hopType) = hop
-    match hopType:
-        case "object":
-            return objToHop(id)
-        case "Category":
-            return catToHop(id)
-        case _:
-            print("It's fucked: ", hopType)
-            return None
+def hopFromCollectionToCollection(cid):
+    url = f'https://data.tepapa.govt.nz/collection/category/{cid}'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+    response = requests.get(url, headers=headers)
+    resp = response.json()
+    fields_to_try = ["relatedTerms", "broaderTerms", "narrowerTerms"]
+    random.shuffle(fields_to_try)
+    for field in fields_to_try:
+        try:
+            # print("Looking for: ", field)
+            # print("Result: ", resp.get(field))
+            filt = list(filter(lambda inner: inner["type"] == "Category", resp[field]))
+            inner = random.choice(filt)
+            print("Hopping to ", inner["title"])
+            return (inner["id"], "Category")
+        except (KeyError, IndexError) as e:
+            continue
+    print("Uh oh col->col")
+    return None
 
+def manyHops(hop):
+    accumulator = hop
+    for i in range(25, 50):
+        next = hopOnce(accumulator)
+        accumulator = next
+    return accumulator
 
 def test():
-    print(hopToHop(hopToHop(hopToHop(objToHop(51952)))))
+    sh = get_starting_hop()
+    print("Staring hop: ", sh)
+    final = manyHops(sh)
+    print("Final hop: ", final)
     return {}
 
