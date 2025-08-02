@@ -102,7 +102,7 @@ def hopFromCollectionToObj(cid):
     }
     response = requests.get(url, headers=headers)
     resp = response.json()
-    obj = random.choice(resp["results"])
+    obj = random.choice(resp["results"][:12])
     print("Hopping to ", obj["title"])
     return (obj["id"], "Object")
 
@@ -130,7 +130,7 @@ def hopFromCollectionToCollection(cid):
     return None
 
 def manyHops(pathTracker,hop):
-    hopsLeft = random.randint(3,6)
+    hopsLeft = random.randint(1,3)
     while True:
         try:
             accumulator = hop
