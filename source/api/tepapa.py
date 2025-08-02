@@ -49,8 +49,8 @@ def random_obj():
             continue
 
 def get_starting_hop():
-    obj = random_obj()
-    return (obj["id"], "Object")
+    choices = [51952, 61379, 925000, 2090487, 1246459]
+    return (random.choice(choices), "Object")
 
 # Hop: Either Object or Category
 # We store (Id, type)
