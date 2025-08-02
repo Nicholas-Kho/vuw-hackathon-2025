@@ -8,7 +8,7 @@ import reportWebVitals from './reportWebVitals';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render( // app is a test, query is the actual thing
   <React.StrictMode>
-    <Query/>
+    <App/>
   </React.StrictMode>
 );
 

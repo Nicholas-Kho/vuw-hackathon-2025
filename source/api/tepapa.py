@@ -15,11 +15,8 @@ def search_tepapa(text):
     }
     data = {
         "from": 0,
-        "size": 10,
-        "query": f"{text}",
-        "sort": [
-            {"field": "title", "order": "DESC"}
-        ]
+        "size": 1,
+        "query": f"{text}"
     }
 
     response = requests.post(url, headers=headers, json=data)
