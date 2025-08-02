@@ -1,6 +1,7 @@
 import requests
 from dotenv import load_dotenv
 import os
+import random
 
 # Load our API key from the .env
 load_dotenv()
@@ -26,4 +27,25 @@ def search_tepapa(text):
 
     print("Status code:", response.status_code)
     print("Response JSON:", response.json())
+    return response.json()
+
+# Getting start & end points:
+# Land on some initial page
+# Parse JSON and find outgoing links
+# Pick one at random, add it to a list, repeat previous step
+
+def random_obj():
+    # random obj ids
+    one_of = [405835, 51952]
+    selected = random.choice(one_of)
+    url = 'https://data.tepapa.govt.nz/object/405835'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+
+    response = requests.get(url, headers=headers)
+
+    print("Status code (randomObj):", response.status_code)
+    print("Response JSON (randomObj):", response.json())
     return response.json()
