@@ -129,22 +129,25 @@ def hopFromCollectionToCollection(cid):
     print("Uh oh col->col")
     return None
 
-def manyHops(hop):
+def manyHops(pathTracker,hop):
+    hopsLeft = random.randint(3,6)
     while True:
         try:
             accumulator = hop
-            for i in range(25, 50):
-                next = hopOnce(accumulator)
-                accumulator = next
-            return accumulator
+            while not(hopsLeft <= 0 and accumulator[1] == "Object"):
+                hopsLeft -= 1
+                pathTracker.append(accumulator)
+                accumulator = hopOnce(accumulator) 
+            pathTracker.append(accumulator)
+            break
         except TypeError:
             print("Aborted path")
             continue
 
-def test():
-    sh = get_starting_hop()
-    print("Staring hop: ", sh)
-    final = manyHops(sh)
-    print("Final hop: ", final)
-    return {}
-
+# Return a list of hops. The first hop is the starting point.
+# Guaranteed to be non-empty and the first and last hops are objects.
+def drunkards_walk():
+    accumulator = get_starting_hop()
+    path = []
+    manyHops(path,accumulator)
+    return path
