@@ -48,4 +48,26 @@ def random_obj():
 
     print("Status code (randomObj):", response.status_code)
     print("Response JSON (randomObj):", response.json())
+    print("Hop test: ", objToHop(response.json()))
     return response.json()
+
+# type hop : (id, content_type) where content_type is one of: object, agent, taxon, collection
+
+# Hop -> Hop
+# getNextHop
+# 
+# Hop -> Maybe Object
+# tryHop2Obj
+
+def objToHop(obj):
+    fieldsToSearch = ["isTypeOf", "isMadeOf", "depicts", "production"]
+    random.shuffle(fieldsToSearch)
+    while (fieldsToSearch):
+        head = fieldsToSearch.pop()
+        try:
+            res = random.choice(obj[head])
+            return (res["id"], res["type"])
+        except KeyError as e:
+            continue
+    return []
+
