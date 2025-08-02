@@ -26,10 +26,12 @@ function App() {
 
   return (
 
+
     <div className="container">
-      <p>yo</p>
-    <h1>{message}</h1>         {/* from /api/hello/ */}
-<pre>{JSON.stringify(results, null, 2)}</pre>  {/* from /api/search/ */}
+              <nav className="navbar">
+    <h1 className="navbar-title">MuseLinks</h1>
+  </nav>
+{/*<pre>{JSON.stringify(results, null, 2)}</pre>   from /api/search/ */}
       <div className="container1">
         <div className="sidebar">
           <div className="container2">
@@ -53,19 +55,12 @@ function App() {
 
         <div className="main-content">
           {/* :mag: Search Bar */}
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
 
           {/* Card Content */}
-          <div className="card-container">
-          <Query />
-        </div>
+          <div className="query-container">
+  <Query />
+</div>
+
         </div>
       </div>
     </div>
