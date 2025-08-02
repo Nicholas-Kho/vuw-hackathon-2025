@@ -15,7 +15,7 @@ def search_tepapa(text):
     }
     data = {
         "from": 0,
-        "size": 10,
+        "size": 1,
         "query": f"{text}",
         "sort": [
             {"field": "title", "order": "DESC"}
