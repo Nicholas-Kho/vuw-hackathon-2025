@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from api.tepapa import search_tepapa, random_obj
+from api.tepapa import search_tepapa, random_obj, test
 
 @api_view(['GET'])
 def hello(request):
@@ -10,6 +10,15 @@ def hello(request):
 def random_view(request):
     try:
         results = random_obj()
+        return Response(results)
+    except Exception as e:
+        print(f"Te Papa API error: {e}")
+        return Response({'error': 'Failed to fetch from Te Papa API'}, status=500)    
+
+@api_view(['GET'])
+def test_view(request):
+    try:
+        results = test()
         return Response(results)
     except Exception as e:
         print(f"Te Papa API error: {e}")

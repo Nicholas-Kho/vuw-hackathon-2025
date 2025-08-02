@@ -45,10 +45,6 @@ def random_obj():
     }
 
     response = requests.get(url, headers=headers)
-
-    print("Status code (randomObj):", response.status_code)
-    print("Response JSON (randomObj):", response.json())
-    print("Hop test: ", objToHop(response.json()))
     return response.json()
 
 # type hop : (id, content_type) where content_type is one of: object, agent, taxon, collection
@@ -59,7 +55,14 @@ def random_obj():
 # Hop -> Maybe Object
 # tryHop2Obj
 
-def objToHop(obj):
+def objToHop(objId):
+    url = f'https://data.tepapa.govt.nz/collection/object/{objId}'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+    response = requests.get(url, headers=headers)
+    obj = response.json()
     fieldsToSearch = ["isTypeOf", "isMadeOf", "depicts", "production"]
     random.shuffle(fieldsToSearch)
     while (fieldsToSearch):
@@ -70,4 +73,30 @@ def objToHop(obj):
         except KeyError as e:
             continue
     return []
+
+def catToHop(cat):
+    url = f'https://data.tepapa.govt.nz/collection/category/{cat["id"]}/related'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+    response = requests.get(url, headers=headers)
+    f = random.choice(response.json()["result"])
+    return (f["id"], "object")
+
+def hopToHop(hop):
+    (id, hopType) = hop
+    match hopType:
+        case "object":
+            return objToHop(id)
+        case "Category":
+            return catToHop(id)
+        case _:
+            print("It's fucked: ", hopType)
+            return None
+
+
+def test():
+    print(hopToHop(hopToHop(hopToHop(objToHop(51952)))))
+    return {}
 
