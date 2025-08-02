@@ -38,7 +38,7 @@ def random_obj():
     # random obj ids
     one_of = [405835, 51952]
     selected = random.choice(one_of)
-    url = 'https://data.tepapa.govt.nz/object/405835'
+    url = f'https://data.tepapa.govt.nz/collection/object/{selected}'
     headers = {
         'Content-Type': 'application/json',
         'x-api-key': f'{api_key}'
