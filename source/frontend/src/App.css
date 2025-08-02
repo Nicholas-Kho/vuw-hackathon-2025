@@ -4,6 +4,7 @@
   padding-right: 1rem;    /* optional: adds space for scrollbar */
   margin: 0 auto;
   width: 100%;
+  max-width: 70vw;
   box-sizing: border-box;
 }
 
@@ -132,18 +133,14 @@ body {
   font-family: 'Poppins', sans-serif;
   background-color: #f9f9f9;
   margin: 0;
-  padding: 2rem;
 }
 
 .card-container {
   background: white;
-  padding: 3rem;
-  margin: 10px;
   border-radius: 1rem;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-  max-width: 50vw;
   flex: 1 1 300px;       /* allows flexible width, min 300px */
-  max-width: 100%;
+  max-width: 300px;
   box-sizing: border-box;
 }
 
@@ -151,7 +148,6 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 
 .card-image {
@@ -177,7 +173,6 @@ body {
   background-color: #f0f0f0;
   padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
 }
 
 .search-bar input {
