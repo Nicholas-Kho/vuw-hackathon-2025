@@ -10,7 +10,7 @@ function getImageUrl(item) {
   );
 }
 
-function Query() {
+function Query({ onWordClick }) {
     const [searchQuery, setSearchQuery] = useState('Nightshade');
 const [previousWord, setPreviousWord] = useState('');
   const [placeholder, setPlaceholder] = useState('Search...');
@@ -19,6 +19,7 @@ const [previousWord, setPreviousWord] = useState('');
     const handleWordClick = (word) => {
       setPreviousWord(searchQuery);     // Save current before overwriting
       setSearchQuery(word);             // Set new word
+      onWordClick(word);
     };
 
   console.log("Begin query");
@@ -96,13 +97,13 @@ useEffect(() => {
             <div className="search-bar">
         <input
           type="text"
-          placeholder={searchQuery}
-          value={searchQuery}
+          placeholder={"You are currently on: "+searchQuery}
+          value={"You are currently on: "+searchQuery}
           readOnly
         />
       </div>
 
-      {Array.isArray(results) && results.length === 0 && <p>No results found.</p>}
+      {Array.isArray(results) && results.length === 0 && <p>Te Papa does not have anything related.</p>}
       {results.map((item, index) => {
         console.log("Item: "+item);
         const id = item.id ?? "None Found.";
@@ -136,7 +137,7 @@ useEffect(() => {
       {description.split(' ').map((word, i) => (
         <span
           key={i}
-          onClick={() => handleWordClick(word)}
+          onClick={() => handleWordClick(word.replace(/[^a-zA-Z0-9]/g, '').charAt(0).toUpperCase() + word.slice(1).replace(/[^a-zA-Z0-9]/g, ''))}
           className="clickable-word"
         >
           {word}
