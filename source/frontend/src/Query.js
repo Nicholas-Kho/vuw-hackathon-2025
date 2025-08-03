@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 function getImageUrl(item) {
   return (
     item.hasRepresentation?.find(r => r.contentUrl)?.contentUrl ||
-    item.image?.url ||
+    item.image?.url || // Rarely the image will be here :p
     null // or default path like a "no image found" image which is kinda done below...
   );
 }
@@ -57,7 +57,6 @@ useEffect(() => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: searchQuery })
-
       })
       .then((res) => {
         if (!res.ok) {
@@ -123,7 +122,14 @@ useEffect(() => {
         return (
           <div key={index} className="result-card">
   {imageUrl ? (
-    <img src={imageUrl} alt={title} />
+    <img src={imageUrl} alt={title}
+         style={{
+           width: '200px',
+           height: 'auto',
+           marginRight: '1rem',
+           objectFit: 'cover',
+         }}
+    />
   ) : (
     <div className="result-card-placeholder">No image found :(</div>
   )}

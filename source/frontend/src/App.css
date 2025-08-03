@@ -136,6 +136,7 @@ body {
 }
 
 .card-container {
+  max-width: 900px;
   background: white;
   padding: 3rem;
   margin: 10px;
