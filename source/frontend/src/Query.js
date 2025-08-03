@@ -91,6 +91,7 @@ function Query() {
       {/*<button onClick={fetchResults}>Resend Query</button>*/}
       <div class="query-header">
       <input
+      readonly
         class="display-bar"
         type="text"
         placeholder={searchQuery}
@@ -124,7 +125,7 @@ function Query() {
   {imageUrl ? (
     <img src={imageUrl} alt={title}
          style={{
-           width: '200px',
+           width: '150px',
            height: 'auto',
            marginRight: '1rem',
            objectFit: 'cover',

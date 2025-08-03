@@ -195,8 +195,7 @@ body {
 
  .display-bar{
   all: unset;
-  text-decoration: underline;
-  font-size:2.8rem;
+  font-size:2.3rem;
   background: none;
   border: none;
   padding: 0;
