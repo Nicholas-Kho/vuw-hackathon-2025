@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from api.tepapa import search_tepapa, random_obj, drunkards_walk
+from api.tepapa import search_tepapa, random_obj, drunkards_walk, get_hops
 
 @api_view(['GET'])
 def hello(request):
@@ -19,6 +19,15 @@ def random_view(request):
 def drunkards_walk_view(request):
     try:
         return Response(drunkards_walk())
+    except Exception as e:
+        print(f"Te Papa API error: {e}")
+        return Response({'error': 'Failed to fetch from Te Papa API'}, status=500)    
+
+@api_view(['POST'])
+def get_hops_view(req):
+    print("Request: ", req.data)
+    try:
+        return Response(get_hops(req.data))
     except Exception as e:
         print(f"Te Papa API error: {e}")
         return Response({'error': 'Failed to fetch from Te Papa API'}, status=500)    

@@ -88,6 +88,17 @@ def hopFromObj(oid):
     print("uh oh obj->something")
     return None
 
+def objRelatedCats(obj):
+    fields_to_try = ["isTypeOf", "productionUsedTechnique", "unknownAssociation", "isAbout", "isMadeOf", "depicts", "influencedBy", "intendedFor", "refersTo"]
+    random.shuffle(fields_to_try)
+    results = {}
+    for field in fields_to_try:
+        try:
+            results[field] = list(filter(lambda inner: inner["type"] == "Category", obj[field]))
+        except (KeyError, IndexError) as e:
+            continue
+    return results
+
 def hopFromCollection(cid):
     return random.choice([hopFromCollectionToObj,hopFromCollectionToCollection])(cid)
 
@@ -102,6 +113,21 @@ def hopFromCollectionToObj(cid):
     obj = random.choice(resp["results"][:12])
     print("Hopping to ", obj["title"])
     return (obj["id"], "Object")
+
+def colRelatedCols(col):
+    fields_to_try = ["relatedTerms", "broaderTerms", "narrowerTerms"]
+    random.shuffle(fields_to_try)
+    results = {}
+    for field in fields_to_try:
+        try:
+            results[field] = list(filter(lambda inner: inner["type"] == "Category", col[field]))
+        except (KeyError, IndexError) as e:
+            continue
+    return results
+
+def colRelatedObjs(col):
+    return (col["results"][:12])
+
 
 def hopFromCollectionToCollection(cid):
     url = f'https://data.tepapa.govt.nz/collection/category/{cid}'
@@ -148,3 +174,50 @@ def drunkards_walk():
     path = []
     manyHops(path,accumulator)
     return path
+
+# Return some nice info about a hop for the frontend guys
+#
+# If it's an object, return
+# MAYBE a picture, title, description, related category IDs
+#
+# If it's a category, return
+# title, description, related category IDs, first few child objects
+# 
+# {
+# id = "";
+# type = "Category OR Object";
+# title = "";
+# description = "";
+# }
+def get_hops(hop):
+    match hop["content_type"]:
+        case "Object":
+            return get_hops_obj(hop["id"])
+        case "Category":
+            return get_hops_col(hop["id"])
+        case "":
+            return None
+    
+def get_hops_obj(oid):
+    url = f'https://data.tepapa.govt.nz/collection/object/{oid}'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+    response = requests.get(url, headers=headers)
+    obj = response.json()
+    return(objRelatedCats(obj))
+
+def get_hops_col(cid):
+    url = f'https://data.tepapa.govt.nz/collection/category/{cid}/related'
+    url2 = f'https://data.tepapa.govt.nz/collection/category/{cid}'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+    response = requests.get(url, headers=headers).json()
+    response2 = requests.get(url2, headers=headers).json()
+    return {
+        "relatedCollections": colRelatedCols(response2), 
+        "childObjects": colRelatedObjs(response)
+    }
