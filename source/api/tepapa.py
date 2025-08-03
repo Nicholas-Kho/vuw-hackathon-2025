@@ -61,11 +61,16 @@ def get_starting_hop():
 
 def hopOnce(hop):
     (id, content_type) = hop
+    print("Hopping from: ", content_type)
     match content_type:
         case "Object":
             return hopFromObj(id)
         case "Category":
             return hopFromCollection(id)
+        case "Person":
+            return hopFromAgent(id)
+        case "Specimen":
+            return hopFromSpecimen(id)
 
 def hopFromObj(oid):
     url = f'https://data.tepapa.govt.nz/collection/object/{oid}'
@@ -76,13 +81,15 @@ def hopFromObj(oid):
     response = requests.get(url, headers=headers)
     obj = response.json()
     fields_to_try = ["isTypeOf", "productionUsedTechnique", "unknownAssociation", "isAbout", "isMadeOf", "depicts", "influencedBy", "intendedFor", "refersTo"]
+    acceptable_hops = ['Category', 'Person']
     random.shuffle(fields_to_try)
     for field in fields_to_try:
         try:
-            filt = list(filter(lambda inner: inner["type"] == "Category", obj[field]))
+            # print("Field: ", field, ", contents: ", obj[field])
+            filt = list(filter(lambda inner: inner["type"] in acceptable_hops, obj[field]))
             inner = random.choice(filt)
             print("Hopping to ", inner["title"], "   Id: ", inner['id'])
-            return (inner["id"], "Category")
+            return (inner["id"], inner['type'])
         except (KeyError, IndexError) as e:
             continue
     print("uh oh obj->something")
@@ -99,9 +106,12 @@ def hopFromCollectionToObj(cid):
     }
     response = requests.get(url, headers=headers)
     resp = response.json()
-    obj = random.choice(resp["results"][:12])
-    print("Hopping to ", obj["title"])
-    return (obj["id"], "Object")
+    try:
+        obj = random.choice(resp["results"][:12])
+        print("Hopping to ", obj["title"], "   Id: ", obj['id'])
+        return (obj["id"], obj['type'])
+    except:
+        return None
 
 def hopFromCollectionToCollection(cid):
     url = f'https://data.tepapa.govt.nz/collection/category/{cid}'
@@ -126,15 +136,64 @@ def hopFromCollectionToCollection(cid):
     print("Uh oh col->col")
     return None
 
+def hopFromAgent(cid):
+    url = f'https://data.tepapa.govt.nz/collection/agent/{cid}/related'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+    response = requests.get(url, headers=headers)
+    resp = response.json()
+    for obj in random.shuffle(resp["results"][:12]):
+        match obj["type"]:
+            case 'Specimen':
+                print("Hopping to ", obj["title"], "   Id: ", obj['id'])
+                return (obj["id"], "Specimen")
+            case 'Object':
+                print("Hopping to ", obj["title"], "   Id: ", obj['id'])
+                return (obj["id"], "Object")
+
+def hopFromSpecimen(id):
+    url = f'https://data.tepapa.govt.nz/collection/object/{id}'
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': f'{api_key}'
+    }
+    response = requests.get(url, headers=headers)
+    obj = response.json()
+    try:
+        person = random.choice(obj['evidenceFor']["recordedBy"])
+        print("Hopping to ", person["title"], "   Id: ", person['id'])
+        return (person["id"], "Person")
+    except:
+        pass
+    try:
+        for ident in obj['identification']:
+            try:
+                print("Hopping to ", ident["identifiedBy"]["title"], "   Id: ", ident["identifiedBy"]['id'])
+                return (ident["identifiedBy"]["id"], "Person")
+            except:
+                pass
+    except:
+        pass
+    print("oh no specimen->person")
+    return None
+
 def manyHops(pathTracker,hop):
-    hopsLeft = random.randint(1,3)
+    hopsLeft = random.randint(20,30)
+    hopsStart = hopsLeft
     while True:
         try:
             accumulator = hop
             while not(hopsLeft <= 0 and accumulator[1] == "Object"):
                 hopsLeft -= 1
                 pathTracker.append(accumulator)
-                accumulator = hopOnce(accumulator) 
+                buffer = hopOnce(accumulator)
+                while buffer == None:
+                    print("Step that back")
+                    hopsLeft += 1
+                    buffer = hopOnce(pathTracker[hopsStart - hopsLeft - 1])
+                accumulator = buffer
             pathTracker.append(accumulator)
             break
         except TypeError:
@@ -144,6 +203,14 @@ def manyHops(pathTracker,hop):
 # Return a list of hops. The first hop is the starting point.
 # Guaranteed to be non-empty and the first and last hops are objects.
 def drunkards_walk():
+    print("Walking")
+    # url = f'https://data.tepapa.govt.nz/collection/category/317138'
+    # headers = {
+    #             'Content-Type': 'application/json',
+    #             'x-api-key': f'{api_key}'
+    #         }
+    # response = requests.get(url, headers=headers).json()
+    # return response
     accumulator = get_starting_hop()
     path = []
     manyHops(path,accumulator)
