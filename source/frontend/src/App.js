@@ -37,7 +37,7 @@ function App() {
       <div className="container1">
         <div className="sidebar">
           <div className="container2">
-            <h2>Your Museum Item</h2>
+            <h2><u>Your Museum Item</u></h2>
             <img
               src="https://dummyimage.com/300x300/cccccc/000000&text=Hello"
               alt="Linked image"
@@ -45,7 +45,7 @@ function App() {
               style={{ borderRadius: '10px' }}
             />
           </div>
-          <h2>Links Clicked</h2>
+          <h2><u>Links Clicked</u></h2>
           <ul>
             {['Maui', 'Tangaroa', 'Kiwi', 'Waka', 'Haka'].map((word, index) => (
               <li key={index} onClick={() => handleLinkClick(word)} style={{ cursor: 'pointer' }}>
@@ -60,8 +60,8 @@ function App() {
 
           {/* Card Content */}
           <div className="query-container">
-  <Query />
-</div>
+            <Query />
+          </div>
 
         </div>
       </div>
