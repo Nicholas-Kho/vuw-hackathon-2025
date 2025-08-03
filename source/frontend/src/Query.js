@@ -154,16 +154,6 @@ function Query() {
               <ul>
                 {[...relatedLinks.entries()].map(([title, { link, image }]) => (
                   <li key={link} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <img 
-                      src={image || 'no image :('}
-                      alt='no image'
-                      style={{
-                        width: '40px',
-                        height: 'auto',
-                        marginRight: '1rem',
-                        objectFit: 'cover',
-                      }}
-                    />
                     <a href={link} target="_blank" rel="noopener noreferrer">{title}</a>
                   </li>
                 ))}
