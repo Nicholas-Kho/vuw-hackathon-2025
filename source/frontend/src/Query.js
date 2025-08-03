@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 function getImageUrl(item) {
   return (
     item.hasRepresentation?.find(r => r.contentUrl)?.contentUrl ||
-    item.image?.url ||
+    item.image?.url || // Rarely the image will be here :p
     null // or default path like a "no image found" image which is kinda done below...
   );
 }
@@ -12,11 +12,11 @@ function Query() {
   console.log("Begin query");
   const [results, setResults] = useState([]);
 
-  useEffect(() => { // Honestly I don't care what this pulls anymore, I'm just going to read whatever comes through and wait until the backend fixes
+  useEffect(() => { // Honestly I don't care what this pulls anymore, I'm just going to read whatever comes through
     fetch('/api/search/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: 'myosotis' })
+        body: JSON.stringify({ query: 'Beehive' })
       })
       .then((res) => {
         if (!res.ok) {
