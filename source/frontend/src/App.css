@@ -1,20 +1,26 @@
+* {
+  overflow: hidden;
+}
+
 .query-container {
-  max-height: 80vh;       /* or a fixed height like 600px */
-  overflow-y: auto;       /* enables vertical scrolling when content overflows */
-  padding-right: 1rem;    /* optional: adds space for scrollbar */
-  margin: 0 auto;
+  max-height: 80vh;
+  /* or a fixed height like 600px */
+  overflow-y: auto;
+  /* enables vertical scrolling when content overflows */
   width: 100%;
   box-sizing: border-box;
 }
 
-
+.revert-button {
+  font-size: 1.3rem;
+}
 
 .navbar {
   width: 100%;
   background-color: #222;
   padding: 1rem 0;
   text-align: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -58,10 +64,16 @@
   color: #61dafb;
 }
 
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -75,13 +87,15 @@
   height: 100%;
   z-index: -100;
   background-position: center;
-  overflow: hidden; /* if needed */
+  overflow: hidden;
+  /* if needed */
 }
 
 .container {
   position: relative;
   width: 100%;
-  height: 100vh; /* or any height you want */
+  height: 100vh;
+  /* or any height you want */
 
 }
 
@@ -89,24 +103,34 @@
   position: relative;
   z-index: 1;
   padding: 2rem;
-  color: white; /* or contrasting color */
+  color: white;
+  /* or contrasting color */
 }
 
 .container1 {
   display: flex;
-  height: 100vh;
-  border-radius: 1rem;
+  justify-content: space-between;
+  flex-direction: row;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
 }
 
 .sidebar {
+  flex-grow: 1;
+  flex-basis: 0;
   top: 0;
   height: 100vh;
-  width: 250px;
   background-color: #333;
   padding: 1rem;
-  overflow-y: auto;
   color: white;
+  padding: 0;
+  display: flex;
+  text-align: center;
+  justify-content: flex-start;
+  flex-direction: column;
 }
+
 .sidebar a {
   display: block;
   color: white;
@@ -120,9 +144,8 @@
 }
 
 .main-content {
-
-  flex-grow: 1;
-  padding: 2rem;
+  flex-grow: 2.8;
+  flex-basis: 0;
   background-color: #f0f0f0;
 }
 
@@ -132,14 +155,11 @@ body {
   font-family: 'Poppins', sans-serif;
   background-color: #f9f9f9;
   margin: 0;
-  padding: 2rem;
 }
 
 .card-container {
   max-width: 900px;
   background: white;
-  padding: 3rem;
-  margin: 10px;
   border-radius: 1rem;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
   max-width: 50vw;
@@ -152,7 +172,6 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 
 .card-image {
@@ -174,17 +193,21 @@ body {
   color: #444;
 }
 
-.search-bar {
-  background-color: #f0f0f0;
+ .display-bar{
+  all: unset;
+  text-decoration: underline;
+  font-size:2.8rem;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
   padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
 }
 
-.search-bar input {
-  width: 100%;
-  padding: 0.6rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+.query-header {
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
 }

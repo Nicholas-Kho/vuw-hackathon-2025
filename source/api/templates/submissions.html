@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>User Submissions</title>
+</head>
+<body>
+    <h1>All User Submissions</h1>
+    <ul>
+        {% for sub in submissions %}
+            <li><strong>{{ sub.submitted_at|date:"Y-m-d H:i" }}:</strong> {{ sub.text }}</li>
+        {% empty %}
+            <li>No submissions yet.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
