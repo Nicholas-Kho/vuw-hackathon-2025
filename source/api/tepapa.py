@@ -245,19 +245,6 @@ def drunkards_walk():
     return path
 
 # Return some nice info about a hop for the frontend guys
-#
-# If it's an object, return
-# MAYBE a picture, title, description, related category IDs
-#
-# If it's a category, return
-# title, description, related category IDs, first few child objects
-# 
-# {
-# id = "";
-# type = "Category OR Object";
-# title = "";
-# description = "";
-# }
 def get_hops(hop):
     match hop["content_type"]:
         case "Object":
