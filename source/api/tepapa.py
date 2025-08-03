@@ -118,9 +118,11 @@ def hopFromCollectionToObj(cid):
     response = requests.get(url, headers=headers)
     resp = response.json()
     try:
-        obj = random.choice(resp["results"][:12])
-        print("Hopping to ", obj["title"], "   Id: ", obj['id'])
-        return (obj["id"], obj['type'])
+        for i in range(0, 10): # Avoid looping infinitely
+            obj = random.choice(resp["results"][:12])
+            if obj["type"] == "Object":
+                print("Hopping to ", obj["title"], "   Id: ", obj['id'])
+                return (obj["id"], obj['type'])
     except:
         return None
 
