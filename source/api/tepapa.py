@@ -208,7 +208,7 @@ def hopFromSpecimen(id):
     return None
 
 def manyHops(pathTracker,hop):
-    hopsLeft = random.randint(20,30)
+    hopsLeft = random.randint(2,4)
     hopsStart = hopsLeft
     while True:
         try:
