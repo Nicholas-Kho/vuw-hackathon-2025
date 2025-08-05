@@ -11,7 +11,7 @@ function getImageUrl(item) {
 }
 
 function Query({ onWordClick }) {
-    const [searchQuery, setSearchQuery] = useState('Nightshade');
+    const [searchQuery, setSearchQuery] = useState('Hīnaki (eel trap)');
 const [previousWord, setPreviousWord] = useState('');
   const [placeholder, setPlaceholder] = useState('Search...');
 

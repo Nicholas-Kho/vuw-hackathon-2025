@@ -14,10 +14,14 @@ const handleAnimationComplete = () => {
 
 
 
+
+
 function App() {
 
   // Counter
   const [counter, setCounter] = useState(0);
+  const [endingWord, setEndingWord] = useState('Benevolent Institution, Dunedin');
+
   // Clicked words
   const [clickedWords, setClickedWords] = useState([]);
   const incrementCounter = () => {
@@ -121,13 +125,14 @@ const sendTextAndCounter = (text, counter, searchQuery, won) => {
 
 
 
-            <h2>Your Museum Item</h2>
+            <h3>The museum Item: Hīnaki</h3>
             <img
-              src="https://dummyimage.com/300x300/cccccc/000000&text=Hello"
+              src="https://media.tepapa.govt.nz/collection/728/preview"
               alt="Linked image"
               width="200"
               style={{ borderRadius: '10px' }}
             />
+            <h4>Description: Hīnaki (eel trap)</h4>
           </div>
           <h3>Score: {counter} Total Navigations</h3>
             <ul>
