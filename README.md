@@ -25,8 +25,8 @@ virtual environment:
 ### .env:
 in `source/api`, create a `.env` file containing the following contents:
 ```
-API_KEY = GYxOLdjYl7z6deFeoKFQYevF8L7eVSVCEkr1h5LA
-API_TOKEN = GYxOLdjYl7z6deFeoKFQYevF8L7eVSVCEkr1h5LA
+API_KEY = <Your key here>
+API_TOKEN = <Your token here>
 ```
 
 ### frontend: nodejs
