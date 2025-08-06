@@ -16,7 +16,7 @@ function TextSubmit() {
       .catch((err) => console.error(err));
   };
 
-  return (
+    return (
     <div>
       <form onSubmit={handleSubmit}>
         <input
@@ -32,5 +32,4 @@ function TextSubmit() {
     </div>
   );
 }
-
 export default TextSubmit;

@@ -10,16 +10,17 @@ function getImageUrl(item) {
   );
 }
 
-function Query() {
-  const [searchQuery, setSearchQuery] = useState('Nightshade');
+function Query({ onWordClick }) {
+  const [searchQuery, setSearchQuery] = useState('Hīnaki (eel trap)');
   const [previousWord, setPreviousWord] = useState('');
   const [placeholder, setPlaceholder] = useState('Search...');
 
   // User word clicking changes the word
-  const handleWordClick = (word) => {
-    setPreviousWord(searchQuery);     // Save current before overwriting
-    setSearchQuery(word);             // Set new word
-  };
+    const handleWordClick = (word) => {
+      setPreviousWord(searchQuery);     // Save current before overwriting
+      setSearchQuery(word);             // Set new word
+      onWordClick(word);
+    };
 
   console.log("Begin query");
   const [results, setResults] = useState([]);
@@ -102,7 +103,7 @@ function Query() {
       </button>
       </div>
 
-      {Array.isArray(results) && results.length === 0 && <p>No results found.</p>}
+      {Array.isArray(results) && results.length === 0 && <p>Te Papa does not have anything related.</p>}
       {results.map((item, index) => {
         console.log("Item: " + item);
         const id = item.id ?? "None Found.";
@@ -143,7 +144,7 @@ function Query() {
       {description.split(' ').map((word, i) => (
         <span
           key={i}
-          onClick={() => handleWordClick(word)}
+          onClick={() => handleWordClick(word.replace(/[^a-zA-Z0-9]/g, '').charAt(0).toUpperCase() + word.slice(1).replace(/[^a-zA-Z0-9]/g, ''))}
           className="clickable-word"
         >
           {word}
