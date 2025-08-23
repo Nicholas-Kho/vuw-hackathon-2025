@@ -36,6 +36,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , dotenv
     , persistent
     , persistent-sqlite
     , servant-server
@@ -56,6 +57,7 @@ executable backend-exe
       aeson
     , backend
     , base
+    , dotenv
     , persistent
     , persistent-sqlite
     , servant-server
@@ -77,6 +79,7 @@ test-suite backend-test
       aeson
     , backend
     , base
+    , dotenv
     , hspec
     , hspec-wai
     , hspec-wai-json
