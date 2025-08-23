@@ -1,5 +1,5 @@
 {
-  description = "Tools for working on thing";
+  description = "Development tools for MuseLinks";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts.url = "github:numtide/flake-utils";
@@ -10,15 +10,21 @@
       let pkgs = import nixpkgs { inherit system; };
       in {
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [ python313Packages.pip nodejs_24 ];
-          shellHook = ''
-            echo "Entering Python development shell..."
-            # Create and activate venv if it doesn't exist
-            if [ ! -d ".venv" ]; then
-              python3 -m venv .venv
-            fi
-            source .venv/bin/activate
-          '';
+          buildInputs = with pkgs; [
+            # Frontend:
+            nodejs_24
+            # Backend:
+            stack
+            ## Haskell editor tools:
+            haskell-language-server
+            ormolu
+            hlint
+            ## Dependencies of some haskell packages:
+            zlib
+            pkg-config
+            ## DB
+            sqlite
+          ];
         };
       });
 }
