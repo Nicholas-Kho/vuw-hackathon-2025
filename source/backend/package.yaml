@@ -26,6 +26,7 @@ dependencies:
 - persistent
 - persistent-sqlite
 - servant-server
+- text
 - wai
 - warp
 
