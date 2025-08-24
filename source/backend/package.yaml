@@ -27,6 +27,7 @@ dependencies:
 - persistent-sqlite
 - servant-server
 - text
+- time
 - wai
 - warp
 

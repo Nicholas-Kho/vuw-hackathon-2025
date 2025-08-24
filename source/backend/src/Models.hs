@@ -20,6 +20,7 @@
 module Models (addReferenceCheckConstraint, migrateAll) where
 
 import Data.Proxy
+import Data.Time.Clock (UTCTime)
 import Database.Persist.Class.PersistField
 import Database.Persist.PersistValue (PersistValue(..))
 import Database.Persist.Sql (PersistFieldSql(..), SqlPersistT, rawExecute)
@@ -134,6 +135,10 @@ Reference
 
     UniqueReference to_type external_id
 
+CacheMetadata
+    addedAt UTCTime
+    ttlSeconds Int default=1200
+    reference ReferenceId
 
 Person
     title String
