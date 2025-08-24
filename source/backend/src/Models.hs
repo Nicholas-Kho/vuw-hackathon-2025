@@ -21,6 +21,7 @@ module Models (addReferenceCheckConstraint, doMigrations) where
 
 import Control.Monad.Reader (ReaderT)
 import Control.Monad.Trans (lift)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Proxy
 import Data.Time.Clock (UTCTime)
 import Database.Persist.Class.PersistField
@@ -306,7 +307,7 @@ Topic
     aggregated_topics [ReferenceId]
 |]
 
-addReferenceCheckConstraint :: SqlPersistT IO ()
+addReferenceCheckConstraint :: MonadIO m => SqlPersistT m ()
 addReferenceCheckConstraint = rawExecute
     "ALTER TABLE reference \
     \ADD CONSTRAINT only_one_cache_present \
@@ -326,5 +327,5 @@ addReferenceCheckConstraint = rawExecute
     \);"
     []
 
-doMigrations :: SqlPersistT IO ()
+doMigrations :: MonadIO m => SqlPersistT m ()
 doMigrations = runMigration migrateAll

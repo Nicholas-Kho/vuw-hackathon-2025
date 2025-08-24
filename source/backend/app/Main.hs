@@ -18,7 +18,7 @@ main = do
   config <- mkConfig stage
   let loggerMiddleware = pickLogger stage
       pool = getPool config
-  runSqlPool (doMigrations >> addReferenceCheckConstraint) pool
+  runStdoutLoggingT $ runSqlPool (doMigrations >> addReferenceCheckConstraint) pool
 
 getPort :: IO Port
 getPort = do
