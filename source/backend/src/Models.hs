@@ -17,13 +17,15 @@
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE FlexibleInstances          #-}
-module Models (addReferenceCheckConstraint, migrateAll) where
+module Models (addReferenceCheckConstraint, doMigrations) where
 
+import Control.Monad.Reader (ReaderT)
+import Control.Monad.Trans (lift)
 import Data.Proxy
 import Data.Time.Clock (UTCTime)
 import Database.Persist.Class.PersistField
 import Database.Persist.PersistValue (PersistValue(..))
-import Database.Persist.Sql (PersistFieldSql(..), SqlPersistT, rawExecute)
+import Database.Persist.Sql (PersistFieldSql(..), SqlPersistT, SqlBackend, rawExecute, runMigration)
 import Database.Persist.TH (share, mkPersist, sqlSettings, mkMigrate, persistLowerCase)
 import Database.Persist.Types (SqlType(SqlString))
 import qualified Data.Text as T
@@ -323,3 +325,6 @@ addReferenceCheckConstraint = rawExecute
         \ (CASE WHEN cached_topic IS NOT NULL THEN 1 ELSE 0 END) <= 1 \
     \);"
     []
+
+doMigrations :: SqlPersistT IO ()
+doMigrations = runMigration migrateAll

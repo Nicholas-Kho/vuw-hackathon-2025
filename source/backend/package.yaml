@@ -25,6 +25,7 @@ dependencies:
 - conduit
 - dotenv
 - monad-logger
+- mtl
 - persistent
 - persistent-sqlite
 - resource-pool

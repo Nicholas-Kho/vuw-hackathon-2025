@@ -42,6 +42,7 @@ library
     , conduit
     , dotenv
     , monad-logger
+    , mtl
     , persistent
     , persistent-sqlite
     , resource-pool
@@ -69,6 +70,7 @@ executable backend-exe
     , conduit
     , dotenv
     , monad-logger
+    , mtl
     , persistent
     , persistent-sqlite
     , resource-pool
@@ -100,6 +102,7 @@ test-suite backend-test
     , hspec-wai
     , hspec-wai-json
     , monad-logger
+    , mtl
     , persistent
     , persistent-sqlite
     , resource-pool

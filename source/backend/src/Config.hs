@@ -2,6 +2,8 @@
 module Config
   ( Config(..)
   , Stage(..)
+  , mkConfig
+  , pickLogger
   )
 where
 
@@ -28,10 +30,13 @@ data Config = MkConfig
   , getStage :: Stage
   }
 
-setLogger :: Stage -> Middleware
-setLogger Test = id
-setLogger Development = logStdoutDev
-setLogger Production = logStdout
+mkConfig :: Stage -> IO Config
+mkConfig stg = MkConfig <$> (getConnPool stg) <*> (pure stg)
+
+pickLogger :: Stage -> Middleware
+pickLogger Test = id
+pickLogger Development = logStdoutDev
+pickLogger Production = logStdout
 
 getConnPool :: Stage -> IO ConnectionPool
 getConnPool Test = runNoLoggingT $ createSqlitePool (connStr Test) (poolSize Test)
