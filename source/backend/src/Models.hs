@@ -56,15 +56,15 @@ data SpecimenCollection
     deriving (Show, Read, Eq)
 
 data MuseumResource
-    = RAgent
-    | RConcept
-    | RDocument
-    | RFieldCollection
-    | RGroup
-    | RObject
-    | RPlace
-    | RTaxon
-    | RTopic
+    = MRAgent
+    | MRConcept
+    | MRDocument
+    | MRFieldCollection
+    | MRGroup
+    | MRObject
+    | MRPlace
+    | MRTaxon
+    | MRTopic
     deriving (Show, Read, Eq)
 
 -- Note: I tried to make generic instances of PersistField and PersistFieldSql by
@@ -136,32 +136,167 @@ Reference
 
 
 Person
+    title String
+    associations AgentAssociationsId
 
 Organization
+    title String
+    associations AgentAssociationsId
 
 Collaboration
+    title String
+    associations AgentAssociationsId
+
+-- Associations for people, organizations, and collaborations.
+AgentAssociations
+    --Identifier of a Specimen
+    identification_identified[ReferenceId] 
+    --Maker of an Object
+    production_contributor[ReferenceId] 
+    --Associated with another agent
+    associated_parties [ReferenceId]
+    --Author of a Topic or Publication
+    authors [ReferenceId]
+    --Recorder of the field collection of a Specimen
+    evidence_for_at_event_recorded_by [ReferenceId]
+    --Author of the scientific name of a Specimen
+    scientific_name_authorship [ReferenceId]
+    --Associated with another agent, Category, or Place
+    associated_with [ReferenceId]
+    --Depicted in an Object
+    depicts [ReferenceId]
+    --Former owner of an Object
+    former_owner [ReferenceId]
+    --Referred to by an Object, Specimen, Topic, or Publication
+    refers_to [ReferenceId]
+    --Influenced the making of an Object
+    influenced_by [ReferenceId]
+    --Publisher of a Publication
+    publisher [ReferenceId]
+    --Editor of a Publication
+    editor [ReferenceId]
+    --Illustrator of a Publication
+    illustrator [ReferenceId]
+    --Part of an aggregation of agents
+    aggregated_agents [ReferenceId]
+    --Associated in an unspecified way with an Object or Specimen 
+    unknown_association [ReferenceId]
 
 Category
+    title String
+    --Associated with another category, Place, Person, Organisation, or Collaboration
+    associated_with [ReferenceId]
+    --Concept depicted in an Object
+    depicts [ReferenceId]
+    --Style/group/etc. referred to by an Object, Specimen, Topic, or Publication
+    refers_to [ReferenceId]
+    --Subject of an Object
+    is_about [ReferenceId]
+    --Style/group/etc. that influenced the making of an Object
+    influenced_by [ReferenceId]
+    --Subject that an Object is intended for
+    intended_for [ReferenceId]
+    --Technique used in the making of an Object
+    production_used_technique [ReferenceId]
+    --Object type of an Object
+    is_type_of [ReferenceId]
+    --Material that an Object is made of
+    is_made_of [ReferenceId]
+    --Associated in an unspecified way with an Object or Specimen
+    unknown_association [ReferenceId]
+    --Child category underneath a parent Category 
+    related_terms [ReferenceId]
 
 Publication
+    title String
+    --Referred to by an Object or Specimen
+    is_referenced_by [ReferenceId] 
+    --Associated with a Topic
+    related_topics [ReferenceId] 
+    --Parent of one or more other child Publications
+    is_part_of [ReferenceId] 
+    --Child publication underneath a parent Publication 
+    has_part [ReferenceId] 
 
 FieldCollection
+    title String
+    evidence_for_at_event [ReferenceId]
 
 Group
+    title String
+    aggregatedGroups [ReferenceId]
 
 Artefact
     title String
     collection ArtefactCollection
+    associations ObjectAssociationsId
 
 Specimen
     title String
     collection SpecimenCollection
+    associations ObjectAssociationsId
+
+-- Associations for Artefacts and Specimens
+ObjectAssociations
+    --Associated with another Object or Specimen
+    relation [ReferenceId] 
+    --Related to a Topic or Publication
+    related_objects [ReferenceId] 
+    --Parent of one or more other children Objects or Specimens
+    is_part_of [ReferenceId] 
+    --Child object or specimen underneath a parent Object or Specimen
+    has_part [ReferenceId] 
+    --Part of an aggregation of Objects or Specimens 
+    aggregated_objects [ReferenceId] 
 
 Place
+    title String
+    --Place related to where an Object was made
+    production_spatial [ReferenceId]
+    --Associated with another place, Category, Person, Organisation, or Collaboration
+    associated_with [ReferenceId]
+    --Concept depicted in an Object
+    depicts [ReferenceId]
+    --Place referred to by an Object, Specimen, Topic, or Publication
+    refers_to [ReferenceId]
+    --Subject of an Object
+    is_about [ReferenceId]
+    --Place that influenced the making of an Object
+    influenced_by [ReferenceId]
+    --Child place within a parent Place 
+    related_terms [ReferenceId]
+
+
 
 Taxon
+    title String
+    -- Associated with a Publication or Topic
+    associated_with [ReferenceId]
+    -- Taxon depicted in an Object
+    depicts [ReferenceId]
+    -- Taxon referred to by an Object, Specimen, Topic, or Publication
+    refers_to [ReferenceId]
+    -- Subject of an Object
+    is_about [ReferenceId]
+    -- Taxon that influenced the making of an Object
+    influenced_by [ReferenceId]
+    -- Subject that an Object is intended for
+    intended_for [ReferenceId]
+    -- Associated in an unspecified way with an Object or Specimen 
+    unknown_association [ReferenceId]
 
 Topic
+    title String
+    -- Referred to by an Object or Specimen
+    is_referenced_by [ReferenceId]
+    -- Associated with a Topic
+    related_topics [ReferenceId]
+    -- Parent of one or more other child Topics
+    is_part_of [ReferenceId]
+    -- Child topic underneath a parent Topic
+    has_part [ReferenceId]
+    -- Part of an aggregation of Topics 
+    aggregated_topics [ReferenceId]
 |]
 
 addReferenceCheckConstraint :: SqlPersistT IO ()
