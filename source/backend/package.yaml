@@ -22,13 +22,17 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - aeson
+- conduit
 - dotenv
+- monad-logger
 - persistent
 - persistent-sqlite
+- resource-pool
 - servant-server
 - text
 - time
 - wai
+- wai-extra
 - warp
 
 ghc-options:

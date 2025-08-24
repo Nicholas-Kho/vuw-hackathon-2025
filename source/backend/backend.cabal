@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Api
+      Config
       Lib
       Models
   other-modules:
@@ -38,13 +39,17 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , conduit
     , dotenv
+    , monad-logger
     , persistent
     , persistent-sqlite
+    , resource-pool
     , servant-server
     , text
     , time
     , wai
+    , wai-extra
     , warp
   default-language: Haskell2010
 
@@ -61,13 +66,17 @@ executable backend-exe
       aeson
     , backend
     , base
+    , conduit
     , dotenv
+    , monad-logger
     , persistent
     , persistent-sqlite
+    , resource-pool
     , servant-server
     , text
     , time
     , wai
+    , wai-extra
     , warp
   default-language: Haskell2010
 
@@ -85,15 +94,19 @@ test-suite backend-test
       aeson
     , backend
     , base
+    , conduit
     , dotenv
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , monad-logger
     , persistent
     , persistent-sqlite
+    , resource-pool
     , servant-server
     , text
     , time
     , wai
+    , wai-extra
     , warp
   default-language: Haskell2010
