@@ -1,33 +1,32 @@
 # VUW Hackathon 2025 - MuseLinks
 
 ## Backend
-located in `source/backend` (cooked)
+located in `source/backend`
 
 ## Frontend
 located in `source/frontend/src`
 `app.js` is the file that runs when you `npm run start`
 
 
-
 ## Dependencies:
-virtual environment:
-`python3 -m venv venv`
-`source venv/bin/activate`
 
-### backend:
-`pip3 install requests`
-`pip3 install dotenv` or `python-dotenv`
+### Haskell tools / stack for backend
+**If you are using the Nix package manager:** Run `nix develop` to pull in Stack, as well as all dependencies needed to build the backend (GHC, Zlib, pkg-config, etc.) as well as the language server.
 
-### django:
-`pip3 install djangorestframework` 
-`pip install django-cors-headers`
+**If you are not using Nix:** You will need to install Stack, and you'll probably want the language server too. An easy way to get these is via GHCup. The formatter used is fourmolu - you can either get this via your system's package manager, or install Cabal through GHCup and `cabal install fourmolu`. (this will put it in ~/.cabal/bin)
+
+Then simply go to `source/backend` and run `stack build --file-watch`
 
 ### .env:
-in `source/api`, create a `.env` file containing the following contents:
+in `source/backend`, create a `.env` file containing the following contents:
 ```
 API_KEY = <Your key here>
 API_TOKEN = <Your token here>
+PORT = <Whatever port the backend should run on. Default to 8080>
 ```
+
+### Database:
+There is a minimal `seed.sqlite3`. You can make a copy named `db.sqlite3` to get a local development database. Please refrain from commiting database related files, as they can blow up diffs and cause a lot of unnecessary conflicts.
 
 ### frontend: nodejs
 `install npm` (ask chatgpt)
@@ -39,5 +38,5 @@ API_TOKEN = <Your token here>
 
 ## Deployment
 - Two terminals are needed.
-- in `source/`, run `python manage.py runserver`. This loads the backend
+- in `source/backend`, run `stack run`. This loads the backend
 - in `source/frontend`, run `npm run start`, loading the frontend

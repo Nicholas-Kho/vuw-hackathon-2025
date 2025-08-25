@@ -1,6 +1,7 @@
 .idea
 .env
 node_modules/
+.dev-bin/
 # Python related stuff
 .pyc
 __pycache__/
