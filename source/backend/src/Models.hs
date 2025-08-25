@@ -308,24 +308,55 @@ Topic
 |]
 
 addReferenceCheckConstraint :: MonadIO m => SqlPersistT m ()
-addReferenceCheckConstraint = rawExecute
-    "ALTER TABLE reference \
-    \ADD CONSTRAINT only_one_cache_present \
-    \CHECK ( \
-        \ (CASE WHEN cached_person IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_organization IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_collaboration IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_category IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_publication IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_field_collection IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_group IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_artefact IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_specimen IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_place IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_taxon IS NOT NULL THEN 1 ELSE 0 END) + \
-        \ (CASE WHEN cached_topic IS NOT NULL THEN 1 ELSE 0 END) <= 1 \
-    \);"
-    []
+addReferenceCheckConstraint = do
+  -- Reusable condition: count how many cached_* columns are non-null
+  let cond =
+        "( " <>
+        "  (CASE WHEN NEW.cached_person IS NOT NULL THEN 1 ELSE 0 END) + "  <>
+        "  (CASE WHEN NEW.cached_organization IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_collaboration IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_category IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_publication IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_field_collection IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_group IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_artefact IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_specimen IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_place IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_taxon IS NOT NULL THEN 1 ELSE 0 END) + " <>
+        "  (CASE WHEN NEW.cached_topic IS NOT NULL THEN 1 ELSE 0 END) "  <>
+        ") > 1"
+
+  -- Drop old triggers so this is idempotent
+  rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_ins;" []
+  rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_upd;" []
+
+  -- INSERT trigger
+  rawExecute
+    ( "CREATE TRIGGER only_one_cache_present_ins "
+   <> "BEFORE INSERT ON reference "
+   <> "FOR EACH ROW "
+   <> "WHEN " <> cond <> " "
+   <> "BEGIN "
+   <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
+   <> "END;"
+    ) []
+
+  -- UPDATE trigger (fires only if one of the cached_* columns is updated)
+  rawExecute
+    ( "CREATE TRIGGER only_one_cache_present_upd "
+   <> "BEFORE UPDATE OF "
+   <> "cached_person, cached_organization, cached_collaboration, cached_category, "
+   <> "cached_publication, cached_field_collection, cached_group, cached_artefact, "
+   <> "cached_specimen, cached_place, cached_taxon, cached_topic "
+   <> "ON reference "
+   <> "FOR EACH ROW "
+   <> "WHEN " <> cond <> " "
+   <> "BEGIN "
+   <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
+   <> "END;"
+    ) []
+
+
 
 doMigrations :: MonadIO m => SqlPersistT m ()
 doMigrations = runMigration migrateAll

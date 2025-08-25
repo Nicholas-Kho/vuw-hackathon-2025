@@ -43,7 +43,7 @@ getConnPool Test = runNoLoggingT $ createSqlitePool (connStr Test) (poolSize Tes
 getConnPool e = runStdoutLoggingT $ createSqlitePool (connStr e) (poolSize e)
 
 connStr :: Stage -> Text
-connStr _ = ""
+connStr _ = "db.sqlite3"
 
 poolSize :: Stage -> Int
 poolSize Test = 2
