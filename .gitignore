@@ -1,9 +1,23 @@
 .idea
 .env
-.venv
+node_modules/
+# Python related stuff
 .pyc
 __pycache__/
-node_modules/
 venv/
+.venv
+# haskell/stack related files
 .stack-work/
 _stack-work/
+# SQLite database files
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-journal
+*.sqlite3-shm
+*.sqlite3-wal
+# Except the seed DB
+!seed.sqlite3
