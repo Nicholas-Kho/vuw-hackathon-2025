@@ -1,0 +1,21 @@
+# .fourmolu.yaml
+# See all options: https://hackage.haskell.org/package/fourmolu/docs/Fourmolu.html#t:PrinterOptsPartial
+
+# Use Elm-style leading commas
+comma-style: leading
+
+# Align nested lets/do/where/ifs more cleanly
+indentation: 2
+
+# Keep import groups tidy
+record-brace-space: true
+import-export-style: leading
+
+# Put each import/export on its own line if multi-line
+respectful: true
+
+# Control how multi-line lists/records are broken up
+newlines-between-decls: 1
+
+# Put trailing commas in multi-line lists/records (safer diffs)
+trailing-comma: always

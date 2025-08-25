@@ -62,6 +62,9 @@ extra-deps:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
-nix:
-  enable: true
-  packages: [zlib, pkg-config]
+
+system-ghc: true
+
+# Note: no `nix:` section needed here.
+# System dependencies (e.g. GHC, zlib, pkg-config) are provided by our flake.nix
+# via `nix develop`. This keeps stack.yaml simpler and avoids duplicating config.
