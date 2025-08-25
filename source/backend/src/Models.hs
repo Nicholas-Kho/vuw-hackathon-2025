@@ -18,19 +18,18 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Models (addReferenceCheckConstraint, doMigrations) where
+module Models (CacheType (..), addReferenceCheckConstraint, cacheCheck, doMigrations) where
 
 import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Reader (ReaderT)
-import Control.Monad.Trans (lift)
+import Data.Maybe (catMaybes)
 import Data.Proxy
 import qualified Data.Text as T
 import Data.Time.Clock (UTCTime)
 import Database.Persist.Class.PersistField
 import Database.Persist.PersistValue (PersistValue (..))
-import Database.Persist.Sql (PersistFieldSql (..), SqlBackend, SqlPersistT, rawExecute, runMigration)
+import Database.Persist.Sql (PersistFieldSql (..), SqlPersistT, rawExecute, runMigration)
 import Database.Persist.TH (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
-import Database.Persist.Types (SqlType (SqlString))
+import Database.Persist.Types (Key, SqlType (SqlString))
 
 data ArtefactCollection
     = Art
@@ -123,6 +122,9 @@ share
 -- Want a polymorphic association between "objects" and other "objects"
 -- ASSUMPTION: AT MOST ONE of the 'cached' fields are not null.
 -- we have "addReferenceCheckConstraint" to do this. (run after migrations.)
+-- We use 12 columns instead of storing a sum type so that Persistent can validate
+-- foreign keys for us. Nonetheless, there is a CachedEntry sum type that makes it
+-- easier to work with this.
 Reference
     to_type MuseumResource
     external_id Int
@@ -364,6 +366,41 @@ addReferenceCheckConstraint = do
             <> "END;"
         )
         []
+
+data CacheType
+    = Miss Int MuseumResource
+    | HitPerson (Key Person)
+    | HitOrganization (Key Organization)
+    | HitCollaboration (Key Collaboration)
+    | HitCategory (Key Category)
+    | HitPublication (Key Publication)
+    | HitFieldCollection (Key FieldCollection)
+    | HitGroup (Key Group)
+    | HitArtefact (Key Artefact)
+    | HitSpecimen (Key Specimen)
+    | HitPlace (Key Place)
+    | HitTaxon (Key Taxon)
+    | HitTopic (Key Topic)
+
+cacheCheck :: Reference -> CacheType
+cacheCheck (Reference tt eid psn org coll cat pub fcol grp arte spec plce txon tpic) =
+    case catMaybes
+        [ HitPerson <$> psn
+        , HitOrganization <$> org
+        , HitCollaboration <$> coll
+        , HitCategory <$> cat
+        , HitPublication <$> pub
+        , HitFieldCollection <$> fcol
+        , HitGroup <$> grp
+        , HitArtefact <$> arte
+        , HitSpecimen <$> spec
+        , HitPlace <$> plce
+        , HitTaxon <$> txon
+        , HitTopic <$> tpic
+        ] of
+        [] -> Miss eid tt
+        [one] -> one
+        __ -> error "Invariant violated - cache entry should have one type."
 
 doMigrations :: (MonadIO m) => SqlPersistT m ()
 doMigrations = runMigration migrateAll
