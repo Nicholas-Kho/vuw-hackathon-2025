@@ -1,35 +1,36 @@
-{-# LANGUAGE EmptyDataDecls             #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE RecordWildCards            #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE UndecidableInstances       #-}
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Models (addReferenceCheckConstraint, doMigrations) where
 
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (ReaderT)
 import Control.Monad.Trans (lift)
-import Control.Monad.IO.Class (MonadIO)
 import Data.Proxy
+import qualified Data.Text as T
 import Data.Time.Clock (UTCTime)
 import Database.Persist.Class.PersistField
-import Database.Persist.PersistValue (PersistValue(..))
-import Database.Persist.Sql (PersistFieldSql(..), SqlPersistT, SqlBackend, rawExecute, runMigration)
-import Database.Persist.TH (share, mkPersist, sqlSettings, mkMigrate, persistLowerCase)
-import Database.Persist.Types (SqlType(SqlString))
-import qualified Data.Text as T
+import Database.Persist.PersistValue (PersistValue (..))
+import Database.Persist.Sql (PersistFieldSql (..), SqlBackend, SqlPersistT, rawExecute, runMigration)
+import Database.Persist.TH (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
+import Database.Persist.Types (SqlType (SqlString))
 
 data ArtefactCollection
     = Art
@@ -76,13 +77,13 @@ data MuseumResource
 -- with Persistent's key types. I've kept this class for now, but later if there's more enums, we can
 -- try to tackle this error again, or use a different solution.
 class (Show a, Read a) => PersistEnum a where
-    typename :: Proxy a -> T.Text 
+    typename :: Proxy a -> T.Text
     fromPersistText :: PersistValue -> Either T.Text a
     fromPersistText (PersistText t) =
         case reads (T.unpack t) of
             [(v, "")] -> Right v
             _ -> Left $ "Text must correspond to " <> typename (Proxy @a) <> " type."
-    fromPersistText  _ = Left $ typename (Proxy @a) <> " is represented as text."
+    fromPersistText _ = Left $ typename (Proxy @a) <> " is represented as text."
     toText :: a -> T.Text
     toText = T.pack . show
 
@@ -116,7 +117,9 @@ instance PersistFieldSql SpecimenCollection where
 instance PersistFieldSql MuseumResource where
     sqlType _ = SqlString
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+share
+    [mkPersist sqlSettings, mkMigrate "migrateAll"]
+    [persistLowerCase|
 -- Want a polymorphic association between "objects" and other "objects"
 -- ASSUMPTION: AT MOST ONE of the 'cached' fields are not null.
 -- we have "addReferenceCheckConstraint" to do this. (run after migrations.)
@@ -307,56 +310,60 @@ Topic
     aggregated_topics [ReferenceId]
 |]
 
-addReferenceCheckConstraint :: MonadIO m => SqlPersistT m ()
+addReferenceCheckConstraint :: (MonadIO m) => SqlPersistT m ()
 addReferenceCheckConstraint = do
-  -- Reusable condition: count how many cached_* columns are non-null
-  let cond =
-        "( " <>
-        "  (CASE WHEN NEW.cached_person IS NOT NULL THEN 1 ELSE 0 END) + "  <>
-        "  (CASE WHEN NEW.cached_organization IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_collaboration IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_category IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_publication IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_field_collection IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_group IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_artefact IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_specimen IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_place IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_taxon IS NOT NULL THEN 1 ELSE 0 END) + " <>
-        "  (CASE WHEN NEW.cached_topic IS NOT NULL THEN 1 ELSE 0 END) "  <>
-        ") > 1"
+    -- Reusable condition: count how many cached_* columns are non-null
+    let cond =
+            "( "
+                <> "  (CASE WHEN NEW.cached_person IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_organization IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_collaboration IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_category IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_publication IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_field_collection IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_group IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_artefact IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_specimen IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_place IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_taxon IS NOT NULL THEN 1 ELSE 0 END) + "
+                <> "  (CASE WHEN NEW.cached_topic IS NOT NULL THEN 1 ELSE 0 END) "
+                <> ") > 1"
 
-  -- Drop old triggers so this is idempotent
-  rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_ins;" []
-  rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_upd;" []
+    -- Drop old triggers so this is idempotent
+    rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_ins;" []
+    rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_upd;" []
 
-  -- INSERT trigger
-  rawExecute
-    ( "CREATE TRIGGER only_one_cache_present_ins "
-   <> "BEFORE INSERT ON reference "
-   <> "FOR EACH ROW "
-   <> "WHEN " <> cond <> " "
-   <> "BEGIN "
-   <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
-   <> "END;"
-    ) []
+    -- INSERT trigger
+    rawExecute
+        ( "CREATE TRIGGER only_one_cache_present_ins "
+            <> "BEFORE INSERT ON reference "
+            <> "FOR EACH ROW "
+            <> "WHEN "
+            <> cond
+            <> " "
+            <> "BEGIN "
+            <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
+            <> "END;"
+        )
+        []
 
-  -- UPDATE trigger (fires only if one of the cached_* columns is updated)
-  rawExecute
-    ( "CREATE TRIGGER only_one_cache_present_upd "
-   <> "BEFORE UPDATE OF "
-   <> "cached_person, cached_organization, cached_collaboration, cached_category, "
-   <> "cached_publication, cached_field_collection, cached_group, cached_artefact, "
-   <> "cached_specimen, cached_place, cached_taxon, cached_topic "
-   <> "ON reference "
-   <> "FOR EACH ROW "
-   <> "WHEN " <> cond <> " "
-   <> "BEGIN "
-   <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
-   <> "END;"
-    ) []
+    -- UPDATE trigger (fires only if one of the cached_* columns is updated)
+    rawExecute
+        ( "CREATE TRIGGER only_one_cache_present_upd "
+            <> "BEFORE UPDATE OF "
+            <> "cached_person, cached_organization, cached_collaboration, cached_category, "
+            <> "cached_publication, cached_field_collection, cached_group, cached_artefact, "
+            <> "cached_specimen, cached_place, cached_taxon, cached_topic "
+            <> "ON reference "
+            <> "FOR EACH ROW "
+            <> "WHEN "
+            <> cond
+            <> " "
+            <> "BEGIN "
+            <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
+            <> "END;"
+        )
+        []
 
-
-
-doMigrations :: MonadIO m => SqlPersistT m ()
+doMigrations :: (MonadIO m) => SqlPersistT m ()
 doMigrations = runMigration migrateAll

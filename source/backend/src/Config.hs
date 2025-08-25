@@ -1,34 +1,34 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Config
-  ( Config(..)
-  , Stage(..)
-  , mkConfig
-  , pickLogger
-  )
+
+module Config (
+    Config (..),
+    Stage (..),
+    mkConfig,
+    pickLogger,
+)
 where
 
-import Control.Monad.Logger (MonadLoggerIO, runNoLoggingT, runStdoutLoggingT)
 import Conduit (MonadUnliftIO)
-import Database.Persist.SqlBackend.Internal (SqlBackend)
-import Database.Persist.Sqlite (createSqlitePool)
+import Control.Monad.Logger (MonadLoggerIO, runNoLoggingT, runStdoutLoggingT)
 import Data.Pool (Pool)
 import Data.Text (Text)
-import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
+import Database.Persist.SqlBackend.Internal (SqlBackend)
+import Database.Persist.Sqlite (createSqlitePool)
 import Network.Wai (Middleware)
-
+import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 
 type ConnectionPool = Pool SqlBackend
 
 data Stage
-  = Test
-  | Development
-  | Production
-  deriving (Eq, Show, Read)
+    = Test
+    | Development
+    | Production
+    deriving (Eq, Show, Read)
 
 data Config = MkConfig
-  { getPool :: ConnectionPool
-  , getStage :: Stage
-  }
+    { getPool :: ConnectionPool
+    , getStage :: Stage
+    }
 
 mkConfig :: Stage -> IO Config
 mkConfig stg = MkConfig <$> (getConnPool stg) <*> (pure stg)
