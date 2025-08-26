@@ -30,6 +30,7 @@ module Models (
 import Control.Monad.IO.Class (MonadIO)
 import Data.Proxy
 import qualified Data.Text as T
+import Data.Time.Clock (UTCTime)
 import Database.Persist.Class.PersistField
 import Database.Persist.PersistValue (PersistValue (..))
 import Database.Persist.Sql (PersistFieldSql (..), SqlPersistT, runMigration)
@@ -64,6 +65,12 @@ data SpecimenCollection
     | Insects
     deriving (Show, Read, Eq)
 
+{-
+The different types of Resources the TePapa collections API exposes.
+Each variant corresponds to an API endpoint. A "thing" in TePapa can be defined
+with a resource type and external ID, since external IDs are only unique
+within endpoints.
+-}
 data MuseumResource
     = MRAgent
     | MRConcept
@@ -74,6 +81,26 @@ data MuseumResource
     | MRPlace
     | MRTaxon
     | MRTopic
+    deriving (Show, Read, Eq)
+
+{-
+All the types of "things" we can store in the database. This is *almost* bijective to
+MuseumResource, except the "object" resource has two sub-categories, namely artefacts and
+specimens, and likewise the "agent" resource has three. (people, organizations, collaborations)
+-}
+data MuseumObjectType
+    = MPerson
+    | MOrganization
+    | MCollaboration
+    | MCategory
+    | MPublication
+    | MFieldCollection
+    | MGroup
+    | MArtefact
+    | MSpecimen
+    | MPlace
+    | MTaxon
+    | MTopic
     deriving (Show, Read, Eq)
 
 -- Note: I tried to make generic instances of PersistField and PersistFieldSql by
@@ -98,7 +125,10 @@ instance PersistEnum SpecimenCollection where
     typename _ = "SpecimenCollection"
 
 instance PersistEnum MuseumResource where
-    typename _ = "MuseumObject"
+    typename _ = "MuseumResource"
+
+instance PersistEnum MuseumObjectType where
+    typename _ = "MuseumObjectType"
 
 instance PersistField ArtefactCollection where
     toPersistValue = PersistText . toText
@@ -112,6 +142,10 @@ instance PersistField MuseumResource where
     toPersistValue = PersistText . toText
     fromPersistValue = fromPersistText
 
+instance PersistField MuseumObjectType where
+    toPersistValue = PersistText . toText
+    fromPersistValue = fromPersistText
+
 instance PersistFieldSql ArtefactCollection where
     sqlType _ = SqlString
 
@@ -119,6 +153,9 @@ instance PersistFieldSql SpecimenCollection where
     sqlType _ = SqlString
 
 instance PersistFieldSql MuseumResource where
+    sqlType _ = SqlString
+
+instance PersistFieldSql MuseumObjectType where
     sqlType _ = SqlString
 
 -- A Reference to a Tepapa Collections API object.
@@ -189,6 +226,14 @@ $(derivePersistField "ObjectAssociations")
 share
     [mkPersist sqlSettings, mkMigrate "migrateAll"]
     [persistLowerCase|
+
+-- We need to keep track of what and when we add to the cache so that we can clean it
+-- up periodically.
+CacheMeta
+    time_added UTCTime
+    ttl_seconds Int
+    refers_to_internal_id Int
+    refers_to_object_type MuseumObjectType
 
 Person
     external_id Int
@@ -286,8 +331,6 @@ Place
     influenced_by [TORef]
     --Child place within a parent Place 
     related_terms [TORef]
-
-
 
 Taxon
     title String
