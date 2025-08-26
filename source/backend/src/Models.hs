@@ -24,20 +24,16 @@ module Models (
     Person (..),
     Collaboration (..),
     Organization (..),
-    addReferenceCheckConstraint,
-    cacheCheck,
     doMigrations,
 ) where
 
 import Control.Monad.IO.Class (MonadIO)
-import Data.Maybe (catMaybes)
 import Data.Proxy
 import qualified Data.Text as T
-import Data.Time.Clock (UTCTime)
 import Database.Persist.Class.PersistField
 import Database.Persist.PersistValue (PersistValue (..))
-import Database.Persist.Sql (PersistFieldSql (..), SqlPersistT, rawExecute, runMigration)
-import Database.Persist.TH (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
+import Database.Persist.Sql (PersistFieldSql (..), SqlPersistT, runMigration)
+import Database.Persist.TH (derivePersistField, mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
 import Database.Persist.Types (Key, SqlType (SqlString))
 
 data ArtefactCollection
@@ -125,260 +121,206 @@ instance PersistFieldSql SpecimenCollection where
 instance PersistFieldSql MuseumResource where
     sqlType _ = SqlString
 
+-- A Reference to a Tepapa Collections API object.
+data TORef = MkRef
+    { resourceType :: MuseumResource
+    , externalId :: Int
+    }
+    deriving (Eq, Read, Show)
+
+$(derivePersistField "TORef")
+
+-- Types of associations Agent resources (people, organizations, collaborations) can have:
+data AgentAssociations = MkAgentAssoc
+    { -- Identifier of a Specimen
+      identificationIdentified :: [TORef]
+    , -- Maker of an Object
+      productionContributor :: [TORef]
+    , -- Associated with another agent
+      associatedParties :: [TORef]
+    , -- Author of a Topic or Publication
+      authors :: [TORef]
+    , -- Recorder of the field collection of a Specimen
+      evidenceForAtEventRecordedBy :: [TORef]
+    , -- Author of the scientific name of a Specimen
+      scientificNameAuthorship :: [TORef]
+    , -- Associated with another agent, Category, or Place
+      associatedWith :: [TORef]
+    , -- Depicted in an Object
+      depicts :: [TORef]
+    , -- Former owner of an Object
+      formerOwner :: [TORef]
+    , -- Referred to by an Object, Specimen, Topic, or Publication
+      refersTo :: [TORef]
+    , -- Influenced the making of an Object
+      influencedBy :: [TORef]
+    , -- Publisher of a Publication
+      publisher :: [TORef]
+    , -- Editor of a Publication
+      editor :: [TORef]
+    , -- Illustrator of a Publication
+      illustrator :: [TORef]
+    , -- Part of an aggregation of agents
+      aggregatedAgents :: [TORef]
+    , -- Associated in an unspecified way with an Object or Specimen
+      unknownAssociation :: [TORef]
+    }
+    deriving (Eq, Read, Show)
+
+$(derivePersistField "AgentAssociations")
+
+-- Associations an Object (artefact, specimen) can have
+data ObjectAssociations = MkObjectAssoc
+    { -- Associated with another Object or Specimen
+      relation :: [TORef]
+    , -- Related to a Topic or Publication
+      related_objects :: [TORef]
+    , -- Parent of one or more other children Objects or Specimens
+      is_part_of :: [TORef]
+    , -- Child object or specimen underneath a parent Object or Specimen
+      has_part :: [TORef]
+    , -- Part of an aggregation of Objects or Specimens
+      aggregated_objects :: [TORef]
+    }
+    deriving (Eq, Read, Show)
+
+$(derivePersistField "ObjectAssociations")
+
 share
     [mkPersist sqlSettings, mkMigrate "migrateAll"]
     [persistLowerCase|
--- Want a polymorphic association between "objects" and other "objects"
--- ASSUMPTION: AT MOST ONE of the 'cached' fields are not null.
--- we have "addReferenceCheckConstraint" to do this. (run after migrations.)
--- We use 12 columns instead of storing a sum type so that Persistent can validate
--- foreign keys for us. Nonetheless, there is a CachedEntry sum type that makes it
--- easier to work with this.
-Reference
-    to_type MuseumResource
-    external_id Int
-    cached_person PersonId Maybe
-    cached_organization OrganizationId Maybe
-    cached_collaboration CollaborationId Maybe
-    cached_category CategoryId Maybe
-    cached_publication PublicationId Maybe
-    cached_field_collection FieldCollectionId Maybe
-    cached_group GroupId Maybe
-    cached_artefact ArtefactId Maybe
-    cached_specimen SpecimenId Maybe
-    cached_place PlaceId Maybe
-    cached_taxon TaxonId Maybe
-    cached_topic TopicId Maybe
-
-    UniqueReference to_type external_id
-
-CacheMetadata
-    addedAt UTCTime
-    ttlSeconds Int default=1200
-    reference ReferenceId
 
 Person
+    external_id Int
     title String
     verbatim_birth_date String
     verbatim_death_date String
     bith_place String
     death_place String
-    associations AgentAssociationsId
+    associations AgentAssociations
 
 Organization
+    external_id Int
     title String
-    associations AgentAssociationsId
+    associations AgentAssociations
 
 Collaboration
+    external_id Int
     title String
-    associations AgentAssociationsId
-
--- Associations for people, organizations, and collaborations.
-AgentAssociations
-    --Identifier of a Specimen
-    identification_identified[ReferenceId] 
-    --Maker of an Object
-    production_contributor[ReferenceId] 
-    --Associated with another agent
-    associated_parties [ReferenceId]
-    --Author of a Topic or Publication
-    authors [ReferenceId]
-    --Recorder of the field collection of a Specimen
-    evidence_for_at_event_recorded_by [ReferenceId]
-    --Author of the scientific name of a Specimen
-    scientific_name_authorship [ReferenceId]
-    --Associated with another agent, Category, or Place
-    associated_with [ReferenceId]
-    --Depicted in an Object
-    depicts [ReferenceId]
-    --Former owner of an Object
-    former_owner [ReferenceId]
-    --Referred to by an Object, Specimen, Topic, or Publication
-    refers_to [ReferenceId]
-    --Influenced the making of an Object
-    influenced_by [ReferenceId]
-    --Publisher of a Publication
-    publisher [ReferenceId]
-    --Editor of a Publication
-    editor [ReferenceId]
-    --Illustrator of a Publication
-    illustrator [ReferenceId]
-    --Part of an aggregation of agents
-    aggregated_agents [ReferenceId]
-    --Associated in an unspecified way with an Object or Specimen 
-    unknown_association [ReferenceId]
+    associations AgentAssociations
 
 Category
     title String
+    external_id Int
     --Associated with another category, Place, Person, Organisation, or Collaboration
-    associated_with [ReferenceId]
+    associated_with [TORef]
     --Concept depicted in an Object
-    depicts [ReferenceId]
+    depicts [TORef]
     --Style/group/etc. referred to by an Object, Specimen, Topic, or Publication
-    refers_to [ReferenceId]
+    refers_to [TORef]
     --Subject of an Object
-    is_about [ReferenceId]
+    is_about [TORef]
     --Style/group/etc. that influenced the making of an Object
-    influenced_by [ReferenceId]
+    influenced_by [TORef]
     --Subject that an Object is intended for
-    intended_for [ReferenceId]
+    intended_for [TORef]
     --Technique used in the making of an Object
-    production_used_technique [ReferenceId]
+    production_used_technique [TORef]
     --Object type of an Object
-    is_type_of [ReferenceId]
+    is_type_of [TORef]
     --Material that an Object is made of
-    is_made_of [ReferenceId]
+    is_made_of [TORef]
     --Associated in an unspecified way with an Object or Specimen
-    unknown_association [ReferenceId]
+    unknown_association [TORef]
     --Child category underneath a parent Category 
-    related_terms [ReferenceId]
+    related_terms [TORef]
 
 Publication
     title String
+    external_id Int
     --Referred to by an Object or Specimen
-    is_referenced_by [ReferenceId] 
+    is_referenced_by [TORef] 
     --Associated with a Topic
-    related_topics [ReferenceId] 
+    related_topics [TORef] 
     --Parent of one or more other child Publications
-    is_part_of [ReferenceId] 
+    is_part_of [TORef] 
     --Child publication underneath a parent Publication 
-    has_part [ReferenceId] 
+    has_part [TORef] 
 
 FieldCollection
     title String
-    evidence_for_at_event [ReferenceId]
+    external_id Int
+    evidence_for_at_event [TORef]
 
 Group
     title String
-    aggregatedGroups [ReferenceId]
+    external_id Int
+    aggregatedGroups [TORef]
 
 Artefact
     title String
+    external_id Int
     collection ArtefactCollection
-    associations ObjectAssociationsId
+    associations ObjectAssociations
 
 Specimen
     title String
+    external_id Int
     collection SpecimenCollection
-    associations ObjectAssociationsId
-
--- Associations for Artefacts and Specimens
-ObjectAssociations
-    --Associated with another Object or Specimen
-    relation [ReferenceId] 
-    --Related to a Topic or Publication
-    related_objects [ReferenceId] 
-    --Parent of one or more other children Objects or Specimens
-    is_part_of [ReferenceId] 
-    --Child object or specimen underneath a parent Object or Specimen
-    has_part [ReferenceId] 
-    --Part of an aggregation of Objects or Specimens 
-    aggregated_objects [ReferenceId] 
+    associations ObjectAssociations
 
 Place
     title String
+    external_id Int
     --Place related to where an Object was made
-    production_spatial [ReferenceId]
+    production_spatial [TORef]
     --Associated with another place, Category, Person, Organisation, or Collaboration
-    associated_with [ReferenceId]
+    associated_with [TORef]
     --Concept depicted in an Object
-    depicts [ReferenceId]
+    depicts [TORef]
     --Place referred to by an Object, Specimen, Topic, or Publication
-    refers_to [ReferenceId]
+    refers_to [TORef]
     --Subject of an Object
-    is_about [ReferenceId]
+    is_about [TORef]
     --Place that influenced the making of an Object
-    influenced_by [ReferenceId]
+    influenced_by [TORef]
     --Child place within a parent Place 
-    related_terms [ReferenceId]
+    related_terms [TORef]
 
 
 
 Taxon
     title String
+    external_id Int
     -- Associated with a Publication or Topic
-    associated_with [ReferenceId]
+    associated_with [TORef]
     -- Taxon depicted in an Object
-    depicts [ReferenceId]
+    depicts [TORef]
     -- Taxon referred to by an Object, Specimen, Topic, or Publication
-    refers_to [ReferenceId]
+    refers_to [TORef]
     -- Subject of an Object
-    is_about [ReferenceId]
+    is_about [TORef]
     -- Taxon that influenced the making of an Object
-    influenced_by [ReferenceId]
+    influenced_by [TORef]
     -- Subject that an Object is intended for
-    intended_for [ReferenceId]
+    intended_for [TORef]
     -- Associated in an unspecified way with an Object or Specimen 
-    unknown_association [ReferenceId]
+    unknown_association [TORef]
 
 Topic
     title String
+    external_id Int
     -- Referred to by an Object or Specimen
-    is_referenced_by [ReferenceId]
+    is_referenced_by [TORef]
     -- Associated with a Topic
-    related_topics [ReferenceId]
+    related_topics [TORef]
     -- Parent of one or more other child Topics
-    is_part_of [ReferenceId]
+    is_part_of [TORef]
     -- Child topic underneath a parent Topic
-    has_part [ReferenceId]
+    has_part [TORef]
     -- Part of an aggregation of Topics 
-    aggregated_topics [ReferenceId]
+    aggregated_topics [TORef]
 |]
-
-addReferenceCheckConstraint :: (MonadIO m) => SqlPersistT m ()
-addReferenceCheckConstraint = do
-    -- Reusable condition: count how many cached_* columns are non-null
-    let cond =
-            "( "
-                <> "  (CASE WHEN NEW.cached_person IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_organization IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_collaboration IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_category IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_publication IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_field_collection IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_group IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_artefact IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_specimen IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_place IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_taxon IS NOT NULL THEN 1 ELSE 0 END) + "
-                <> "  (CASE WHEN NEW.cached_topic IS NOT NULL THEN 1 ELSE 0 END) "
-                <> ") > 1"
-
-    -- Drop old triggers so this is idempotent
-    rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_ins;" []
-    rawExecute "DROP TRIGGER IF EXISTS only_one_cache_present_upd;" []
-
-    -- INSERT trigger
-    rawExecute
-        ( "CREATE TRIGGER only_one_cache_present_ins "
-            <> "BEFORE INSERT ON reference "
-            <> "FOR EACH ROW "
-            <> "WHEN "
-            <> cond
-            <> " "
-            <> "BEGIN "
-            <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
-            <> "END;"
-        )
-        []
-
-    -- UPDATE trigger (fires only if one of the cached_* columns is updated)
-    rawExecute
-        ( "CREATE TRIGGER only_one_cache_present_upd "
-            <> "BEFORE UPDATE OF "
-            <> "cached_person, cached_organization, cached_collaboration, cached_category, "
-            <> "cached_publication, cached_field_collection, cached_group, cached_artefact, "
-            <> "cached_specimen, cached_place, cached_taxon, cached_topic "
-            <> "ON reference "
-            <> "FOR EACH ROW "
-            <> "WHEN "
-            <> cond
-            <> " "
-            <> "BEGIN "
-            <> "  SELECT RAISE(FAIL, 'only one cache field may be non-null'); "
-            <> "END;"
-        )
-        []
 
 data CacheType
     = Miss Int MuseumResource
@@ -394,26 +336,6 @@ data CacheType
     | HitPlace (Key Place)
     | HitTaxon (Key Taxon)
     | HitTopic (Key Topic)
-
-cacheCheck :: Reference -> CacheType
-cacheCheck (Reference tt eid psn org coll cat pub fcol grp arte spec plce txon tpic) =
-    case catMaybes
-        [ HitPerson <$> psn
-        , HitOrganization <$> org
-        , HitCollaboration <$> coll
-        , HitCategory <$> cat
-        , HitPublication <$> pub
-        , HitFieldCollection <$> fcol
-        , HitGroup <$> grp
-        , HitArtefact <$> arte
-        , HitSpecimen <$> spec
-        , HitPlace <$> plce
-        , HitTaxon <$> txon
-        , HitTopic <$> tpic
-        ] of
-        [] -> Miss eid tt
-        [one] -> one
-        __ -> error "Invariant violated - cache entry should have one type."
 
 doMigrations :: (MonadIO m) => SqlPersistT m ()
 doMigrations = runMigration migrateAll

@@ -6,7 +6,7 @@ import Config (Config (..), Stage (..), mkConfig, pickLogger)
 import Configuration.Dotenv as DE
 import Control.Monad.Logger (runStdoutLoggingT)
 import Database.Persist.Sql (runSqlPool)
-import Models (addReferenceCheckConstraint, doMigrations)
+import Models (doMigrations)
 import Network.Wai.Handler.Warp (Port)
 import System.Environment (lookupEnv)
 import Text.Read (readMaybe)
@@ -19,7 +19,7 @@ main = do
     config <- mkConfig stage
     let loggerMiddleware = pickLogger stage
         pool = getPool config
-    runStdoutLoggingT $ runSqlPool (doMigrations >> addReferenceCheckConstraint) pool
+    runStdoutLoggingT $ runSqlPool doMigrations pool
 
 getPort :: IO Port
 getPort = do
