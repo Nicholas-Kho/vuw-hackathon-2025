@@ -18,7 +18,16 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Models (CacheType (..), addReferenceCheckConstraint, cacheCheck, doMigrations) where
+module Models (
+    CacheType (..),
+    MuseumResource (..),
+    Person (..),
+    Collaboration (..),
+    Organization (..),
+    addReferenceCheckConstraint,
+    cacheCheck,
+    doMigrations,
+) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.Maybe (catMaybes)
@@ -150,6 +159,10 @@ CacheMetadata
 
 Person
     title String
+    verbatim_birth_date String
+    verbatim_death_date String
+    bith_place String
+    death_place String
     associations AgentAssociationsId
 
 Organization
