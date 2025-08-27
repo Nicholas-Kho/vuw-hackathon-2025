@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
 {-
@@ -11,31 +12,38 @@ which lives in the API module.
 See https://data.tepapa.govt.nz/docs/ and
 https://github.com/te-papa/collections-api/wiki
 -}
-module ApiTepapa (ApiTepapa) where
+module ApiTepapa (ApiTepapa, agentById) where
 
 import Data.Aeson (FromJSON (..), withObject, (.:))
 import Data.Aeson.Types (Value (..))
 import Data.Text (Text, unpack)
 import Models (Collaboration (..), Organization (..), Person (..))
 import Servant
+import Servant.Client
+
+type NeedsKey api = Header "x-api-key" Text :> api
 
 type ApiTepapa =
-    "agent" :> Capture "id" Int :> Get '[JSON] AgentResponse
+    NeedsKey ("agent" :> Capture "id" Int :> Get '[JSON] AgentResponse)
 
 data AgentResponse
     = APerson Person
     | AnOrg Organization
     | ACollab Collaboration
+    deriving (Show)
 
 instance FromJSON AgentResponse where
     parseJSON = withObject "An /agent response" $ \o -> do
         resType :: Text <- o .: "type"
         case resType of
-            "person" -> APerson <$> parseJSON (Object o)
-            "organisation" -> AnOrg <$> fail "Organisations not implemented"
-            "collaboration" -> ACollab <$> fail "Collaborations not implemented"
+            "Person" -> APerson <$> parseJSON (Object o)
+            "Organisation" -> AnOrg <$> fail "Organisations not implemented"
+            "Collaboration" -> ACollab <$> fail "Collaborations not implemented"
             somethingElse ->
                 fail $
                     "I don't know how to parse type="
                         <> unpack somethingElse
                         <> " ! I am expecting either person, organisation, or collaboration."
+
+agentById :: Maybe Text -> Int -> ClientM AgentResponse
+agentById = client (Proxy @ApiTepapa)
