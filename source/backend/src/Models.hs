@@ -24,10 +24,13 @@ module Models (
     Person (..),
     Collaboration (..),
     Organization (..),
+    TORef (..),
     doMigrations,
 ) where
 
 import Control.Monad.IO.Class (MonadIO)
+import Data.Aeson (FromJSON (..), Object, withObject, withText, (.:))
+import Data.Aeson.Types (Parser, Value (..))
 import Data.Proxy
 import qualified Data.Text as T
 import Data.Time.Clock (UTCTime)
@@ -102,6 +105,22 @@ data MuseumObjectType
     | MTaxon
     | MTopic
     deriving (Show, Read, Eq)
+
+-- Which resource type does a museum object belong to?
+objectTypeToResourceType :: MuseumObjectType -> MuseumResource
+objectTypeToResourceType ot = case ot of
+    MPerson -> MRAgent
+    MOrganization -> MRAgent
+    MCollaboration -> MRAgent
+    MCategory -> MRConcept
+    MPublication -> MRDocument
+    MFieldCollection -> MRFieldCollection
+    MGroup -> MRGroup
+    MArtefact -> MRObject
+    MSpecimen -> MRObject
+    MPlace -> MRPlace
+    MTaxon -> MRTaxon
+    MTopic -> MRTopic
 
 -- Note: I tried to make generic instances of PersistField and PersistFieldSql by
 -- "instance (PersistEnum a) => PersistField a where ...", but this results in some nasty conflicts
@@ -382,3 +401,62 @@ data CacheType
 
 doMigrations :: (MonadIO m) => SqlPersistT m ()
 doMigrations = runMigration migrateAll
+
+parseAgentAssocs :: Object -> Parser AgentAssociations
+parseAgentAssocs o =
+    MkAgentAssoc
+        <$> o .: "identificationIdentified"
+        <*> o .: "productionContributor"
+        <*> o .: "associatedParties"
+        <*> o .: "authors"
+        <*> o .: "evidenceForAtEventRecordedBy"
+        <*> o .: "scientificNameAuthorship"
+        <*> o .: "associatedWith"
+        <*> o .: "depicts"
+        <*> o .: "formerOwner"
+        <*> o .: "refersTo"
+        <*> o .: "influencedBy"
+        <*> o .: "publisher"
+        <*> o .: "editor"
+        <*> o .: "illustrator"
+        <*> o .: "aggregatedAgents"
+        <*> o .: "unknownAssociation"
+
+instance FromJSON MuseumObjectType where
+    parseJSON = withText "Museum object type" $ \t ->
+        case t of
+            "Object" -> pure MArtefact
+            "Specimen" -> pure MSpecimen
+            "Person" -> pure MPerson
+            "Category" -> pure MCategory
+            "Organization" -> pure MOrganization
+            "Collaboration" -> pure MCollaboration
+            "Publication" -> pure MPublication
+            "FieldCollection" -> pure MFieldCollection
+            "Group" -> pure MGroup
+            "Place" -> pure MPlace
+            "Taxon" -> pure MTaxon
+            "Topic" -> pure MTopic
+            _ ->
+                fail $
+                    "I expected to see one of : Object, Specimen, Person, Category, Organization"
+                        <> ", Collaboration, Publication, FieldCollection, Group, Place, Taxon, or Topic"
+                        <> ", but instead I got "
+                        <> T.unpack t
+
+instance FromJSON TORef where
+    parseJSON = withObject "Tepapa association" $ \o ->
+        MkRef
+            <$> (objectTypeToResourceType <$> o .: "Type")
+            <*> o .: "Id"
+
+instance FromJSON Person where
+    parseJSON = withObject "person" $ \o ->
+        Person
+            <$> o .: "externalId"
+            <*> o .: "title"
+            <*> o .: "verbatimBirthDate"
+            <*> o .: "verbatimDeathDate"
+            <*> o .: "bithPlace"
+            <*> o .: "deathPlace"
+            <*> parseAgentAssocs o
