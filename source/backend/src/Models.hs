@@ -29,7 +29,7 @@ module Models (
 ) where
 
 import Control.Monad.IO.Class (MonadIO)
-import Data.Aeson (FromJSON (..), Object, withObject, withText, (.:))
+import Data.Aeson (FromJSON (..), Object, withObject, withText, (.!=), (.:), (.:?))
 import Data.Aeson.Types (Parser, Value (..))
 import Data.Proxy
 import qualified Data.Text as T
@@ -263,15 +263,21 @@ Person
     death_place String
     associations AgentAssociations
 
+    deriving Show
+
 Organization
     external_id Int
     title String
     associations AgentAssociations
 
+    deriving Show
+
 Collaboration
     external_id Int
     title String
     associations AgentAssociations
+
+    deriving Show
 
 Category
     title String
@@ -405,22 +411,22 @@ doMigrations = runMigration migrateAll
 parseAgentAssocs :: Object -> Parser AgentAssociations
 parseAgentAssocs o =
     MkAgentAssoc
-        <$> o .: "identificationIdentified"
-        <*> o .: "productionContributor"
-        <*> o .: "associatedParties"
-        <*> o .: "authors"
-        <*> o .: "evidenceForAtEventRecordedBy"
-        <*> o .: "scientificNameAuthorship"
-        <*> o .: "associatedWith"
-        <*> o .: "depicts"
-        <*> o .: "formerOwner"
-        <*> o .: "refersTo"
-        <*> o .: "influencedBy"
-        <*> o .: "publisher"
-        <*> o .: "editor"
-        <*> o .: "illustrator"
-        <*> o .: "aggregatedAgents"
-        <*> o .: "unknownAssociation"
+        <$> o .:? "identificationIdentified" .!= []
+        <*> o .:? "productionContributor" .!= []
+        <*> o .:? "associatedParties" .!= []
+        <*> o .:? "authors" .!= []
+        <*> o .:? "evidenceForAtEventRecordedBy" .!= []
+        <*> o .:? "scientificNameAuthorship" .!= []
+        <*> o .:? "associatedWith" .!= []
+        <*> o .:? "depicts" .!= []
+        <*> o .:? "formerOwner" .!= []
+        <*> o .:? "refersTo" .!= []
+        <*> o .:? "influencedBy" .!= []
+        <*> o .:? "publisher" .!= []
+        <*> o .:? "editor" .!= []
+        <*> o .:? "illustrator" .!= []
+        <*> o .:? "aggregatedAgents" .!= []
+        <*> o .:? "unknownAssociation" .!= []
 
 instance FromJSON MuseumObjectType where
     parseJSON = withText "Museum object type" $ \t ->
@@ -447,16 +453,16 @@ instance FromJSON MuseumObjectType where
 instance FromJSON TORef where
     parseJSON = withObject "Tepapa association" $ \o ->
         MkRef
-            <$> (objectTypeToResourceType <$> o .: "Type")
-            <*> o .: "Id"
+            <$> (objectTypeToResourceType <$> o .: "type")
+            <*> o .: "id"
 
 instance FromJSON Person where
     parseJSON = withObject "person" $ \o ->
         Person
-            <$> o .: "externalId"
+            <$> o .: "id"
             <*> o .: "title"
             <*> o .: "verbatimBirthDate"
             <*> o .: "verbatimDeathDate"
-            <*> o .: "bithPlace"
+            <*> o .: "birthPlace"
             <*> o .: "deathPlace"
             <*> parseAgentAssocs o
