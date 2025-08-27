@@ -16,7 +16,7 @@ located in `source/frontend/src`
 ### Haskell tools / stack for backend
 **If you are using the Nix package manager:** Run `nix develop` to pull in Stack, as well as all dependencies needed to build the backend (GHC, Zlib, pkg-config, etc.) as well as the language server.
 
-**If you are not using Nix:** You will need to install Stack, and you'll probably want the language server too. An easy way to get these is via GHCup. The formatter used is fourmolu - you can either get this via your system's package manager, or install Cabal through GHCup and `cabal install fourmolu`. (this will put it in ~/.cabal/bin)
+**If you are not using Nix:** You will need to install Stack, and you'll probably want the language server too. An easy way to get these is via GHCup. The formatter used is fourmolu - you can either get this via your system's package manager, or install Cabal through GHCup and `cabal install fourmolu`. (this will put it in `~/.cabal/bin`). You may also need to install Zlib, as it is a non-Haskell dependency, so Stack won't manage it for you if it's missing and you will just get a build error.
 
 Then simply go to `source/backend` and run `stack build --file-watch`
 
@@ -24,7 +24,6 @@ Then simply go to `source/backend` and run `stack build --file-watch`
 in `source/backend`, create a `.env` file containing the following contents:
 ```
 API_KEY = <Your key here>
-API_TOKEN = <Your token here>
 PORT = <Whatever port the backend should run on. Default to 8080>
 ```
 
