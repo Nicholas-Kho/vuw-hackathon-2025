@@ -1,5 +1,8 @@
 # VUW Hackathon 2025 - MuseLinks
 
+## **MAIN IS CURRENTLY NOT WORKING!**
+We are in the middle of re-writing the back end and front end. As of now, the backend builds, but is just set to query an API endpoint. This notice will be removed when necessary.
+
 ## Backend
 located in `source/backend`
 
