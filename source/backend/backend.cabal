@@ -42,11 +42,14 @@ library
     , base >=4.7 && <5
     , conduit
     , dotenv
+    , http-client
+    , http-client-tls
     , monad-logger
     , mtl
     , persistent
     , persistent-sqlite
     , resource-pool
+    , servant-client
     , servant-server
     , text
     , time
@@ -70,11 +73,14 @@ executable backend-exe
     , base
     , conduit
     , dotenv
+    , http-client
+    , http-client-tls
     , monad-logger
     , mtl
     , persistent
     , persistent-sqlite
     , resource-pool
+    , servant-client
     , servant-server
     , text
     , time
@@ -102,11 +108,14 @@ test-suite backend-test
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , http-client
+    , http-client-tls
     , monad-logger
     , mtl
     , persistent
     , persistent-sqlite
     , resource-pool
+    , servant-client
     , servant-server
     , text
     , time
