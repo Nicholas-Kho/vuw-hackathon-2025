@@ -38,7 +38,8 @@ instance FromJSON AgentResponse where
         case resType of
             "Person" -> APerson <$> parseJSON (Object o)
             "Organisation" -> AnOrg <$> parseJSON (Object o)
-            "Collaboration" -> ACollab <$> fail "Collaborations not implemented"
+            -- I don't even think the API browser supports this one...
+            "Collaboration" -> ACollab <$> parseJSON (Object o)
             somethingElse ->
                 fail $
                     "I don't know how to parse type="

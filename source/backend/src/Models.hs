@@ -473,3 +473,10 @@ instance FromJSON Organisation where
             <$> o .: "id"
             <*> o .: "title"
             <*> parseAgentAssocs o
+
+instance FromJSON Collaboration where
+    parseJSON = withObject "collaboration" $ \o ->
+        Collaboration
+            <$> o .: "id"
+            <*> o .: "title"
+            <*> parseAgentAssocs o
