@@ -17,7 +17,7 @@ module ApiTepapa (ApiTepapa, agentById) where
 import Data.Aeson (FromJSON (..), withObject, (.:))
 import Data.Aeson.Types (Value (..))
 import Data.Text (Text, unpack)
-import Models (Collaboration (..), Organization (..), Person (..))
+import Models (Collaboration (..), Organisation (..), Person (..))
 import Servant
 import Servant.Client
 
@@ -28,7 +28,7 @@ type ApiTepapa =
 
 data AgentResponse
     = APerson Person
-    | AnOrg Organization
+    | AnOrg Organisation
     | ACollab Collaboration
     deriving (Show)
 
@@ -37,7 +37,7 @@ instance FromJSON AgentResponse where
         resType :: Text <- o .: "type"
         case resType of
             "Person" -> APerson <$> parseJSON (Object o)
-            "Organisation" -> AnOrg <$> fail "Organisations not implemented"
+            "Organisation" -> AnOrg <$> parseJSON (Object o)
             "Collaboration" -> ACollab <$> fail "Collaborations not implemented"
             somethingElse ->
                 fail $

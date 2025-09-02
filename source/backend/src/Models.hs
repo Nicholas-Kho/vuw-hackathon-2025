@@ -23,7 +23,7 @@ module Models (
     MuseumResource (..),
     Person (..),
     Collaboration (..),
-    Organization (..),
+    Organisation (..),
     TORef (..),
     doMigrations,
 ) where
@@ -89,11 +89,11 @@ data MuseumResource
 {-
 All the types of "things" we can store in the database. This is *almost* bijective to
 MuseumResource, except the "object" resource has two sub-categories, namely artefacts and
-specimens, and likewise the "agent" resource has three. (people, organizations, collaborations)
+specimens, and likewise the "agent" resource has three. (people, organisations, collaborations)
 -}
 data MuseumObjectType
     = MPerson
-    | MOrganization
+    | MOrganisation
     | MCollaboration
     | MCategory
     | MPublication
@@ -110,7 +110,7 @@ data MuseumObjectType
 objectTypeToResourceType :: MuseumObjectType -> MuseumResource
 objectTypeToResourceType ot = case ot of
     MPerson -> MRAgent
-    MOrganization -> MRAgent
+    MOrganisation -> MRAgent
     MCollaboration -> MRAgent
     MCategory -> MRConcept
     MPublication -> MRDocument
@@ -186,7 +186,7 @@ data TORef = MkRef
 
 $(derivePersistField "TORef")
 
--- Types of associations Agent resources (people, organizations, collaborations) can have:
+-- Types of associations Agent resources (people, organisations, collaborations) can have:
 data AgentAssociations = MkAgentAssoc
     { -- Identifier of a Specimen
       identificationIdentified :: [TORef]
@@ -265,7 +265,7 @@ Person
 
     deriving Show
 
-Organization
+Organisation
     external_id Int
     title String
     associations AgentAssociations
@@ -393,7 +393,7 @@ Topic
 data CacheType
     = Miss Int MuseumResource
     | HitPerson (Key Person)
-    | HitOrganization (Key Organization)
+    | HitOrganisation (Key Organisation)
     | HitCollaboration (Key Collaboration)
     | HitCategory (Key Category)
     | HitPublication (Key Publication)
@@ -435,7 +435,7 @@ instance FromJSON MuseumObjectType where
             "Specimen" -> pure MSpecimen
             "Person" -> pure MPerson
             "Category" -> pure MCategory
-            "Organization" -> pure MOrganization
+            "Organisation" -> pure MOrganisation
             "Collaboration" -> pure MCollaboration
             "Publication" -> pure MPublication
             "FieldCollection" -> pure MFieldCollection
@@ -445,7 +445,7 @@ instance FromJSON MuseumObjectType where
             "Topic" -> pure MTopic
             _ ->
                 fail $
-                    "I expected to see one of : Object, Specimen, Person, Category, Organization"
+                    "I expected to see one of : Object, Specimen, Person, Category, Organisation"
                         <> ", Collaboration, Publication, FieldCollection, Group, Place, Taxon, or Topic"
                         <> ", but instead I got "
                         <> T.unpack t
@@ -465,4 +465,11 @@ instance FromJSON Person where
             <*> o .: "verbatimDeathDate"
             <*> o .: "birthPlace"
             <*> o .: "deathPlace"
+            <*> parseAgentAssocs o
+
+instance FromJSON Organisation where
+    parseJSON = withObject "organisation" $ \o ->
+        Organisation
+            <$> o .: "id"
+            <*> o .: "title"
             <*> parseAgentAssocs o
