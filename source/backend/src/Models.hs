@@ -19,11 +19,13 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Models (
+    Artefact (..),
     CacheType (..),
     MuseumResource (..),
     Person (..),
     Collaboration (..),
     Organisation (..),
+    Specimen (..),
     TORef (..),
     doMigrations,
 ) where
@@ -230,13 +232,13 @@ data ObjectAssociations = MkObjectAssoc
     { -- Associated with another Object or Specimen
       relation :: [TORef]
     , -- Related to a Topic or Publication
-      related_objects :: [TORef]
+      relatedObjects :: [TORef]
     , -- Parent of one or more other children Objects or Specimens
-      is_part_of :: [TORef]
+      isPartOf :: [TORef]
     , -- Child object or specimen underneath a parent Object or Specimen
-      has_part :: [TORef]
+      hasPart :: [TORef]
     , -- Part of an aggregation of Objects or Specimens
-      aggregated_objects :: [TORef]
+      aggregatedObjects :: [TORef]
     }
     deriving (Eq, Read, Show)
 
@@ -428,6 +430,15 @@ parseAgentAssocs o =
         <*> o .:? "aggregatedAgents" .!= []
         <*> o .:? "unknownAssociation" .!= []
 
+parseObjectAssocs :: Object -> Parser ObjectAssociations
+parseObjectAssocs o =
+    MkObjectAssoc
+        <$> o .:? "relation" .!= []
+        <*> o .:? "relatedObjects" .!= []
+        <*> o .:? "isPartOf" .!= []
+        <*> o .:? "hasPart" .!= []
+        <*> o .:? "aggregatedObjects" .!= []
+
 instance FromJSON MuseumObjectType where
     parseJSON = withText "Museum object type" $ \t ->
         case t of
@@ -480,3 +491,59 @@ instance FromJSON Collaboration where
             <$> o .: "id"
             <*> o .: "title"
             <*> parseAgentAssocs o
+
+instance FromJSON ArtefactCollection where
+    parseJSON = withText "An artefact collection" $ \t ->
+        case t of
+            "Art" -> pure Art
+            "History" -> pure History
+            "PacificCultures" -> pure PacificCultures
+            "Philatelic" -> pure Philatelic
+            "Photography" -> pure Photography
+            "TaongaMaori" -> pure TaongaMaori
+            "RareBooks" -> pure RareBooks
+            "CollectedArchives" -> pure CollectedArchives
+            "MuseumArchives" -> pure MuseumArchives
+            _ ->
+                fail $
+                    "I expected one of: Art, History, PacificCultures, Philatelic, Photography, TaongaMaori, RareBooks, CollectedArchives, MuseumArchives"
+                        <> ", but got "
+                        <> T.unpack t
+
+instance FromJSON SpecimenCollection where
+    parseJSON = withText "A specimen collection" $ \t ->
+        case t of
+            "Archaeozoology" -> pure Archaeozoology
+            "Birds" -> pure Birds
+            "Fish" -> pure Fish
+            "FossilVertebrates" -> pure FossilVertebrates
+            "Geology" -> pure Geology
+            "Crustacea" -> pure Crustacea
+            "Molluscs" -> pure Molluscs
+            "MarineInvertebrates" -> pure MarineInvertebrates
+            "MarineMammals" -> pure MarineMammals
+            "LandMammals" -> pure LandMammals
+            "Plants" -> pure Plants
+            "ReptilesAndAmphibians" -> pure ReptilesAndAmphibians
+            "Insects" -> pure Insects
+            _ ->
+                fail $
+                    "I expected one of: Archaeozoology, Birds, Fish, FossilVertebrates, Geology, Crustacea, Molluscs, MarineInvertebrates, MarineMammals, LandMammals, Plants, ReptilesAndAmphibians, Insects"
+                        <> ", but got "
+                        <> T.unpack t
+
+instance FromJSON Artefact where
+    parseJSON = withObject "artefact" $ \o ->
+        Artefact
+            <$> o .: "title"
+            <*> o .: "external_id"
+            <*> o .: "collection"
+            <*> parseObjectAssocs o
+
+instance FromJSON Specimen where
+    parseJSON = withObject "specimen" $ \o ->
+        Specimen
+            <$> o .: "title"
+            <*> o .: "externalId"
+            <*> o .: "collection"
+            <*> parseObjectAssocs o
