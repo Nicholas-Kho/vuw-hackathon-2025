@@ -36,6 +36,7 @@ data AgentResponse
 data ObjectResponse
     = AnArtefact Artefact
     | ASpecimen Specimen
+    deriving (Show)
 
 instance FromJSON ObjectResponse where
     parseJSON = withObject "An /object response" $ \o -> do

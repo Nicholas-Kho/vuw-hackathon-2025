@@ -12,7 +12,7 @@ import Network.Wai.Handler.Warp (Port, defaultSettings)
 import System.Environment (lookupEnv)
 import Text.Read (readMaybe)
 
-import ApiTepapa (agentById)
+import ApiTepapa (objectById)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Servant
@@ -33,7 +33,7 @@ main = do
 apiTest :: String -> IO ()
 apiTest key = do
     manager <- newManager tlsManagerSettings
-    res <- runClientM (agentById (Just (pack key)) 11327) (mkClientEnv manager baseUrl)
+    res <- runClientM (objectById (Just (pack key)) 281910) (mkClientEnv manager baseUrl)
     print res
 
 baseUrl :: BaseUrl
