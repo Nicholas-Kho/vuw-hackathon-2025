@@ -335,11 +335,15 @@ Artefact
     collection ArtefactCollection
     associations ObjectAssociations
 
+    deriving Show
+
 Specimen
     title String
     external_id Int
     collection SpecimenCollection
     associations ObjectAssociations
+
+    deriving Show
 
 Place
     title String
@@ -536,7 +540,7 @@ instance FromJSON Artefact where
     parseJSON = withObject "artefact" $ \o ->
         Artefact
             <$> o .: "title"
-            <*> o .: "external_id"
+            <*> o .: "id"
             <*> o .: "collection"
             <*> parseObjectAssocs o
 
@@ -544,6 +548,6 @@ instance FromJSON Specimen where
     parseJSON = withObject "specimen" $ \o ->
         Specimen
             <$> o .: "title"
-            <*> o .: "externalId"
+            <*> o .: "id"
             <*> o .: "collection"
             <*> parseObjectAssocs o
