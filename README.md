@@ -3,42 +3,23 @@
 ## **MAIN IS CURRENTLY NOT WORKING!**
 We are in the middle of re-writing the back end and front end. As of now, the backend builds, but is just set to query an API endpoint. This notice will be removed when necessary.
 
-## Backend
-located in `source/backend`
+## Building and development
 
-## Frontend
-located in `source/frontend/src`
-`app.js` is the file that runs when you `npm run start`
+This project uses Nix to define the development environment and build system. Install Nix for your platform, then run
+```
+nix develop
+```
 
-
-## Dependencies:
-
-### Haskell tools / stack for backend
-**If you are using the Nix package manager:** Run `nix develop` to pull in Stack, as well as all dependencies needed to build the backend (GHC, Zlib, pkg-config, etc.) as well as the language server.
-
-**If you are not using Nix:** You will need to install Stack, and you'll probably want the language server too. An easy way to get these is via GHCup. The formatter used is fourmolu - you can either get this via your system's package manager, or install Cabal through GHCup and `cabal install fourmolu`. (this will put it in `~/.cabal/bin`). You may also need to install Zlib, as it is a non-Haskell dependency, so Stack won't manage it for you if it's missing and you will just get a build error.
-
-Then simply go to `source/backend` and run `stack build --file-watch`
+This will provide all of the required tools and dependencies for development. Once you are in the dev-shell, you can run
+ - `cabal run` in `source/backend` to build and run the backend.
+ - `TODO` in `source/frontend` to build and run the frontend.
 
 ### .env:
-in `source/backend`, create a `.env` file containing the following contents:
+in `source/backend`, create a `.env` file containing the following:
 ```
-API_KEY = <Your key here>
-PORT = <Whatever port the backend should run on. Default to 8080>
+API_KEY=<Your key here>
+PORT=<Port the backend should run on. Default to 8080>
 ```
 
 ### Database:
-There is a minimal `seed.sqlite3`. You can make a copy named `db.sqlite3` to get a local development database. Please refrain from commiting database related files, as they can blow up diffs and cause a lot of unnecessary conflicts.
-
-### frontend: nodejs
-`install npm` (ask chatgpt)
-
-### homepage - ignore for now
-`npm install gsap`
-`npm i three @react-three/fiber`
-`npm install framer-motion`
-
-## Deployment
-- Two terminals are needed.
-- in `source/backend`, run `stack run`. This loads the backend
-- in `source/frontend`, run `npm run start`, loading the frontend
+There is a minimal `seed.sqlite3`. You can make a copy named `db.sqlite3` to get a local development database. Please do not commit database related files, as they can grow large, produce noisy diffs, and cause unnecessary merge conflicts. You may, however, commit the `seed.sqlite3` file if you change the database schema or something related.
