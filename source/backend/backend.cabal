@@ -53,9 +53,22 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
+common base-deps
+    build-depends:
+        base ^>= 4.20.1.0
+
+library
+    import: warnings, base-deps
+    hs-source-dirs: src
+    exposed-modules:
+        -- ... fill this out ...
+    build-depends:
+        -- ... and this...
+    default-language: GHC2024
+
 executable backend
     -- Import common warning flags.
-    import:           warnings
+    import:           warnings, base-deps
 
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
@@ -67,7 +80,8 @@ executable backend
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.20.1.0
+    build-depends:
+        backend
 
     -- Directories containing source files.
     hs-source-dirs:   app
