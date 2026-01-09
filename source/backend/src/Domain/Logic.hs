@@ -1,0 +1,1 @@
+module Domain.Logic () where

@@ -1,0 +1,1 @@
+module Cache.Store () where
