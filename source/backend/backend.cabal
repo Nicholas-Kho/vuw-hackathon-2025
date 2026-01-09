@@ -57,11 +57,28 @@ common base-deps
     build-depends:
         base ^>= 4.20.1.0
 
+common tepapa-client-deps
+    build-depends:
+        aeson
+        , bytestring
+        , http-client
+        , http-client-tls
+        , servant
+        , servant-client
+        , text
+
 library
-    import: warnings, base-deps
+    import: warnings, base-deps, tepapa-client-deps
     hs-source-dirs: src
     exposed-modules:
-        -- ... fill this out ...
+        Api.TePapa
+        , Api.Backend
+        , Cache.Schema
+        , Cache.Store
+        , Domain.Model
+        , Domain.Logic
+        , TePapa.Client
+        , TePapa.Decode
     build-depends:
         -- ... and this...
     default-language: GHC2024
