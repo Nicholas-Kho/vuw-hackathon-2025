@@ -26,6 +26,7 @@
             hlint
             sqlite
             cabal-install
+            ghciwatch
           ];
         };
       });
