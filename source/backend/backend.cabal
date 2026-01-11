@@ -61,11 +61,13 @@ common tepapa-client-deps
     build-depends:
         aeson
         , bytestring
+        , dotenv >= 0.7
         , http-client
         , http-client-tls
         , servant
         , servant-client
         , text
+        , vector
 
 library
     import: warnings, base-deps, tepapa-client-deps
@@ -79,6 +81,7 @@ library
         , Domain.Logic
         , TePapa.Client
         , TePapa.Decode
+        , TePapa.Env
     build-depends:
         -- ... and this...
     default-language: GHC2024
