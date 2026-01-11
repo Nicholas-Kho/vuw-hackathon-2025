@@ -5,7 +5,6 @@
 
 module TePapa.Decode (
     AgentResponse,
-    RawItem,
     Person,
     Artefact,
     Specimen,
@@ -22,20 +21,14 @@ import Data.Traversable
 import Data.Vector
 import GHC.Generics
 
--- TODO: remove me!
-data RawItem = RawItem {title :: Text} deriving (Generic)
-
-instance FromJSON RawItem where
-    parseJSON = genericParseJSON defaultOptions
-
 -- NOTE: This is for ID namespaces, not other semantics.
 -- The type is deliberately shallow.
 data MuseumResource
-    = Object
-    | Agent
-    | Place
-    | Concept
-    | Topic
+    = ObjectR
+    | AgentR
+    | PlaceR
+    | ConceptR
+    | TopicR
     deriving (Show)
 
 newtype ExternalId
@@ -106,13 +99,13 @@ parseReferenceyObject =
 
 classLabelToResource :: Text -> Parser MuseumResource
 classLabelToResource = \case
-    "Object" -> pure TePapa.Decode.Object
-    "Specimen" -> pure TePapa.Decode.Object
-    "Person" -> pure Agent
-    "Organisation" -> pure Agent
-    "Place" -> pure Place
-    "Category" -> pure Concept
-    "Topic" -> pure Topic
+    "Object" -> pure ObjectR
+    "Specimen" -> pure ObjectR
+    "Person" -> pure AgentR
+    "Organisation" -> pure AgentR
+    "Place" -> pure PlaceR
+    "Category" -> pure ConceptR
+    "Topic" -> pure TopicR
     other -> fail $ "I can't map " <> (Prelude.show other) <> " to a museum resource type."
 
 -- Agents
@@ -213,3 +206,23 @@ parseRemainingPerson cf o =
         <*> o .: "givenName"
         <*> o .: "verbatimBirthDate"
         <*> o .:? "verbatimDeathDate"
+
+data Place = Place
+    { com :: CommonFields
+    , nation :: Text
+    , lat :: Float
+    , long :: Float
+    }
+    deriving (Show)
+
+instance FromJSON Place where
+    parseJSON =
+        withObject
+            "an object from the /place endpoint"
+            ( \o ->
+                Place
+                    <$> (parseJSON (Data.Aeson.Types.Object o))
+                    <*> o .: "nation"
+                    <*> (o .: "GeoLocation" >>= (.: "lat"))
+                    <*> (o .: "GeoLocation" >>= (.: "long"))
+            )
