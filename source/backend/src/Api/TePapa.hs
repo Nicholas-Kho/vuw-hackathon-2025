@@ -11,3 +11,4 @@ type NeedsKey api = Header' '[Required] "x-api-key" Text :> api
 
 type TePapaApi =
     NeedsKey ("object" :> Capture "id" Int :> Get '[JSON] ObjectResponse)
+        :<|> NeedsKey ("agent" :> Capture "id" Int :> Get '[JSON] AgentResponse)

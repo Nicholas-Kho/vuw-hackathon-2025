@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module TePapa.Decode (
+    AgentResponse,
     RawItem,
     Person,
     Artefact,
@@ -121,14 +122,16 @@ data Person = Person
     , familyName :: Text
     , givenName :: Text
     , verbatimBirthDate :: Text
-    , verbatimDeathDate :: Text
+    , verbatimDeathDate :: Maybe Text
     }
+    deriving (Show)
 
 data Organization = Organization
     { com :: CommonFields
     , verbatimBirthDae :: Text
-    , verbatimDeathDate :: Text
+    , verbatimDeathDate :: Maybe Text
     }
+    deriving (Show)
 
 -- Objects
 data Specimen = Specimen
@@ -177,3 +180,36 @@ parseRemainingArtefact cf o =
         <$> (pure cf)
         <*> o .: "collectionLabel"
         <*> o .: "caption"
+
+data AgentResponse
+    = Prs Person
+    | Org Organization
+    deriving (Show)
+
+instance FromJSON AgentResponse where
+    parseJSON =
+        withObject
+            "response from /agent endpoint"
+            ( \o -> do
+                common :: CommonFields <- parseJSON (Data.Aeson.Types.Object o)
+                case classLabel common of
+                    "Person" -> Prs <$> parseRemainingPerson common o
+                    "Organisation" -> Org <$> parseRemainingOrganization common o
+                    other ->
+                        fail $ "I am expecting a 'type' of 'Person' or 'Organisation' from the /agent endpoint, but I got " <> (Prelude.show other) <> "!"
+            )
+
+parseRemainingOrganization :: CommonFields -> Object -> Parser Organization
+parseRemainingOrganization cf o =
+    Organization cf
+        <$> o .: "verbatimBirthDate"
+        <*> o .:? "verbatimDeathDate"
+
+parseRemainingPerson :: CommonFields -> Object -> Parser Person
+parseRemainingPerson cf o =
+    Person cf
+        <$> o .: "gender"
+        <*> o .: "familyName"
+        <*> o .: "givenName"
+        <*> o .: "verbatimBirthDate"
+        <*> o .:? "verbatimDeathDate"
