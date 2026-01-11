@@ -108,3 +108,14 @@ executable backend
 
     -- Base language which the package is written in.
     default-language: GHC2024
+
+executable decode-smoke-test
+    import: warnings, base-deps
+    main-is: DecodeSmokeTest.hs
+    hs-source-dirs: app
+    build-depends:
+        backend,
+        servant-client,
+        http-client,
+        http-client-tls
+    default-language: GHC2024

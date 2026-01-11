@@ -136,6 +136,7 @@ data Specimen = Specimen
     , collectionLabel :: Text
     , captionFormatted :: Text
     }
+    deriving (Show)
 
 -- Called "object" in the documentation, I am calling it an "artefact" to avoid confusion with the resource name.
 data Artefact = Artefact
@@ -143,10 +144,12 @@ data Artefact = Artefact
     , collectionLabel :: Text
     , caption :: Text
     }
+    deriving (Show)
 
 data ObjectResponse
     = Art Artefact
     | Spc Specimen
+    deriving (Show)
 
 instance FromJSON ObjectResponse where
     parseJSON =
