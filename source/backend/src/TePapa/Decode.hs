@@ -3,7 +3,15 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TePapa.Decode (RawItem) where
+module TePapa.Decode (
+    RawItem,
+    Person,
+    Artefact,
+    Specimen,
+    Organization,
+    ObjectResponse,
+)
+where
 
 import Data.Aeson
 import Data.Aeson.KeyMap
@@ -135,3 +143,34 @@ data Artefact = Artefact
     , collectionLabel :: Text
     , caption :: Text
     }
+
+data ObjectResponse
+    = Art Artefact
+    | Spc Specimen
+
+instance FromJSON ObjectResponse where
+    parseJSON =
+        withObject
+            "response from /object endpoint"
+            ( \o -> do
+                common :: CommonFields <- parseJSON (Data.Aeson.Types.Object o)
+                case classLabel common of
+                    "Object" -> Art <$> parseRemainingArtefact common o
+                    "Specimen" -> Spc <$> parseRemainingSpecimen common o
+                    other ->
+                        fail $ "I am expecting a 'type' of 'Object' or 'Specimen' from the /object endpoint, but I got " <> (Prelude.show other) <> "!"
+            )
+
+parseRemainingSpecimen :: CommonFields -> Object -> Parser Specimen
+parseRemainingSpecimen cf o =
+    Specimen
+        <$> (pure cf)
+        <*> o .: "collectionLabel"
+        <*> o .:? "captionFormatted" .!= ""
+
+parseRemainingArtefact :: CommonFields -> Object -> Parser Artefact
+parseRemainingArtefact cf o =
+    Artefact
+        <$> (pure cf)
+        <*> o .: "collectionLabel"
+        <*> o .: "caption"

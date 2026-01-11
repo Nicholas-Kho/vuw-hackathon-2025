@@ -9,4 +9,5 @@ import TePapa.Decode
 
 type NeedsKey api = Header' '[Required] "x-api-key" Text :> api
 
-type TePapaApi = NeedsKey ("object" :> Capture "id" Int :> Get '[JSON] RawItem)
+type TePapaApi =
+    NeedsKey ("object" :> Capture "id" Int :> Get '[JSON] ObjectResponse)
