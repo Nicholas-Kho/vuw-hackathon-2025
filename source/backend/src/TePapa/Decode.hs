@@ -11,6 +11,7 @@ module TePapa.Decode (
     Organization,
     ObjectResponse,
     Place,
+    TePapaReference,
 )
 where
 

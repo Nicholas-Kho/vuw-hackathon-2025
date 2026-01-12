@@ -61,6 +61,7 @@ common tepapa-client-deps
     build-depends:
         aeson
         , bytestring
+        , containers
         , dotenv >= 0.7
         , http-client
         , http-client-tls
@@ -83,7 +84,7 @@ library
         , TePapa.Decode
         , TePapa.Env
     build-depends:
-        -- ... and this...
+        -- ...
     default-language: GHC2024
 
 executable backend
