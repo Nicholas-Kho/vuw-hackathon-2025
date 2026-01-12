@@ -2,6 +2,7 @@ module TePapa.Client (
     collectionsURL,
     getAgent,
     getObject,
+    getPlace,
 ) where
 
 import Api.TePapa
@@ -25,4 +26,5 @@ tePapaApi = Proxy
 
 getObject :: Text -> Int -> ClientM ObjectResponse
 getAgent :: Text -> Int -> ClientM AgentResponse
-(getObject :<|> getAgent) = client tePapaApi
+getPlace :: Text -> Int -> ClientM Place
+(getObject :<|> getAgent :<|> getPlace) = client tePapaApi

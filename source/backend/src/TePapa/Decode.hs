@@ -10,6 +10,7 @@ module TePapa.Decode (
     Specimen,
     Organization,
     ObjectResponse,
+    Place,
 )
 where
 
