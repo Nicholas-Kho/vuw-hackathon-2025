@@ -117,5 +117,6 @@ executable decode-smoke-test
         backend,
         servant-client,
         http-client,
-        http-client-tls
+        http-client-tls,
+        text
     default-language: GHC2024
