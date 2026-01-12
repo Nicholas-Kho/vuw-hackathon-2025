@@ -210,7 +210,7 @@ parseRemainingPerson cf o =
 
 data Place = Place
     { com :: CommonFields
-    , nation :: Text
+    , nation :: [Text]
     , lat :: Float
     , long :: Float
     }
@@ -223,7 +223,7 @@ instance FromJSON Place where
             ( \o ->
                 Place
                     <$> (parseJSON (Data.Aeson.Types.Object o))
-                    <*> o .: "nation"
-                    <*> (o .: "GeoLocation" >>= (.: "lat"))
-                    <*> (o .: "GeoLocation" >>= (.: "long"))
+                    <*> o .:? "nation" .!= []
+                    <*> (o .: "geoLocation" >>= (.: "lat"))
+                    <*> (o .: "geoLocation" >>= (.: "lon"))
             )
