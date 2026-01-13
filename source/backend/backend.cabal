@@ -76,7 +76,8 @@ library
     exposed-modules:
         Api.TePapa
         , Api.Backend
-        , Cache.Schema
+        , Cache.Interface
+        , Cache.TVarGraphStore
         , Cache.Store
         , Domain.Model
         , Domain.Logic

@@ -1,16 +1,12 @@
 module Domain.Model (
     Edge (..),
-    GraphData (..),
-    Graph,
     Node (..),
     NodeContent (..),
+    NodeId,
 )
 where
 
-import qualified Data.Map as M
-import qualified Data.Set as S
 import Data.Text
-import GHC.Conc (TVar)
 import Servant.Client (ClientError)
 import TePapa.Decode (TePapaReference)
 
@@ -35,10 +31,4 @@ data Edge = Edge
     , to :: NodeId
     , info :: Text
     }
-
-data GraphData = GraphData
-    { nodes :: M.Map NodeId Node
-    , edges :: S.Set Edge
-    }
-
-type Graph = TVar GraphData
+    deriving (Eq, Ord, Show)
