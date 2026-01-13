@@ -66,6 +66,8 @@ common tepapa-client-deps
         , hashable
         , http-client
         , http-client-tls
+        , MonadRandom
+        , mtl
         , servant
         , servant-client
         , stm
@@ -79,6 +81,7 @@ library
     exposed-modules:
         Api.TePapa
         , Api.Backend
+        , App
         , Cache.Interface
         , Cache.TVarGraphStore
         , Cache.Store

@@ -19,6 +19,7 @@ data FetchResult
 
 class (Monad (StoreM g)) => GraphStore g where
     type StoreM g :: Type -> Type
+    blankGraph :: StoreM g g
     readNode :: g -> NodeId -> StoreM g (Maybe Node)
     tryFetch :: g -> NodeId -> StoreM g FetchResult
     deleteNode :: g -> NodeId -> StoreM g (Maybe Node)

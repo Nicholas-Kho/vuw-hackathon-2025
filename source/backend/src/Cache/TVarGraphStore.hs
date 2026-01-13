@@ -43,6 +43,13 @@ waitForLock graph = do
 
 instance GraphStore Graph where
     type StoreM Graph = STM
+    blankGraph =
+        Graph
+            <$> M.empty
+            <*> M.empty
+            <*> M.empty
+            <*> newTVar S.empty
+            <*> newTVar False
     readNode graph nid =
         waitForLock graph >> M.lookup nid (nodes graph)
     failNode graph nid cerr =
