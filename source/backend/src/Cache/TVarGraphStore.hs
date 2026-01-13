@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeFamilies #-}
+
 module Cache.TVarGraphStore (Graph, sweepDeleted)
 where
 
@@ -39,7 +41,8 @@ waitForLock graph = do
     locked <- readTVar (isLocked graph)
     check (not locked)
 
-instance GraphStore Graph STM where
+instance GraphStore Graph where
+    type StoreM Graph = STM
     readNode graph nid =
         waitForLock graph >> M.lookup nid (nodes graph)
     failNode graph nid cerr =
