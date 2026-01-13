@@ -14,9 +14,9 @@ data FetchResult
     | Proceed
 
 class (Monad m) => GraphStore g m where
-    readNode :: g -> NodeId -> m Node
+    readNode :: g -> NodeId -> m (Maybe Node)
     tryFetch :: g -> NodeId -> m FetchResult
-    deleteNode :: g -> NodeId -> m Node
+    deleteNode :: g -> NodeId -> m (Maybe Node)
     commitNode :: g -> NodeId -> NodeContent -> m ()
     failNode :: g -> NodeId -> ClientError -> m ()
     outgoingEdges :: g -> NodeId -> m (Set Edge)

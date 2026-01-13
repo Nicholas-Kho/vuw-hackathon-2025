@@ -18,6 +18,7 @@ where
 import Data.Aeson
 import Data.Aeson.KeyMap
 import Data.Aeson.Types
+import Data.Hashable (Hashable)
 import Data.Text
 import Data.Traversable
 import Data.Vector
@@ -31,11 +32,15 @@ data MuseumResource
     | PlaceR
     | ConceptR
     | TopicR
-    deriving (Show, Eq, Ord)
+    deriving (Show, Eq, Ord, Generic)
+
+instance Hashable MuseumResource
 
 newtype ExternalId
     = ExternalId {unId :: Int}
-    deriving (Show, FromJSON, Eq, Ord)
+    deriving (Show, FromJSON, Generic, Eq, Ord)
+
+instance Hashable ExternalId
 
 data TePapaReference = TePapaReference
     { namespace :: MuseumResource
@@ -43,6 +48,8 @@ data TePapaReference = TePapaReference
     , title :: Text
     }
     deriving (Show, Generic, Eq, Ord)
+
+instance Hashable TePapaReference
 
 data Association = Association
     { name :: Text

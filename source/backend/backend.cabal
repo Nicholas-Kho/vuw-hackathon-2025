@@ -63,11 +63,14 @@ common tepapa-client-deps
         , bytestring
         , containers
         , dotenv >= 0.7
+        , hashable
         , http-client
         , http-client-tls
         , servant
         , servant-client
+        , stm
         , text
+        , ttrie
         , vector
 
 library
