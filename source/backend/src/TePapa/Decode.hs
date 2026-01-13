@@ -31,18 +31,18 @@ data MuseumResource
     | PlaceR
     | ConceptR
     | TopicR
-    deriving (Show)
+    deriving (Show, Eq, Ord)
 
 newtype ExternalId
     = ExternalId {unId :: Int}
-    deriving (Show, FromJSON)
+    deriving (Show, FromJSON, Eq, Ord)
 
 data TePapaReference = TePapaReference
     { namespace :: MuseumResource
     , eid :: ExternalId
     , title :: Text
     }
-    deriving (Show, Generic)
+    deriving (Show, Generic, Eq, Ord)
 
 data Association = Association
     { name :: Text
