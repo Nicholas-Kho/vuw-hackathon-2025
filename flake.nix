@@ -22,8 +22,9 @@
           packages = p: [ backend ];
           nativeBuildInputs = with pkgs; [
             haskellPkgs.haskell-language-server
-            fourmolu
-            hlint
+            haskellPkgs.fourmolu
+            # haskellPkgs.hlint
+            haskellPkgs.stan
             sqlite
             cabal-install
             ghciwatch

@@ -53,6 +53,11 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
+common dohie
+    ghc-options:
+        -fwrite-ide-info
+        -hiedir=.hie
+
 common base-deps
     build-depends:
         base ^>= 4.20.1.0
@@ -76,7 +81,7 @@ common tepapa-client-deps
         , vector
 
 library
-    import: warnings, base-deps, tepapa-client-deps
+    import: warnings, base-deps, tepapa-client-deps, dohie
     hs-source-dirs: src
     exposed-modules:
         Api.TePapa
@@ -88,6 +93,7 @@ library
         , Domain.Model
         , Domain.Logic
         , TePapa.Client
+        , TePapa.Convert
         , TePapa.Decode
         , TePapa.Env
     build-depends:
@@ -96,7 +102,7 @@ library
 
 executable backend
     -- Import common warning flags.
-    import:           warnings, base-deps
+    import:           warnings, base-deps, dohie
 
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
@@ -118,7 +124,7 @@ executable backend
     default-language: GHC2024
 
 executable decode-smoke-test
-    import: warnings, base-deps
+    import: warnings, base-deps, dohie
     main-is: DecodeSmokeTest.hs
     hs-source-dirs: app
     build-depends:
