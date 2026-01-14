@@ -43,21 +43,12 @@ instance GraphStore Graph where
             <*> newTVar False
     readNode graph nid =
         waitForLock graph >> M.lookup nid (nodes graph)
-    failNode graph nid cerr =
-        waitForLock graph >> M.insert nid (Fail cerr) (nodes graph)
+    writeNode graph nid node =
+        M.insert nid node (nodes graph)
     outgoingEdges graph nid =
         waitForLock graph >> M.lookup nid (edgesFrom graph) >>= \case
             Nothing -> pure Nothing
             Just partialEdgeSet -> pure . Just $ S.map (partEdgeFrom nid) partialEdgeSet
-    commitNode graph nid nconts =
-        waitForLock graph >> M.insert nid (Ok nconts) (nodes graph)
-    tryFetch graph nid =
-        waitForLock graph >> M.lookup nid (nodes graph) >>= \case
-            Nothing -> pure Proceed
-            Just NotFetched -> pure Proceed
-            Just Fetching -> pure WaitForResult
-            Just (Fail cerr) -> pure . AlreadyThere . Left $ cerr
-            Just (Ok conts) -> pure . AlreadyThere . Right $ conts
     deleteNode graph nid = do
         node <- readNode graph nid
         M.delete nid (nodes graph)
