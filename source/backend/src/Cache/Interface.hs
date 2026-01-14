@@ -6,7 +6,6 @@ module Cache.Interface (
 )
 where
 
-import Control.Monad.IO.Class
 import Data.Kind
 import Data.Set
 import Domain.Model (Edge, Node, NodeContent, NodeId)

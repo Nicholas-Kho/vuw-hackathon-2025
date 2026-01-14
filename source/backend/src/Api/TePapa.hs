@@ -7,10 +7,13 @@ import Data.Text
 import Servant.API
 import TePapa.Decode
 
-type NeedsKey api = Header' '[Required] "x-api-key" Text :> api
+newtype ApiKey = ApiKey {getKey :: Text} deriving (ToHttpApiData)
 
 type ById endpoint responseType =
-    NeedsKey (endpoint :> Capture "id" Int :> Get '[JSON] responseType)
+    endpoint
+        :> Capture "id" Int
+        :> Header' '[Required] "x-api-key" ApiKey
+        :> Get '[JSON] responseType
 
 type TePapaApi =
     ById "object" ObjectResponse
