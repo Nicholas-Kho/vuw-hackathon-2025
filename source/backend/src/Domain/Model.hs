@@ -29,13 +29,7 @@ data GraphFragment = GraphFragment
     , inEdges :: S.Set PartEdge
     }
 
-data Node
-    = NotFetched
-    | Fetching
-    | Ok NodeContent
-    | -- Note: Might want to change to something else later so
-      -- we're not coupled to Servant
-      Fail ClientError
+data Node = Fail ClientError | Ok NodeContent
 
 data Edge = Edge
     { from :: NodeId
