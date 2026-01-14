@@ -30,4 +30,4 @@ getPlace :: Int -> ApiKey -> ClientM Place
 (getObject :<|> getAgent :<|> getPlace) = client tePapaApi
 
 class ApiM m where
-    runReq :: (ApiKey -> ClientM a) -> m a
+    runReq :: (ApiKey -> ClientM a) -> m (Either ClientError a)

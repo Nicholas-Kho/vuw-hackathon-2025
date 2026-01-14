@@ -6,11 +6,11 @@ module App (
 )
 where
 
+import Api.TePapa
 import Cache.Interface
 import Cache.TVarGraphStore
 import Control.Monad.Random.Strict
 import Control.Monad.Reader
-import Data.Text
 import GHC.Conc
 import Network.HTTP.Client.TLS
 import Servant.Client
@@ -19,7 +19,7 @@ import TePapa.Env
 
 data AppEnv = AppEnv
     { graph :: Graph
-    , apiKey :: Text
+    , apiKey :: ApiKey
     , clientEnv :: ClientEnv
     }
 
@@ -27,6 +27,12 @@ newtype AppM a = AppM
     { unAppM :: RandT StdGen (ReaderT AppEnv IO) a
     }
     deriving (Functor, Applicative, Monad, MonadIO, MonadReader AppEnv, MonadRandom)
+
+instance ApiM AppM where
+    runReq needsKey = do
+        key <- asks apiKey
+        cenv <- asks clientEnv
+        liftIO $ runClientM (needsKey key) cenv
 
 getClientEnv :: IO ClientEnv
 getClientEnv = do
@@ -38,7 +44,7 @@ getInitialEnv = do
     key <- getApiKey
     initialGraph <- atomically blankGraph
     env <- getClientEnv
-    pure $ AppEnv{graph = initialGraph, apiKey = key, clientEnv = env}
+    pure $ AppEnv{graph = initialGraph, apiKey = ApiKey key, clientEnv = env}
 
 runAppM :: AppM a -> AppEnv -> IO a
 runAppM action env = do
