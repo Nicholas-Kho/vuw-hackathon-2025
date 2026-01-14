@@ -6,9 +6,10 @@ module Cache.Interface (
 )
 where
 
+import Control.Monad (forM_)
 import Data.Kind
 import Data.Set
-import Domain.Model (Edge, Node (..), NodeContent, NodeId)
+import Domain.Model (Edge (..), GraphFragment (..), Node (..), NodeContent, NodeId, partEdgeFrom, partEdgeTo)
 import Servant.Client (ClientError)
 
 data FetchResult
@@ -39,3 +40,9 @@ class (Monad (StoreM g)) => GraphStore g where
 
     failNode :: g -> NodeId -> ClientError -> StoreM g ()
     failNode graph nid cerr = writeNode graph nid (Fail cerr)
+
+    stitchFragment :: g -> NodeId -> GraphFragment -> StoreM g ()
+    stitchFragment g nid frag = do
+        commitNode g nid (content frag)
+        forM_ (outEdges frag) (link g . partEdgeFrom nid)
+        forM_ (inEdges frag) (link g . partEdgeTo nid)
