@@ -3,6 +3,9 @@ module Domain.Model (
     Node (..),
     NodeContent (..),
     NodeId,
+    PartEdge,
+    partEdgeFrom,
+    partEdgeTo,
 )
 where
 
@@ -32,3 +35,11 @@ data Edge = Edge
     , info :: Text
     }
     deriving (Eq, Ord, Show)
+
+type PartEdge = (NodeId, Text)
+
+partEdgeFrom :: NodeId -> PartEdge -> Edge
+partEdgeFrom nidFrom (nidTo, txt) = Edge{from = nidFrom, to = nidTo, info = txt}
+
+partEdgeTo :: NodeId -> PartEdge -> Edge
+partEdgeTo nidTo (nidFrom, txt) = Edge{from = nidFrom, to = nidTo, info = txt}

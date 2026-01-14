@@ -5,9 +5,12 @@
 
 module TePapa.Decode (
     AgentResponse (..),
+    Association (..),
     Person (..),
     Artefact (..),
     CommonFields (..),
+    Edge (..),
+    EdgeDirection (..),
     Specimen (..),
     Organization (..),
     ObjectResponse (..),
@@ -131,7 +134,7 @@ data Person = Person
 
 data Organization = Organization
     { com :: CommonFields
-    , verbatimBirthDae :: Text
+    , verbatimBirthDate :: Text
     , verbatimDeathDate :: Maybe Text
     }
     deriving (Show)

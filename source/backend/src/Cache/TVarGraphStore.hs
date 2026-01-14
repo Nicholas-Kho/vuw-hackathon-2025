@@ -9,16 +9,7 @@ import qualified Control.Concurrent.STM.Map as M
 import Control.Monad (forM_)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import qualified Data.Set as S
-import Data.Text
 import Domain.Model
-
-type PartEdge = (NodeId, Text)
-
-partEdgeFrom :: NodeId -> PartEdge -> Edge
-partEdgeFrom nidFrom (nidTo, txt) = Edge{from = nidFrom, to = nidTo, info = txt}
-
-partEdgeTo :: NodeId -> PartEdge -> Edge
-partEdgeTo nidTo (nidFrom, txt) = Edge{from = nidFrom, to = nidTo, info = txt}
 
 data Graph = Graph
     { nodes :: M.Map NodeId Node
