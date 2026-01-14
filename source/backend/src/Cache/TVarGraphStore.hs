@@ -47,8 +47,8 @@ instance GraphStore Graph where
         waitForLock graph >> M.insert nid (Fail cerr) (nodes graph)
     outgoingEdges graph nid =
         waitForLock graph >> M.lookup nid (edgesFrom graph) >>= \case
-            Nothing -> pure S.empty
-            Just partialEdgeSet -> pure $ S.map (partEdgeFrom nid) partialEdgeSet
+            Nothing -> pure Nothing
+            Just partialEdgeSet -> pure . Just $ S.map (partEdgeFrom nid) partialEdgeSet
     commitNode graph nid nconts =
         waitForLock graph >> M.insert nid (Ok nconts) (nodes graph)
     tryFetch graph nid =

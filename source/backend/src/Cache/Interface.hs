@@ -24,5 +24,5 @@ class (Monad (StoreM g)) => GraphStore g where
     deleteNode :: g -> NodeId -> StoreM g (Maybe Node)
     commitNode :: g -> NodeId -> NodeContent -> StoreM g ()
     failNode :: g -> NodeId -> ClientError -> StoreM g ()
-    outgoingEdges :: g -> NodeId -> StoreM g (Set Edge)
+    outgoingEdges :: g -> NodeId -> StoreM g (Maybe (Set Edge))
     link :: g -> Edge -> StoreM g ()
