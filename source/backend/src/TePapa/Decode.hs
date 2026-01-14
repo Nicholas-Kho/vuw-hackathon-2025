@@ -4,14 +4,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module TePapa.Decode (
-    AgentResponse,
-    Person,
-    Artefact,
-    Specimen,
-    Organization,
-    ObjectResponse,
-    Place,
-    TePapaReference,
+    AgentResponse (..),
+    Person (..),
+    Artefact (..),
+    CommonFields (..),
+    Specimen (..),
+    Organization (..),
+    ObjectResponse (..),
+    Place (..),
+    TePapaReference (..),
 )
 where
 
