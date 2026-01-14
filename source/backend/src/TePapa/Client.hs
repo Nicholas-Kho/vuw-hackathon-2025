@@ -29,5 +29,5 @@ getAgent :: Int -> ApiKey -> ClientM AgentResponse
 getPlace :: Int -> ApiKey -> ClientM Place
 (getObject :<|> getAgent :<|> getPlace) = client tePapaApi
 
-class ApiM m where
+class (Monad m) => ApiM m where
     runReq :: (ApiKey -> ClientM a) -> m (Either ClientError a)
