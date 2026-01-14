@@ -62,6 +62,10 @@ common base-deps
     build-depends:
         base ^>= 4.20.1.0
 
+common default-exts
+    default-extensions:
+        StrictData
+
 common tepapa-client-deps
     build-depends:
         aeson
@@ -81,7 +85,7 @@ common tepapa-client-deps
         , vector
 
 library
-    import: warnings, base-deps, tepapa-client-deps, dohie
+    import: warnings, base-deps, tepapa-client-deps, dohie, default-exts
     hs-source-dirs: src
     exposed-modules:
         Api.TePapa
@@ -102,7 +106,7 @@ library
 
 executable backend
     -- Import common warning flags.
-    import:           warnings, base-deps, dohie
+    import:           warnings, base-deps, dohie, default-exts
 
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
@@ -124,7 +128,7 @@ executable backend
     default-language: GHC2024
 
 executable decode-smoke-test
-    import: warnings, base-deps, dohie
+    import: warnings, base-deps, dohie, default-exts
     main-is: DecodeSmokeTest.hs
     hs-source-dirs: app
     build-depends:

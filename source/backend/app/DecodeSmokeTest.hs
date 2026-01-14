@@ -35,7 +35,7 @@ getUserAction = do
             case mkAction action idRaw of
                 Nothing -> getUserAction
                 Just a -> pure a
-        _ -> getUserAction
+        _anyOther -> getUserAction
 
 mkAction :: String -> String -> Maybe UserAction
 mkAction action idRaw = do
