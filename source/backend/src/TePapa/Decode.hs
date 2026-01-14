@@ -16,6 +16,9 @@ module TePapa.Decode (
     ObjectResponse (..),
     Place (..),
     TePapaReference (..),
+    MuseumResource (..),
+    ExternalId (..),
+    Geolocation (..),
 )
 where
 

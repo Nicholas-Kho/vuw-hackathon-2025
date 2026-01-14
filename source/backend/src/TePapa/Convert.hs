@@ -1,14 +1,29 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TePapa.Convert (NodeLike (..)) where
+module TePapa.Convert (
+    NodeLike (..),
+    fetchReference,
+) where
 
+import Api.TePapa (ApiKey)
 import Data.Maybe
 import qualified Data.Set as S
 import Data.Text
+import qualified Data.Text as T
 import Domain.Model
 import GHC.Records
+import Servant.Client (ClientM)
+import TePapa.Client
 import TePapa.Decode
+
+fetchReference :: TePapaReference -> ApiKey -> ClientM GraphFragment
+fetchReference ref key =
+    case namespace ref of
+        ObjectR -> toFragment <$> getObject (unId ref.eid) key
+        AgentR -> toFragment <$> getAgent (unId ref.eid) key
+        PlaceR -> toFragment <$> getPlace (unId ref.eid) key
+        _notImplemented -> error "not implemented"
 
 outgoingEdgeConvert :: TePapa.Decode.Edge -> S.Set PartEdge
 outgoingEdgeConvert
@@ -25,8 +40,15 @@ class Describable a where
 
 class NodeLike a where
     getContent :: a -> NodeContent
-    outEdges :: a -> S.Set PartEdge
-    inEdges :: a -> S.Set PartEdge
+    getOutEdges :: a -> S.Set PartEdge
+    getInEdges :: a -> S.Set PartEdge
+    toFragment :: a -> GraphFragment
+    toFragment a =
+        GraphFragment
+            { content = getContent a
+            , outEdges = getOutEdges a
+            , inEdges = getInEdges a
+            }
 
 nodeContentFromCommon ::
     ( HasField "com" a CommonFields
@@ -62,22 +84,53 @@ instance Describable Artefact where
 instance Describable Specimen where
     describe s = s.collectionLabel <> " - " <> s.captionFormatted
 
+instance Describable Place where
+    describe p =
+        case (p.location, nations) of
+            (Nothing, Nothing) -> ""
+            (Nothing, Just n) -> "Located in " <> n
+            (Just loc, Nothing) -> "Located in " <> (T.show loc.lat) <> ", " <> (T.show loc.lon)
+            (Just loc, Just n) -> "Located in " <> (T.show loc.lat) <> ", " <> (T.show loc.lon) <> ", " <> n
+      where
+        nations = case T.intercalate ", " p.nation of
+            "" -> Nothing
+            other -> Just other
+
 instance NodeLike Person where
     getContent = nodeContentFromCommon
-    outEdges = outEdgesFromCommon
-    inEdges _ = S.empty
+    getOutEdges = outEdgesFromCommon
+    getInEdges _ = S.empty
 
 instance NodeLike Organization where
     getContent = nodeContentFromCommon
-    outEdges = outEdgesFromCommon
-    inEdges _ = S.empty
+    getOutEdges = outEdgesFromCommon
+    getInEdges _ = S.empty
 
 instance NodeLike Artefact where
     getContent = nodeContentFromCommon
-    outEdges = outEdgesFromCommon
-    inEdges _ = S.empty
+    getOutEdges = outEdgesFromCommon
+    getInEdges _ = S.empty
 
 instance NodeLike Specimen where
     getContent = nodeContentFromCommon
-    outEdges = outEdgesFromCommon
-    inEdges _ = S.empty
+    getOutEdges = outEdgesFromCommon
+    getInEdges _ = S.empty
+
+instance NodeLike Place where
+    getContent = nodeContentFromCommon
+    getOutEdges = outEdgesFromCommon
+    getInEdges _ = S.empty
+
+instance NodeLike ObjectResponse where
+    getContent (Art a) = getContent a
+    getContent (Spc s) = getContent s
+    getOutEdges (Art a) = getOutEdges a
+    getOutEdges (Spc s) = getOutEdges s
+    getInEdges _ = S.empty
+
+instance NodeLike AgentResponse where
+    getContent (Prs p) = getContent p
+    getContent (Org o) = getContent o
+    getOutEdges (Prs p) = getOutEdges p
+    getOutEdges (Org o) = getOutEdges o
+    getInEdges _ = S.empty

@@ -1,5 +1,6 @@
 module Domain.Model (
     Edge (..),
+    GraphFragment (..),
     Node (..),
     NodeContent (..),
     NodeId,
@@ -9,6 +10,7 @@ module Domain.Model (
 )
 where
 
+import qualified Data.Set as S
 import Data.Text
 import Servant.Client (ClientError)
 import TePapa.Decode (TePapaReference)
@@ -19,6 +21,12 @@ data NodeContent = NodeContent
     { title :: Text
     , description :: Text
     , thumbnailUrl :: Maybe Text
+    }
+
+data GraphFragment = GraphFragment
+    { content :: NodeContent
+    , outEdges :: S.Set PartEdge
+    , inEdges :: S.Set PartEdge
     }
 
 data Node
