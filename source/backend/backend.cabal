@@ -96,6 +96,7 @@ library
         , Cache.Store
         , Domain.Model
         , Domain.Logic
+        , MonadWait
         , TePapa.Client
         , TePapa.Convert
         , TePapa.Decode

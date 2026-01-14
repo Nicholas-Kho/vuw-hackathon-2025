@@ -3,6 +3,7 @@
 module Cache.Interface (
     FetchResult (..),
     GraphStore (..),
+    MonadWait (..),
 )
 where
 
@@ -10,11 +11,12 @@ import Control.Monad (forM_)
 import Data.Kind
 import Data.Set
 import Domain.Model (Edge (..), GraphFragment (..), Node (..), NodeContent, NodeId, partEdgeFrom, partEdgeTo)
+import MonadWait
 import Servant.Client (ClientError)
 
-data FetchResult
+data FetchResult w
     = AlreadyThere (Either ClientError NodeContent)
-    | WaitForResult
+    | WaitForResult (w (Either ClientError NodeContent))
     | Proceed
 
 class (Monad (StoreM g)) => GraphStore g where
@@ -25,15 +27,7 @@ class (Monad (StoreM g)) => GraphStore g where
     deleteNode :: g -> NodeId -> StoreM g (Maybe Node)
     outgoingEdges :: g -> NodeId -> StoreM g (Maybe (Set Edge))
     link :: g -> Edge -> StoreM g ()
-
-    tryFetch :: g -> NodeId -> StoreM g FetchResult
-    tryFetch graph nid = do
-        readNode graph nid >>= \case
-            Nothing -> pure Proceed
-            Just NotFetched -> pure Proceed
-            Just Fetching -> pure WaitForResult
-            Just (Fail ce) -> pure . AlreadyThere . Left $ ce
-            Just (Ok nc) -> pure . AlreadyThere . Right $ nc
+    tryFetch :: g -> NodeId -> StoreM g (FetchResult (Wait (StoreM g)))
 
     commitNode :: g -> NodeId -> NodeContent -> StoreM g ()
     commitNode graph nid content = writeNode graph nid (Ok content)
