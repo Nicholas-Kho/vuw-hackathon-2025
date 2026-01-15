@@ -4,4 +4,4 @@ cradle:
     components:
       - "backend:lib"
       - "backend:exe:backend"
-      - "backend:exe:decode-smoke-test"
+      - "backend:exe:smoke-test"
