@@ -7,21 +7,26 @@ module Domain.Model (
     PartEdge,
     partEdgeFrom,
     partEdgeTo,
+    prettyPrintNodeId,
 )
 where
 
 import qualified Data.Set as S
 import Data.Text
 import Servant.Client (ClientError)
-import TePapa.Decode (TePapaReference)
+import TePapa.Decode (TePapaReference, showTePapaReferenceNice)
 
 type NodeId = TePapaReference
+
+prettyPrintNodeId :: NodeId -> String
+prettyPrintNodeId = showTePapaReferenceNice
 
 data NodeContent = NodeContent
     { title :: Text
     , description :: Text
     , thumbnailUrl :: Maybe Text
     }
+    deriving (Show)
 
 data GraphFragment = GraphFragment
     { content :: NodeContent
@@ -29,7 +34,7 @@ data GraphFragment = GraphFragment
     , inEdges :: S.Set PartEdge
     }
 
-data Node = Fail ClientError | Ok NodeContent
+data Node = Fail ClientError | Ok NodeContent deriving (Show)
 
 data Edge = Edge
     { from :: NodeId

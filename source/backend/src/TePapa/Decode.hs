@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module TePapa.Decode (
@@ -19,6 +20,7 @@ module TePapa.Decode (
     MuseumResource (..),
     ExternalId (..),
     Geolocation (..),
+    showTePapaReferenceNice,
 )
 where
 
@@ -52,11 +54,23 @@ instance Hashable ExternalId
 data TePapaReference = TePapaReference
     { namespace :: MuseumResource
     , eid :: ExternalId
-    , title :: Text
     }
     deriving (Show, Generic, Eq, Ord)
 
 instance Hashable TePapaReference
+
+showTePapaReferenceNice :: TePapaReference -> String
+showTePapaReferenceNice tref =
+    let
+        namespaceNice :: String = case (namespace tref) of
+            ObjectR -> "object/"
+            AgentR -> "agent/"
+            PlaceR -> "place/"
+            ConceptR -> "concept/"
+            TopicR -> "topic/"
+        idStr :: String = Prelude.show . unId $ tref.eid
+     in
+        namespaceNice <> idStr
 
 data Association = Association
     { name :: Text
@@ -110,7 +124,6 @@ parseReferenceyObject =
             TePapaReference
                 <$> (o .: "type" >>= classLabelToResource)
                 <*> o .: "id"
-                <*> o .:? "title" .!= ""
         )
 
 classLabelToResource :: Text -> Parser MuseumResource

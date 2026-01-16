@@ -1,15 +1,16 @@
 {-# LANGUAGE TypeFamilies #-}
 
-module Cache.TVarGraphStore (Graph, sweepDeleted)
+module Cache.TVarGraphStore (Graph, sweepDeleted, showCache)
 where
 
 import Cache.Interface
 import Control.Concurrent.STM
 import qualified Control.Concurrent.STM.Map as M
 import Control.Exception
-import Control.Monad (forM_)
+import Control.Monad (forM, forM_)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import qualified Data.Set as S
+import Data.Text (unpack)
 import Domain.Model
 
 data Graph = Graph
@@ -98,3 +99,27 @@ sweepDeleted graph = do
                 M.unsafeDelete k (nodes graph)
                 M.unsafeDelete k (edgesFrom graph)
                 M.unsafeDelete k (edgesTo graph)
+
+showCache :: (MonadIO m) => Graph -> m ()
+showCache g = do
+    -- We need to block the store for a bit so we can get a consistent snapshot
+    liftIO . atomically $ writeTVar (isLocked g) True
+    nodePromiseList <- liftIO $ M.unsafeToList (nodes g)
+    partEdgesFrom <- liftIO $ M.unsafeToList (edgesFrom g)
+    partEdgesTo <- liftIO $ M.unsafeToList (edgesTo g)
+    liftIO . atomically $ writeTVar (isLocked g) False
+    -- It's possible other threads were writing when we got the nodeList, so
+    -- we need to finish waiting for those so we can print them.
+    nodeList <- forM nodePromiseList $ \(nid, promise) -> do
+        content <- liftIO . atomically . readTMVar $ promise
+        pure (nid, content)
+    -- convert our [(nodeId, Set PartEdge)] to [Edge]
+    let fullEdgesA = foldl' S.union S.empty $ (\(nidFrom, s) -> S.map (partEdgeFrom nidFrom) s) <$> partEdgesFrom
+    let fullEdgesB = foldl' S.union S.empty $ (\(nidTo, s) -> S.map (partEdgeFrom nidTo) s) <$> partEdgesTo
+    let allEdges = fullEdgesA <> fullEdgesB
+    liftIO . putStrLn $ "Nodes:"
+    liftIO . forM_ nodeList $
+        \(nid, node) -> putStrLn (prettyPrintNodeId nid <> " is " <> show node) >> putStrLn ""
+    liftIO . putStrLn $ "Edges:"
+    liftIO . forM_ allEdges $ \e ->
+        putStrLn (prettyPrintNodeId (from e) <> " -> " <> prettyPrintNodeId (to e) <> "(" <> (unpack . info $ e) <> ")")
