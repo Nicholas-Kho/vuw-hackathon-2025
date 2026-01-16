@@ -19,7 +19,9 @@ type TePapaApi =
     ById "object" ObjectResponse
         :<|> ById "agent" AgentResponse
         :<|> ById "place" Place
-        :<|> Capture "id" Int
+        :<|> "category"
+            :> Capture "id" Int
+            :> "related"
             :> QueryParam "limit" Int
             :> Header' '[Required] "x-api-key" ApiKey
             :> Get '[JSON] CategoryRelatedResponse

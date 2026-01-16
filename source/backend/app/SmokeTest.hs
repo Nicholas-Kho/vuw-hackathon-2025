@@ -33,6 +33,9 @@ repl = do
             store <- asks graph
             showCache store
             repl
+        CatRelated eid -> do
+            res <- runReq $ getCatRelated eid (Just 10)
+            liftIO $ print res
             repl
 
 getUserAction :: IO UserAction
@@ -55,6 +58,7 @@ mkAction action idRaw = do
         "object" -> pure (ObjectById idInt)
         "agent" -> pure (AgentById idInt)
         "place" -> pure (PlaceById idInt)
+        "catRelated" -> pure (CatRelated idInt)
         _ -> Nothing
 
 showRes :: (Show a) => Either ClientError a -> IO ()
@@ -66,5 +70,6 @@ data UserAction
     = ObjectById Int
     | AgentById Int
     | PlaceById Int
+    | CatRelated Int
     | ShowCache
     | Quit
