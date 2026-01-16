@@ -135,8 +135,8 @@ executable smoke-test
     hs-source-dirs: app
     build-depends:
         backend,
+        mtl,
+        optparse-applicative,
         servant-client,
-        http-client,
-        http-client-tls,
-        text
+        text,
     default-language: GHC2024

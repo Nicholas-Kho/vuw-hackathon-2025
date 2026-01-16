@@ -23,7 +23,7 @@ fetchReference ref key =
         ObjectR -> toFragment <$> getObject (unId ref.eid) key
         AgentR -> toFragment <$> getAgent (unId ref.eid) key
         PlaceR -> toFragment <$> getPlace (unId ref.eid) key
-        _notImplemented -> error "not implemented"
+        notImplemented -> error $ (Prelude.show notImplemented) <> " is not implemented"
 
 outgoingEdgeConvert :: TePapa.Decode.Edge -> S.Set PartEdge
 outgoingEdgeConvert
