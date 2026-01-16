@@ -2,7 +2,7 @@
 
 module Domain.Model (
     Edge (..),
-    GraphFragment (..),
+    GraphAction (..),
     Node (..),
     NodeContent (..),
     NodeId,
@@ -14,7 +14,6 @@ module Domain.Model (
 )
 where
 
-import qualified Data.Set as S
 import Data.Text
 import Servant.Client (ClientError)
 import TePapa.Decode (TePapaReference, showTePapaReferenceNice)
@@ -30,12 +29,6 @@ data NodeContent = NodeContent
     , thumbnailUrl :: Maybe Text
     }
     deriving (Show)
-
-data GraphFragment = GraphFragment
-    { content :: NodeContent
-    , outEdges :: S.Set PartEdgeTo
-    , inEdges :: S.Set PartEdgeFrom
-    }
 
 data Node = Fail ClientError | Ok NodeContent deriving (Show)
 
@@ -63,3 +56,7 @@ mkEdgeFrom nidFrom PartEdgeTo{to = nidTo, info = txt} = Edge{from = nidFrom, to 
 
 mkEdgeTo :: NodeId -> PartEdgeFrom -> Edge
 mkEdgeTo nidTo PartEdgeFrom{from = nidFrom, info = txt} = Edge{from = nidFrom, to = nidTo, info = txt}
+
+data GraphAction
+    = AddNode NodeId Node
+    | AddEdge Edge

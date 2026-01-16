@@ -4,11 +4,8 @@ import App
 import Cache.TVarGraphStore (showCache)
 import Control.Monad.IO.Class
 import Control.Monad.Reader (asks)
-import Domain.Logic (DrunkardsWalkSettings (..), drunkardsWalk)
-import GHC.Conc (atomically)
 import Servant.Client
 import TePapa.Client
-import TePapa.Decode (ExternalId (..), MuseumResource (..), TePapaReference (..))
 import Text.Read
 
 main :: IO ()
@@ -36,11 +33,6 @@ repl = do
             store <- asks graph
             showCache store
             repl
-        Drunkards start steps -> do
-            store <- asks graph
-            let lifter = liftIO . atomically
-            end <- drunkardsWalk lifter store DrunkardsWalkSettings{start = start, numSteps = steps}
-            liftIO . print $ end
             repl
 
 getUserAction :: IO UserAction
@@ -54,9 +46,6 @@ getUserAction = do
             case mkAction action idRaw of
                 Nothing -> getUserAction
                 Just a -> pure a
-        ["drunkards", namespace, idRaw, stepsRaw] -> case mkDrunkards namespace idRaw stepsRaw of
-            Nothing -> getUserAction
-            Just a -> pure a
         _anyOther -> getUserAction
 
 mkAction :: String -> String -> Maybe UserAction
@@ -68,17 +57,6 @@ mkAction action idRaw = do
         "place" -> pure (PlaceById idInt)
         _ -> Nothing
 
-mkDrunkards :: String -> String -> String -> Maybe UserAction
-mkDrunkards ns idraw stepsraw = do
-    idInt <- readMaybe @Int idraw
-    steps <- readMaybe @Int stepsraw
-    tref <- case ns of
-        "object" -> pure (TePapaReference{namespace = ObjectR, eid = ExternalId idInt})
-        "agent" -> pure (TePapaReference{namespace = AgentR, eid = ExternalId idInt})
-        "place" -> pure (TePapaReference{namespace = PlaceR, eid = ExternalId idInt})
-        _ -> Nothing
-    pure (Drunkards tref steps)
-
 showRes :: (Show a) => Either ClientError a -> IO ()
 showRes = \case
     Left clientError -> print clientError
@@ -89,5 +67,4 @@ data UserAction
     | AgentById Int
     | PlaceById Int
     | ShowCache
-    | Drunkards TePapaReference Int
     | Quit

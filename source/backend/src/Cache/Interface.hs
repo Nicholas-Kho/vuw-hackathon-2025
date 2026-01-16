@@ -5,12 +5,13 @@ module Cache.Interface (
     GraphStore (..),
     MonadWait (..),
     ReadResult (..),
+    runAction,
 )
 where
 
 import Data.Kind
 import Data.Set
-import Domain.Model (Edge (..), Node (..), NodeId)
+import Domain.Model (Edge (..), GraphAction (..), Node (..), NodeId)
 import MonadFulfil
 import MonadWait
 
@@ -34,3 +35,21 @@ class (Monad (StoreM g)) => GraphStore g where
     readNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
     deleteNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
     claimFetch :: g -> NodeId -> StoreM g (FetchResult (Wait (StoreM g)) (NodeObligation g))
+
+runAction ::
+    ( GraphStore g
+    , MonadFulfil (StoreM g)
+    ) =>
+    g ->
+    GraphAction ->
+    StoreM g ()
+runAction g action = do
+    case action of
+        AddNode nid n -> do
+            claimFetch g nid >>= \case
+                -- Fetching a node which is already there, ignore the op.
+                AlreadyThere _ -> pure ()
+                -- Someone else is already getting it, ignore the op.
+                WaitForResult _ -> pure ()
+                Proceed obligation -> fulfil obligation n
+        AddEdge e -> link g e
