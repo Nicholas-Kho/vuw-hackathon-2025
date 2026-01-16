@@ -5,23 +5,45 @@ module Domain.Model (
     GraphAction (..),
     Node (..),
     NodeContent (..),
-    NodeId,
+    NodeId (..),
+    NodeType (..),
     PartEdgeFrom (..),
     PartEdgeTo (..),
     mkEdgeFrom,
     mkEdgeTo,
+    nodeIdToExternal,
     prettyPrintNodeId,
 )
 where
 
+import Data.Hashable
 import Data.Text
+import GHC.Generics
 import Servant.Client (ClientError)
-import TePapa.Decode (TePapaReference, showTePapaReferenceNice)
+import TePapa.Decode (ExternalId (..), MuseumResource (..), TePapaReference (..))
 
-type NodeId = TePapaReference
+data NodeType
+    = ObjectN
+    | AgentN
+    | PlaceN
+    deriving (Eq, Ord, Show, Generic)
+
+instance Hashable NodeType
+
+newtype NodeId = NodeId {unNodeId :: (NodeType, Int)}
+    deriving (Eq, Ord, Show, Generic)
+
+instance Hashable NodeId
 
 prettyPrintNodeId :: NodeId -> String
-prettyPrintNodeId = showTePapaReferenceNice
+prettyPrintNodeId NodeId{unNodeId = (nt, x)} = (Prelude.show nt) <> "/" <> (Prelude.show x)
+
+nodeIdToExternal :: NodeId -> TePapaReference
+nodeIdToExternal NodeId{unNodeId = (nt, x)} =
+    case nt of
+        ObjectN -> TePapaReference{namespace = ObjectR, eid = ExternalId x}
+        AgentN -> TePapaReference{namespace = AgentR, eid = ExternalId x}
+        PlaceN -> TePapaReference{namespace = PlaceR, eid = ExternalId x}
 
 data NodeContent = NodeContent
     { title :: Text
