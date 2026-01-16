@@ -2,6 +2,7 @@ module TePapa.Client (
     ApiM (..),
     collectionsURL,
     getAgent,
+    getCatRelated,
     getObject,
     getPlace,
 ) where
@@ -27,7 +28,8 @@ tePapaApi = Proxy
 getObject :: Int -> ApiKey -> ClientM ObjectResponse
 getAgent :: Int -> ApiKey -> ClientM AgentResponse
 getPlace :: Int -> ApiKey -> ClientM Place
-(getObject :<|> getAgent :<|> getPlace) = client tePapaApi
+getCatRelated :: Int -> Maybe Int -> ApiKey -> ClientM CategoryRelatedResponse
+(getObject :<|> getAgent :<|> getPlace :<|> getCatRelated) = client tePapaApi
 
 class (Monad m) => ApiM m where
     runReq :: (ApiKey -> ClientM a) -> m (Either ClientError a)

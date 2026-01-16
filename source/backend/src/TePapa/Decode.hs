@@ -10,6 +10,7 @@ module TePapa.Decode (
     Person (..),
     Artefact (..),
     CommonFields (..),
+    CategoryRelatedResponse (..),
     Edge (..),
     EdgeDirection (..),
     Specimen (..),
@@ -269,3 +270,60 @@ instance FromJSON Place where
                     <*> o .:? "nation" .!= []
                     <*> o .:? "geoLocation"
             )
+
+instance FromJSON Artefact where
+    parseJSON = withObject "an object" $ \o -> do
+        common :: CommonFields <- parseJSON (Data.Aeson.Types.Object o)
+        parseRemainingArtefact common o
+
+instance FromJSON Specimen where
+    parseJSON = withObject "an object" $ \o -> do
+        common :: CommonFields <- parseJSON (Data.Aeson.Types.Object o)
+        parseRemainingSpecimen common o
+
+instance FromJSON Person where
+    parseJSON = withObject "an object" $ \o -> do
+        common :: CommonFields <- parseJSON (Data.Aeson.Types.Object o)
+        parseRemainingPerson common o
+
+instance FromJSON Organization where
+    parseJSON = withObject "an object" $ \o -> do
+        common :: CommonFields <- parseJSON (Data.Aeson.Types.Object o)
+        parseRemainingOrganization common o
+
+data CategoryRelatedResponse = CategoryRelatedResponse
+    { relatedArtefacts :: [Artefact]
+    , relatedSpecimens :: [Specimen]
+    , relatedPeople :: [Person]
+    , relatedOrgs :: [Organization]
+    , relatedPlaces :: [Place]
+    }
+    deriving (Show)
+
+blankRelatedCatResponse :: CategoryRelatedResponse
+blankRelatedCatResponse =
+    CategoryRelatedResponse
+        { relatedArtefacts = []
+        , relatedSpecimens = []
+        , relatedPeople = []
+        , relatedOrgs = []
+        , relatedPlaces = []
+        }
+
+addOne :: CategoryRelatedResponse -> Value -> CategoryRelatedResponse
+addOne acc v
+    | Just a <- parseMaybe parseJSON v =
+        acc{relatedArtefacts = a : relatedArtefacts acc}
+    | Just s <- parseMaybe parseJSON v =
+        acc{relatedSpecimens = s : relatedSpecimens acc}
+    | Just p <- parseMaybe parseJSON v =
+        acc{relatedPeople = p : relatedPeople acc}
+    | Just o <- parseMaybe parseJSON v =
+        acc{relatedOrgs = o : relatedOrgs acc}
+    | Just p <- parseMaybe parseJSON v =
+        acc{relatedPlaces = p : relatedPlaces acc}
+    | otherwise = acc
+
+instance FromJSON CategoryRelatedResponse where
+    parseJSON = withObject "related category response" $ \o ->
+        o .: "results" >>= pure . Data.Vector.foldl' addOne blankRelatedCatResponse
