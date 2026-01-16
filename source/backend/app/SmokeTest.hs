@@ -34,7 +34,7 @@ repl = do
             showCache store
             repl
         CatRelated eid -> do
-            res <- runReq $ getCatRelated eid (Just 10)
+            res <- runReq $ getConceptRelated eid (Just 10)
             liftIO $ print res
             repl
 

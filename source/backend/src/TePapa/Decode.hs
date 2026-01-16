@@ -10,7 +10,7 @@ module TePapa.Decode (
     Person (..),
     Artefact (..),
     CommonFields (..),
-    CategoryRelatedResponse (..),
+    RelatedThings (..),
     Edge (..),
     EdgeDirection (..),
     Specimen (..),
@@ -291,7 +291,7 @@ instance FromJSON Organization where
         common :: CommonFields <- parseJSON (Data.Aeson.Types.Object o)
         parseRemainingOrganization common o
 
-data CategoryRelatedResponse = CategoryRelatedResponse
+data RelatedThings = RelatedThings
     { relatedArtefacts :: [Artefact]
     , relatedSpecimens :: [Specimen]
     , relatedPeople :: [Person]
@@ -300,9 +300,9 @@ data CategoryRelatedResponse = CategoryRelatedResponse
     }
     deriving (Show)
 
-blankRelatedCatResponse :: CategoryRelatedResponse
-blankRelatedCatResponse =
-    CategoryRelatedResponse
+blankRelatedThings :: RelatedThings
+blankRelatedThings =
+    RelatedThings
         { relatedArtefacts = []
         , relatedSpecimens = []
         , relatedPeople = []
@@ -310,7 +310,7 @@ blankRelatedCatResponse =
         , relatedPlaces = []
         }
 
-addOne :: CategoryRelatedResponse -> Value -> CategoryRelatedResponse
+addOne :: RelatedThings -> Value -> RelatedThings
 addOne acc v
     | Just a <- parseMaybe parseJSON v =
         acc{relatedArtefacts = a : relatedArtefacts acc}
@@ -324,6 +324,6 @@ addOne acc v
         acc{relatedPlaces = p : relatedPlaces acc}
     | otherwise = acc
 
-instance FromJSON CategoryRelatedResponse where
+instance FromJSON RelatedThings where
     parseJSON = withObject "related category response" $ \o ->
-        o .: "results" >>= pure . Data.Vector.foldl' addOne blankRelatedCatResponse
+        o .: "results" >>= pure . Data.Vector.foldl' addOne blankRelatedThings
