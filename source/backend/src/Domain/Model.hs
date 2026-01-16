@@ -1,12 +1,15 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+
 module Domain.Model (
     Edge (..),
     GraphFragment (..),
     Node (..),
     NodeContent (..),
     NodeId,
-    PartEdge,
-    partEdgeFrom,
-    partEdgeTo,
+    PartEdgeFrom (..),
+    PartEdgeTo (..),
+    mkEdgeFrom,
+    mkEdgeTo,
     prettyPrintNodeId,
 )
 where
@@ -30,8 +33,8 @@ data NodeContent = NodeContent
 
 data GraphFragment = GraphFragment
     { content :: NodeContent
-    , outEdges :: S.Set PartEdge
-    , inEdges :: S.Set PartEdge
+    , outEdges :: S.Set PartEdgeTo
+    , inEdges :: S.Set PartEdgeFrom
     }
 
 data Node = Fail ClientError | Ok NodeContent deriving (Show)
@@ -43,10 +46,20 @@ data Edge = Edge
     }
     deriving (Eq, Ord, Show)
 
-type PartEdge = (NodeId, Text)
+data PartEdgeTo = PartEdgeTo
+    { to :: NodeId
+    , info :: Text
+    }
+    deriving (Eq, Ord)
 
-partEdgeFrom :: NodeId -> PartEdge -> Edge
-partEdgeFrom nidFrom (nidTo, txt) = Edge{from = nidFrom, to = nidTo, info = txt}
+data PartEdgeFrom = PartEdgeFrom
+    { from :: NodeId
+    , info :: Text
+    }
+    deriving (Eq, Ord)
 
-partEdgeTo :: NodeId -> PartEdge -> Edge
-partEdgeTo nidTo (nidFrom, txt) = Edge{from = nidFrom, to = nidTo, info = txt}
+mkEdgeFrom :: NodeId -> PartEdgeTo -> Edge
+mkEdgeFrom nidFrom PartEdgeTo{to = nidTo, info = txt} = Edge{from = nidFrom, to = nidTo, info = txt}
+
+mkEdgeTo :: NodeId -> PartEdgeFrom -> Edge
+mkEdgeTo nidTo PartEdgeFrom{from = nidFrom, info = txt} = Edge{from = nidFrom, to = nidTo, info = txt}

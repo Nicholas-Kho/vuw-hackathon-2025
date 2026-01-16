@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Cache.TVarGraphStore (Graph, sweepDeleted, showCache)
@@ -9,25 +10,20 @@ import qualified Control.Concurrent.STM.Map as M
 import Control.Exception
 import Control.Monad (forM, forM_)
 import Control.Monad.IO.Class (MonadIO (liftIO))
+import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.Text (unpack)
 import Domain.Model
 
 data Graph = Graph
     { nodes :: M.Map NodeId (TMVar Node)
-    , edgesFrom :: M.Map NodeId (S.Set PartEdge)
-    , edgesTo :: M.Map NodeId (S.Set PartEdge)
+    , -- Edges from KEY to VALUES
+      edgesFrom :: M.Map NodeId (S.Set PartEdgeTo)
+    , -- Edges to KEY from VALUES
+      edgesTo :: M.Map NodeId (S.Set PartEdgeFrom)
     , toDelete :: TVar (S.Set NodeId)
     , isLocked :: TVar Bool
     }
-
-insertPartEdge :: NodeId -> PartEdge -> M.Map NodeId (S.Set PartEdge) -> STM ()
-insertPartEdge nid pe emap = do
-    edgeSet <-
-        M.lookup nid emap >>= \case
-            Nothing -> pure $ S.singleton pe
-            Just s -> pure $ S.insert pe s
-    M.insert nid edgeSet emap
 
 waitForLock :: Graph -> STM ()
 waitForLock graph = do
@@ -46,11 +42,18 @@ instance GraphStore Graph where
     outgoingEdges graph nid =
         waitForLock graph >> M.lookup nid (edgesFrom graph) >>= \case
             Nothing -> pure Nothing
-            Just partialEdgeSet -> pure . Just $ S.map (partEdgeFrom nid) partialEdgeSet
+            Just partialEdgeSet -> pure . Just $ S.map (mkEdgeFrom nid) partialEdgeSet
     link graph edge = do
         waitForLock graph
-        insertPartEdge (from edge) (to edge, info edge) (edgesFrom graph)
-        insertPartEdge (to edge) (from edge, info edge) (edgesTo graph)
+        -- Set PartEdgeFrom
+        esTo <- fromMaybe S.empty <$> M.lookup (edge.to) (graph.edgesTo)
+        -- Set PartEdgeTo
+        esFrom <- fromMaybe S.empty <$> M.lookup (edge.from) (graph.edgesFrom)
+        let partTo = PartEdgeTo{to = edge.to, info = edge.info}
+        let partFrom = PartEdgeFrom{from = edge.from, info = edge.info}
+        M.insert edge.from (S.insert partTo esFrom) graph.edgesFrom
+        M.insert edge.to (S.insert partFrom esTo) graph.edgesTo
+
     readNode g nid = do
         waitForLock g
         M.lookup nid (nodes g) >>= \case
@@ -114,12 +117,12 @@ showCache g = do
         content <- liftIO . atomically . readTMVar $ promise
         pure (nid, content)
     -- convert our [(nodeId, Set PartEdge)] to [Edge]
-    let fullEdgesA = foldl' S.union S.empty $ (\(nidFrom, s) -> S.map (partEdgeFrom nidFrom) s) <$> partEdgesFrom
-    let fullEdgesB = foldl' S.union S.empty $ (\(nidTo, s) -> S.map (partEdgeFrom nidTo) s) <$> partEdgesTo
+    let fullEdgesA = foldl' S.union S.empty . map (\(fromId, pet) -> S.map (mkEdgeFrom fromId) pet) $ partEdgesFrom
+    let fullEdgesB = foldl' S.union S.empty . map (\(toId, pef) -> S.map (mkEdgeTo toId) pef) $ partEdgesTo
     let allEdges = fullEdgesA <> fullEdgesB
     liftIO . putStrLn $ "Nodes:"
     liftIO . forM_ nodeList $
         \(nid, node) -> putStrLn (prettyPrintNodeId nid <> " is " <> show node) >> putStrLn ""
     liftIO . putStrLn $ "Edges:"
     liftIO . forM_ allEdges $ \e ->
-        putStrLn (prettyPrintNodeId (from e) <> " -> " <> prettyPrintNodeId (to e) <> "(" <> (unpack . info $ e) <> ")")
+        putStrLn (prettyPrintNodeId (e.from) <> " -> " <> prettyPrintNodeId (e.to) <> "(" <> (unpack e.info) <> ")")

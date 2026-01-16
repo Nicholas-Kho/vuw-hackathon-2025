@@ -25,7 +25,7 @@ fetchReference ref key =
         PlaceR -> toFragment <$> getPlace (unId ref.eid) key
         notImplemented -> error $ (Prelude.show notImplemented) <> " is not implemented"
 
-outgoingEdgeConvert :: TePapa.Decode.Edge -> S.Set PartEdge
+outgoingEdgeConvert :: TePapa.Decode.Edge -> S.Set PartEdgeTo
 outgoingEdgeConvert
     TePapa.Decode.Edge
         { direction = d
@@ -33,15 +33,15 @@ outgoingEdgeConvert
         } =
         case d of
             TePapa.Decode.Incoming -> S.empty
-            TePapa.Decode.Outgoing -> S.map (\r -> (r, n)) (S.fromList rs)
+            TePapa.Decode.Outgoing -> S.map (\r -> PartEdgeTo{to = r, info = n}) (S.fromList rs)
 
 class Describable a where
     describe :: a -> Text
 
 class NodeLike a where
     getContent :: a -> NodeContent
-    getOutEdges :: a -> S.Set PartEdge
-    getInEdges :: a -> S.Set PartEdge
+    getOutEdges :: a -> S.Set PartEdgeTo
+    getInEdges :: a -> S.Set PartEdgeFrom
     toFragment :: a -> GraphFragment
     toFragment a =
         GraphFragment
@@ -63,7 +63,7 @@ nodeContentFromCommon a =
         , description = describe a
         }
 
-outEdgesFromCommon :: (HasField "com" a CommonFields) => a -> S.Set PartEdge
+outEdgesFromCommon :: (HasField "com" a CommonFields) => a -> S.Set PartEdgeTo
 outEdgesFromCommon a = Prelude.foldl' S.union S.empty (outgoingEdgeConvert <$> a.com.outgoing)
 
 instance Describable Person where

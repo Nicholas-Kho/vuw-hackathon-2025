@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Domain.Logic (
     DrunkardsWalkSettings (..),
     drunkardsWalk,
@@ -28,8 +30,8 @@ stitchFragment ::
     StoreM g ()
 stitchFragment g nid obligation frag = do
     fulfil obligation (Ok . content $ frag)
-    forM_ (outEdges frag) (link g . partEdgeFrom nid)
-    forM_ (inEdges frag) (link g . partEdgeTo nid)
+    forM_ (outEdges frag) (link g . mkEdgeFrom nid)
+    forM_ (inEdges frag) (link g . mkEdgeTo nid)
 
 fetchNode ::
     ( GraphStore g
@@ -113,7 +115,7 @@ fetchRandomNeighbor ::
     m (Maybe (NodeContent, NodeId))
 fetchRandomNeighbor triedSoFar liftSM graph nid = do
     edges <- liftSM $ fromMaybe S.empty <$> outgoingEdges graph nid
-    let candidates = (S.map to edges) `S.difference` triedSoFar
+    let candidates = (S.map (\e -> e.to) edges) `S.difference` triedSoFar
     case setToNE candidates of
         Nothing -> pure Nothing
         Just ne -> do
