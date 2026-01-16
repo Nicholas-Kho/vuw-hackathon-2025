@@ -11,8 +11,6 @@ module TePapa.Decode (
     Artefact (..),
     CommonFields (..),
     RelatedThings (..),
-    Edge (..),
-    EdgeDirection (..),
     Specimen (..),
     Organization (..),
     ObjectResponse (..),
@@ -79,14 +77,11 @@ data Association = Association
     }
     deriving (Show, Generic)
 
-data EdgeDirection = Incoming | Outgoing deriving (Show, Generic)
-data Edge = Edge {direction :: EdgeDirection, association :: Association} deriving (Show, Generic)
-
 data CommonFields = CommonFields
     { eid :: ExternalId
     , title :: Text
     , classLabel :: Text
-    , outgoing :: [Edge]
+    , outgoing :: [Association]
     }
     deriving (Show, Generic)
 
@@ -102,10 +97,8 @@ instance FromJSON CommonFields where
                     <*> (pure $ parseCommonOutgoingEdges o)
             )
 
-parseCommonOutgoingEdges :: Object -> [Edge]
-parseCommonOutgoingEdges = elems . mapMaybeWithKey (\k v -> parseMaybe (edgeParser k) v)
-  where
-    edgeParser k v = Edge Outgoing <$> associationParserHelper k v
+parseCommonOutgoingEdges :: Object -> [Association]
+parseCommonOutgoingEdges = elems . mapMaybeWithKey (\k v -> parseMaybe (associationParserHelper k) v)
 
 associationParserHelper :: Key -> Value -> Parser Association
 associationParserHelper k =
