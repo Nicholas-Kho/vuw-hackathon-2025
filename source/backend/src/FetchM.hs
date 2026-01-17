@@ -2,18 +2,20 @@ module FetchM (FetchM, fetch, runFetch) where
 
 import Control.Monad.Free
 
-data Fetch k v next
-    = WithLookup k (v -> next)
-    deriving (Functor)
+data Fetch req a where
+    WithReq :: req v -> (v -> a) -> Fetch req a
 
-type FetchM k v = Free (Fetch k v)
+instance Functor (Fetch req) where
+    fmap f (WithReq query mkOp) = WithReq query (f . mkOp)
 
-fetch :: k -> FetchM k v v
-fetch k = liftF (WithLookup k id)
+type FetchM req = Free (Fetch req)
 
-runFetch :: (Monad m) => (k -> m v) -> FetchM k v a -> m a
+fetch :: req a -> FetchM req a
+fetch r = liftF (WithReq r id)
+
+runFetch :: (Monad m) => (forall t. req t -> m t) -> FetchM req a -> m a
 runFetch _ (Pure a) = return a
-runFetch get (Free (WithLookup key mkNextComp)) = do
-    value <- get key
-    let nextComp = mkNextComp value
-    runFetch get nextComp
+runFetch runQuery (Free (WithReq query ansToNextComp)) = do
+    result <- runQuery query
+    let nextComp = ansToNextComp result
+    runFetch runQuery nextComp
