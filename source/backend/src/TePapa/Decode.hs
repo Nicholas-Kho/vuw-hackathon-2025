@@ -17,6 +17,7 @@ module TePapa.Decode (
     ObjectResponse (..),
     Place (..),
     TePapaReference (..),
+    Topic (..),
     MuseumResource (..),
     ExternalId (..),
     Geolocation (..),
@@ -330,3 +331,14 @@ data Category = Category
 instance FromJSON Category where
     parseJSON = withObject "a category" $ \o ->
         Category <$> parseJSON (Data.Aeson.Types.Object o)
+
+data Topic = Topic
+    { com :: CommonFields
+    , narrative :: Text
+    }
+
+instance FromJSON Topic where
+    parseJSON = withObject "a topic" $ \o ->
+        Topic
+            <$> parseJSON (Data.Aeson.Types.Object o)
+            <*> o .: "narrative"

@@ -6,6 +6,7 @@ module TePapa.CommonObject (
     fromCategory,
     fromObjectResponse,
     fromPlace,
+    fromTopic,
     getCommon,
 ) where
 
@@ -18,6 +19,7 @@ data TePapaThing
     | ASpecimen !Specimen
     | APlace !Place
     | ACategory !Category
+    | ATopic !Topic
 
 getCommon :: TePapaThing -> CommonFields
 getCommon t = case t of
@@ -27,6 +29,7 @@ getCommon t = case t of
     ASpecimen s -> s.com
     APlace p -> p.com
     ACategory c -> c.com
+    ATopic tp -> tp.com
 
 fromObjectResponse :: ObjectResponse -> TePapaThing
 fromObjectResponse resp =
@@ -45,3 +48,6 @@ fromPlace = APlace
 
 fromCategory :: Category -> TePapaThing
 fromCategory = ACategory
+
+fromTopic :: Topic -> TePapaThing
+fromTopic = ATopic
