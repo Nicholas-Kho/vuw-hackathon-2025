@@ -10,8 +10,10 @@ module TePapa.CommonObject (
     fromTopic,
     getCommon,
     getId,
+    prettyPrintThing,
 ) where
 
+import qualified Data.Text as T
 import TePapa.Decode
 
 data TePapaThing
@@ -22,6 +24,9 @@ data TePapaThing
     | APlace !Place
     | ACategory !Category
     | ATopic !Topic
+
+prettyPrintThing :: TePapaThing -> String
+prettyPrintThing thing = T.unpack (getCommon thing).title
 
 getCommon :: TePapaThing -> CommonFields
 getCommon t = case t of

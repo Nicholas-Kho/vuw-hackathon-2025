@@ -8,7 +8,8 @@ import Control.Monad.Reader (asks)
 import Domain.Model
 import Servant.Client
 import TePapa.Client
-import TePapa.Convert
+import TePapa.Decode (ExternalId (..), MuseumResource (..), TePapaReference (..))
+import TePapa.Traverse
 import Text.Read
 
 main :: IO ()
@@ -41,8 +42,8 @@ repl = do
             liftIO $ print res
             repl
         ObjectNeighs eid -> do
-            neighActions <- getNeighbors (NodeId (ObjectN, eid))
-            forM_ neighActions (liftIO . graphActionPrettyPrint)
+            neighActions <- fetchFromAPI $ getNeighs (TePapaReference{namespace = ObjectR, eid = ExternalId eid})
+            forM_ neighActions $ liftIO . putStrLn . prettyPrintDiscovery
             repl
 
 getUserAction :: IO UserAction

@@ -8,6 +8,7 @@ module TePapa.Traverse (
     getDirectNeighs,
     getNeighs,
     getNeighborsViaCats,
+    prettyPrintDiscovery,
 ) where
 
 import Control.Monad
@@ -16,7 +17,7 @@ import FetchM (FetchM, fetch, runFetch)
 import Servant.Client (ClientError)
 import TePapa.Client (ApiM (..), getAgent, getAgentRelated, getCategory, getConceptRelated, getObject, getObjectRelated, getPlace, getPlaceRelated, getTopic, getTopicRelated)
 import TePapa.CommonObject
-import TePapa.Decode (Association (..), CommonFields (..), ExternalId (..), MuseumResource (..), RelatedThings, TePapaReference (..))
+import TePapa.Decode (Association (..), CommonFields (..), ExternalId (..), MuseumResource (..), RelatedThings, TePapaReference (..), showTePapaReferenceNice)
 
 data CategoryInfo = CategoryInfo
     { catTitle :: T.Text
@@ -31,6 +32,19 @@ data Discovery
     = FoundThing TePapaReference TePapaThing
     | ErrorFetching TePapaReference ClientError
     | FoundLink TePapaReference TePapaReference EdgeReason
+
+prettyPrintEdgeReason :: EdgeReason -> String
+prettyPrintEdgeReason r =
+    case r of
+        Direct t -> "direct neighbors via " <> (T.unpack t)
+        ShareCategory cinf via -> "both " <> (T.unpack via) <> " " <> (T.unpack cinf.catTitle)
+
+prettyPrintDiscovery :: Discovery -> String
+prettyPrintDiscovery d =
+    case d of
+        ErrorFetching ref cerr -> showTePapaReferenceNice ref <> " FAILED: " <> show cerr
+        FoundThing ref thing -> showTePapaReferenceNice ref <> " OK: " <> prettyPrintThing thing
+        FoundLink ref1 ref2 why -> showTePapaReferenceNice ref1 <> " <-> " <> showTePapaReferenceNice ref2 <> " because " <> prettyPrintEdgeReason why
 
 data FetchReq a where
     GetId :: TePapaReference -> FetchReq (Either ClientError TePapaThing)
