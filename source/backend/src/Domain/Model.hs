@@ -13,6 +13,7 @@ module Domain.Model (
     mkEdgeTo,
     nodeIdToExternal,
     prettyPrintNodeId,
+    graphActionPrettyPrint,
 )
 where
 
@@ -54,6 +55,15 @@ data NodeContent = NodeContent
 
 data Node = Fail ClientError | Ok NodeContent deriving (Show)
 
+prettyPrintNode :: Node -> String
+prettyPrintNode (Fail cerr) = "FAIL: " <> (Prelude.show cerr)
+prettyPrintNode (Ok nc) =
+    "OK: "
+        <> (unpack . title $ nc)
+        <> ": "
+        <> (Prelude.take 15 . unpack . description $ nc)
+        <> (if (Data.Text.length . description $ nc) > 15 then "..." else "")
+
 data Edge = Edge
     { from :: NodeId
     , to :: NodeId
@@ -82,3 +92,15 @@ mkEdgeTo nidTo PartEdgeFrom{from = nidFrom, info = txt} = Edge{from = nidFrom, t
 data GraphAction
     = AddNode NodeId Node
     | AddEdge Edge
+    deriving (Show)
+
+graphActionPrettyPrint :: GraphAction -> IO ()
+graphActionPrettyPrint (AddNode nid n) =
+    putStrLn $ prettyPrintNodeId nid <> " ::= " <> prettyPrintNode n
+graphActionPrettyPrint (AddEdge Edge{from = fid, to = tid, info = inf}) =
+    putStrLn $
+        prettyPrintNodeId fid
+            <> " -> "
+            <> prettyPrintNodeId tid
+            <> " because "
+            <> unpack inf

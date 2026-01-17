@@ -72,6 +72,7 @@ common tepapa-client-deps
         , bytestring
         , containers
         , dotenv >= 0.7
+        , free
         , hashable
         , http-client
         , http-client-tls
@@ -96,6 +97,7 @@ library
         , Cache.Store
         , Domain.Model
         , Domain.Logic
+        , FetchM
         , MonadFulfil
         , MonadWait
         , TePapa.Client

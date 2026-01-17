@@ -2,10 +2,13 @@ module Main (main) where
 
 import App
 import Cache.TVarGraphStore (showCache)
+import Control.Monad (forM_)
 import Control.Monad.IO.Class
 import Control.Monad.Reader (asks)
+import Domain.Model
 import Servant.Client
 import TePapa.Client
+import TePapa.Convert
 import Text.Read
 
 main :: IO ()
@@ -37,6 +40,10 @@ repl = do
             res <- runReq $ getConceptRelated eid (Just 10)
             liftIO $ print res
             repl
+        ObjectNeighs eid -> do
+            neighActions <- getNeighbors (NodeId (ObjectN, eid))
+            forM_ neighActions (liftIO . graphActionPrettyPrint)
+            repl
 
 getUserAction :: IO UserAction
 getUserAction = do
@@ -59,6 +66,7 @@ mkAction action idRaw = do
         "agent" -> pure (AgentById idInt)
         "place" -> pure (PlaceById idInt)
         "catRelated" -> pure (CatRelated idInt)
+        "objectNeighs" -> pure (ObjectNeighs idInt)
         _ -> Nothing
 
 showRes :: (Show a) => Either ClientError a -> IO ()
@@ -71,5 +79,6 @@ data UserAction
     | AgentById Int
     | PlaceById Int
     | CatRelated Int
+    | ObjectNeighs Int
     | ShowCache
     | Quit
