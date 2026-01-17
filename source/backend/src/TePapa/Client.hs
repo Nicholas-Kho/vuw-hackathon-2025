@@ -3,6 +3,7 @@ module TePapa.Client (
     collectionsURL,
     getAgent,
     getAgentRelated,
+    getCategory,
     getConceptRelated,
     getObject,
     getObjectRelated,
@@ -32,6 +33,7 @@ tePapaApi = Proxy
 getObject :: Int -> ApiKey -> ClientM ObjectResponse
 getAgent :: Int -> ApiKey -> ClientM AgentResponse
 getPlace :: Int -> ApiKey -> ClientM Place
+getCategory :: Int -> ApiKey -> ClientM Category
 getObjectRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
 getAgentRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
 getPlaceRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
@@ -40,6 +42,7 @@ getTopicRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
 ( getObject
         :<|> getAgent
         :<|> getPlace
+        :<|> getCategory
         :<|> getObjectRelated
         :<|> getAgentRelated
         :<|> getPlaceRelated

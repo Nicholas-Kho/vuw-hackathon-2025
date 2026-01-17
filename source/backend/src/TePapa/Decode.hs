@@ -9,6 +9,7 @@ module TePapa.Decode (
     Association (..),
     Person (..),
     Artefact (..),
+    Category (..),
     CommonFields (..),
     RelatedThings (..),
     Specimen (..),
@@ -321,3 +322,11 @@ addOne acc v
 instance FromJSON RelatedThings where
     parseJSON = withObject "related category response" $ \o ->
         o .: "results" >>= pure . Data.Vector.foldl' addOne blankRelatedThings
+
+data Category = Category
+    { com :: CommonFields
+    }
+
+instance FromJSON Category where
+    parseJSON = withObject "a category" $ \o ->
+        Category <$> parseJSON (Data.Aeson.Types.Object o)
