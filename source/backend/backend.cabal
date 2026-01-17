@@ -102,8 +102,10 @@ library
         , MonadWait
         , TePapa.Client
         , TePapa.Convert
+        , TePapa.CommonObject
         , TePapa.Decode
         , TePapa.Env
+        , TePapa.Traverse
     build-depends:
         -- ...
     default-language: GHC2024
