@@ -73,7 +73,7 @@ showTePapaReferenceNice tref =
 
 data Association = Association
     { name :: Text
-    , pointsTo :: [TePapaReference]
+    , pointsTo :: [(TePapaReference, Text)]
     }
     deriving (Show, Generic)
 
@@ -110,14 +110,15 @@ associationParserHelper k =
                 <*> (Data.Traversable.traverse parseReferenceyObject (Data.Vector.toList a))
         )
 
-parseReferenceyObject :: Value -> Parser TePapaReference
+parseReferenceyObject :: Value -> Parser (TePapaReference, Text)
 parseReferenceyObject =
     withObject
         "Referencey object"
-        ( \o ->
-            TePapaReference
-                <$> (o .: "type" >>= classLabelToResource)
-                <*> o .: "id"
+        ( \o -> do
+            typ <- o .: "type" >>= classLabelToResource
+            eid <- o .: "id"
+            linkTitle <- o .: "title"
+            pure $ (TePapaReference typ eid, linkTitle)
         )
 
 classLabelToResource :: Text -> Parser MuseumResource

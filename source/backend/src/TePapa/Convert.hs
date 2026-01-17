@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TePapa.Convert () where
+module TePapa.Convert (getNeighbors) where
 
+import Control.Monad (forM)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Domain.Model
@@ -22,6 +23,9 @@ fetchRelated NodeId{unNodeId = (ns, x)} =
         AgentN -> runReq $ getAgentRelated x (Just maxFetchAmount)
         PlaceN -> runReq $ getPlaceRelated x (Just maxFetchAmount)
 
+getNeighbors :: (ApiM m) => NodeId -> m [GraphAction]
+getNeighbors nid = (<>) <$> (getNeighborsViaRelated nid) <*> (getNeighborsViaCats nid)
+
 getNeighborsViaRelated :: (ApiM m) => NodeId -> m [GraphAction]
 getNeighborsViaRelated nid = do
     fetchRelated nid >>= \case
@@ -33,12 +37,11 @@ getNeighborsViaRelated nid = do
                     , AddEdge <$> relatedThingsToEdges nid rel
                     ]
 
-type OutgoingCat = (T.Text, Int)
+type OutgoingCat = (T.Text, TePapaReference, T.Text)
 
 assocToOutgoingCats :: Association -> [OutgoingCat]
 assocToOutgoingCats a =
-    map (\r -> (a.name, unId r.eid)) $
-        filter (\r -> r.namespace == ConceptR) a.pointsTo
+    map (\(ref, t) -> (a.name, ref, t)) $ filter (\(ref, _) -> ref.namespace == ConceptR) a.pointsTo
 
 getNeighborsViaCats :: (ApiM m) => NodeId -> m [GraphAction]
 getNeighborsViaCats nid@NodeId{unNodeId = (namespace, eid)} =
@@ -50,7 +53,49 @@ getNeighborsViaCats nid@NodeId{unNodeId = (namespace, eid)} =
             Left cerr -> pure [AddNode nid (Fail cerr)]
             Right assocs -> do
                 let outCats = concatMap assocToOutgoingCats assocs
-                error "todo"
+                concat <$> forM outCats (neighborsFromCat nid)
+
+neighborsFromCat :: (ApiM m) => NodeId -> OutgoingCat -> m [GraphAction]
+neighborsFromCat nid (relatedHow, catId, catTitle) = do
+    (runReq $ getConceptRelated (unId catId.eid) (Just maxFetchAmount)) >>= \case
+        Left _ -> pure []
+        Right
+            RelatedThings
+                { relatedSpecimens = rs
+                , relatedPlaces = rp
+                , relatedPeople = rppl
+                , relatedOrgs = ro
+                , relatedArtefacts = ra
+                } -> do
+                pure . concat $
+                    [ mkActions rs
+                    , mkActions rp
+                    , mkActions rppl
+                    , mkActions ro
+                    , mkActions ra
+                    ]
+  where
+    mkActions :: (HasField "com" r CommonFields, NodeLike r) => [r] -> [GraphAction]
+    mkActions xs = concat (sameRelations <$> xs)
+    sameRelations :: (HasField "com" r CommonFields, NodeLike r) => r -> [GraphAction]
+    sameRelations r =
+        if any (\a -> a.name == relatedHow && catId `elem` (fst <$> a.pointsTo)) r.com.outgoing
+            then
+                [ AddNode (mkId r) (Ok $ getContent r)
+                , AddEdge
+                    Edge
+                        { to = nid
+                        , info = "Both " <> relatedHow <> " " <> catTitle
+                        , from = mkId r
+                        }
+                , AddEdge
+                    Edge
+                        { to = mkId r
+                        , info = "Both " <> relatedHow <> " " <> catTitle
+                        , from = nid
+                        }
+                ]
+            else []
 
 outgoingFromObjectResponse :: ObjectResponse -> [Association]
 outgoingFromObjectResponse res = case res of
@@ -106,7 +151,7 @@ relatedThingsToEdges
 relatedToHow :: (HasField "com" r CommonFields, NodeLike r) => r -> NodeId -> [Edge]
 relatedToHow thing target =
     map (\a -> Edge{to = target, info = a.name, from = mkId thing}) $
-        filter (\a -> (nodeIdToExternal target) `elem` a.pointsTo) thing.com.outgoing
+        filter (\a -> (nodeIdToExternal target) `elem` (fst <$> a.pointsTo)) thing.com.outgoing
 
 class Describable a where
     describe :: a -> T.Text
