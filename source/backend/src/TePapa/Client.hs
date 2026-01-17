@@ -9,6 +9,7 @@ module TePapa.Client (
     getObjectRelated,
     getPlace,
     getPlaceRelated,
+    getTopic,
     getTopicRelated,
 ) where
 
@@ -34,6 +35,7 @@ getObject :: Int -> ApiKey -> ClientM ObjectResponse
 getAgent :: Int -> ApiKey -> ClientM AgentResponse
 getPlace :: Int -> ApiKey -> ClientM Place
 getCategory :: Int -> ApiKey -> ClientM Category
+getTopic :: Int -> ApiKey -> ClientM Topic
 getObjectRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
 getAgentRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
 getPlaceRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
@@ -43,6 +45,7 @@ getTopicRelated :: Int -> Maybe Int -> ApiKey -> ClientM RelatedThings
         :<|> getAgent
         :<|> getPlace
         :<|> getCategory
+        :<|> getTopic
         :<|> getObjectRelated
         :<|> getAgentRelated
         :<|> getPlaceRelated

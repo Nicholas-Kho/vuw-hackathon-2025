@@ -37,6 +37,7 @@ type TePapaApi =
         :<|> ById "agent" AgentResponse
         :<|> ById "place" Place
         :<|> ById "category" Category
+        :<|> ById "topic" Topic
         :<|> RelatedApi 'ObjectR
         :<|> RelatedApi 'AgentR
         :<|> RelatedApi 'PlaceR
