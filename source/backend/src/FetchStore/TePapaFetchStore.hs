@@ -18,8 +18,6 @@ data Store = Store
 
 instance FetchStore FetchReq Store where
     type StoreM Store = STM
-    type WaitType Store = TMVar
-    type ObligationType Store = TMVar
     claimFetch store req =
         case req of
             GetId tref -> claimFetchGetId store tref
