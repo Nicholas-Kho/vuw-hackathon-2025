@@ -98,6 +98,8 @@ library
         , Domain.Model
         , Domain.Logic
         , FetchM
+        , FetchStore.Interface
+        , FetchStore.TePapaFetchStore
         , MonadFulfil
         , MonadWait
         , TePapa.Client
