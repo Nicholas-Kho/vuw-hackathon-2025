@@ -6,7 +6,7 @@ import Control.Concurrent
 import Control.Monad (forM_)
 import Control.Monad.IO.Class
 import Control.Monad.Reader (MonadReader (ask), asks)
-import FetchM (runFetchConc)
+import FetchM (runFetch, runFetchConc)
 import FetchStore.TePapaFetchStore
 import GHC.Conc
 import Servant.Client
@@ -44,7 +44,7 @@ repl = do
             res <- runReq $ getConceptRelated eid (Just 10)
             liftIO $ print res
             repl
-        ObjectNeighs eid -> do
+        ObjectNeighs eid True -> do
             ncap <- liftIO $ getNumCapabilities
             liftIO . putStrLn $ "Running with " <> (show ncap) <> "capabilities"
             qsem <- liftIO $ newQSem 8
@@ -52,6 +52,10 @@ repl = do
             env <- ask
             let fetchComp = getNeighs (TePapaReference{namespace = ObjectR, eid = ExternalId eid})
             neighActions <- liftIO $ runFetchConc qsem atomically (doQueryIO env) fetchStore fetchComp
+            forM_ neighActions $ liftIO . putStrLn . prettyPrintDiscovery
+            repl
+        ObjectNeighs eid False -> do
+            neighActions <- runFetch (doQuery) (getNeighs (TePapaReference{namespace = ObjectR, eid = ExternalId eid}))
             forM_ neighActions $ liftIO . putStrLn . prettyPrintDiscovery
             repl
 
@@ -79,7 +83,8 @@ mkAction action idRaw = do
         "agent" -> pure (AgentById idInt)
         "place" -> pure (PlaceById idInt)
         "catRelated" -> pure (CatRelated idInt)
-        "objectNeighs" -> pure (ObjectNeighs idInt)
+        "objectNeighs" -> pure (ObjectNeighs idInt True)
+        "objectNeighsSeq" -> pure (ObjectNeighs idInt False)
         _ -> Nothing
 
 showRes :: (Show a) => Either ClientError a -> IO ()
@@ -92,6 +97,6 @@ data UserAction
     | AgentById Int
     | PlaceById Int
     | CatRelated Int
-    | ObjectNeighs Int
+    | ObjectNeighs Int Bool
     | ShowCache
     | Quit
