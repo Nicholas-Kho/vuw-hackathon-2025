@@ -98,6 +98,7 @@ library
         , Cache.Store
         , Domain.Model
         , Domain.Logic
+        , Domain.Server
         , FetchM
         , FetchStore.Interface
         , FetchStore.TePapaFetchStore
