@@ -4,6 +4,8 @@ module TePapa.Traverse (
     CategoryInfo (..),
     Discovery (..),
     EdgeReason (..),
+    FetchReq (..),
+    doQuery,
     fetchFromAPI,
     getDirectNeighs,
     getNeighs,
@@ -13,7 +15,7 @@ module TePapa.Traverse (
 
 import Control.Monad
 import qualified Data.Text as T
-import FetchM (FetchM, fetch, runFetch)
+import FetchM (FetchM, fetch, fork, runFetch)
 import Servant.Client (ClientError)
 import TePapa.Client (ApiM (..), getAgent, getAgentRelated, getCategory, getConceptRelated, getObject, getObjectRelated, getPlace, getPlaceRelated, getTopic, getTopicRelated)
 import TePapa.CommonObject
@@ -52,6 +54,9 @@ data FetchReq a where
 
 type TFetch a = FetchM FetchReq a
 
+forMFork :: [a] -> (a -> TFetch b) -> TFetch [b]
+forMFork xs f = fork (f <$> xs)
+
 getNeighs :: TePapaReference -> TFetch [Discovery]
 getNeighs ofId = (<>) <$> getDirectNeighs ofId <*> getNeighborsViaCats ofId
 
@@ -62,7 +67,7 @@ getDirectNeighs ofId = do
     outgoing <- fmap (outgoing . getCommon) <$> fetch (GetId ofId)
     case outgoing of
         Left cerr -> pure [ErrorFetching ofId cerr]
-        Right assocs -> concat <$> forM assocs (directNeighsFromAssoc ofId)
+        Right assocs -> concat <$> forMFork assocs (directNeighsFromAssoc ofId)
 
 directNeighsFromAssoc ::
     TePapaReference ->
@@ -75,7 +80,7 @@ directNeighsFromAssoc comingFrom assoc = do
                     FoundLink comingFrom toId (Direct assoc.name)
                 )
                 assoc.pointsTo
-    newNodes <- forM assoc.pointsTo (\(toId, _) -> responseToDiscovery toId <$> fetch (GetId toId))
+    newNodes <- forMFork assoc.pointsTo (\(toId, _) -> responseToDiscovery toId <$> fetch (GetId toId))
     pure $ links <> newNodes
 
 responseToDiscovery :: TePapaReference -> Either ClientError TePapaThing -> Discovery
@@ -91,7 +96,7 @@ getNeighborsViaCats fromId =
         Right thing -> do
             let assocsPointingToCats = map (\a -> a{pointsTo = filter (\(r, _) -> r.namespace == ConceptR) a.pointsTo}) (getCommon thing).outgoing
             let relatedCats = concatMap (\a -> map (\(r, t) -> (a.name, CategoryInfo{catTitle = t, catId = unId r.eid})) a.pointsTo) assocsPointingToCats
-            concat <$> (forM relatedCats $ \(relatedHow, catInfo) -> neighsViaRelatedCat fromId relatedHow catInfo)
+            concat <$> (forMFork relatedCats $ \(relatedHow, catInfo) -> neighsViaRelatedCat fromId relatedHow catInfo)
 
 neighsViaRelatedCat :: TePapaReference -> T.Text -> CategoryInfo -> TFetch [Discovery]
 neighsViaRelatedCat comingFrom comingFromWhy catInfo = do
