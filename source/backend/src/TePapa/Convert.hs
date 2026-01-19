@@ -1,13 +1,61 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TePapa.Convert () where
+module TePapa.Convert (
+    GraphAction (..),
+    discoveryToAction,
+    graphActionPrettyPrint,
+) where
 
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Domain.Model
 import GHC.Records (HasField)
+import TePapa.CommonObject
 import TePapa.Decode
+import TePapa.Traverse
+
+data GraphAction
+    = AddNode NodeId Node
+    | AddEdge Edge
+    deriving (Show)
+
+graphActionPrettyPrint :: GraphAction -> IO ()
+graphActionPrettyPrint (AddNode nid n) =
+    putStrLn $ prettyPrintNodeId nid <> " ::= " <> prettyPrintNode n
+graphActionPrettyPrint (AddEdge Edge{from = fid, to = tid, info = inf}) =
+    putStrLn $
+        prettyPrintNodeId fid
+            <> " -> "
+            <> prettyPrintNodeId tid
+            <> " because "
+            <> T.unpack inf
+
+discoveryToAction :: Discovery -> [GraphAction]
+discoveryToAction d =
+    case d of
+        FoundThing _ tthing ->
+            maybe [] (\(nid, ncon) -> [AddNode nid (Ok ncon)]) (tePapaThingToNode tthing)
+        ErrorFetching tref cerr ->
+            maybe [] (\nid -> [AddNode nid (Fail cerr)]) (trefToNodeId tref)
+        FoundLink fromTref toTref why ->
+            case Edge
+                <$> (trefToNodeId fromTref)
+                <*> (trefToNodeId toTref)
+                <*> (pure $ edgeReasonToTxt why) of
+                Nothing -> []
+                Just e -> [AddEdge e, AddEdge (flipEdge e)]
+
+flipEdge :: Edge -> Edge
+flipEdge Edge{to = tid, info = inf, from = fid} =
+    Edge{to = fid, info = inf, from = tid}
+
+edgeReasonToTxt :: EdgeReason -> T.Text
+edgeReasonToTxt r =
+    case r of
+        Direct relationName -> "Directly related via " <> relationName
+        ShareCategory CategoryInfo{catTitle = catName, catId = _} relatedHow ->
+            "Both " <> relatedHow <> " " <> catName
 
 class Describable a where
     describe :: a -> T.Text
@@ -90,3 +138,23 @@ instance NodeLike AgentResponse where
     getContent (Org o) = getContent o
     mkId (Prs p) = NodeId{unNodeId = (PlaceN, unId p.com.eid)}
     mkId (Org o) = NodeId{unNodeId = (PlaceN, unId o.com.eid)}
+
+tePapaThingToNode :: TePapaThing -> Maybe (NodeId, NodeContent)
+tePapaThingToNode thing =
+    case thing of
+        APerson p -> Just (mkId p, getContent p)
+        AnOrg o -> Just (mkId o, getContent o)
+        AnArtefact a -> Just (mkId a, getContent a)
+        ASpecimen s -> Just (mkId s, getContent s)
+        APlace p -> Just (mkId p, getContent p)
+        ATopic _ -> Nothing
+        ACategory _ -> Nothing
+
+trefToNodeId :: TePapaReference -> Maybe NodeId
+trefToNodeId tref =
+    case tref.namespace of
+        ObjectR -> Just $ NodeId{unNodeId = (ObjectN, unId tref.eid)}
+        AgentR -> Just $ NodeId{unNodeId = (AgentN, unId tref.eid)}
+        PlaceR -> Just $ NodeId{unNodeId = (PlaceN, unId tref.eid)}
+        ConceptR -> Nothing
+        TopicR -> Nothing

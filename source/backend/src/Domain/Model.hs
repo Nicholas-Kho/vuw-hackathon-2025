@@ -1,8 +1,9 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Domain.Model (
     Edge (..),
-    GraphAction (..),
     Node (..),
     NodeContent (..),
     NodeId (..),
@@ -12,11 +13,12 @@ module Domain.Model (
     mkEdgeFrom,
     mkEdgeTo,
     nodeIdToExternal,
+    prettyPrintNode,
     prettyPrintNodeId,
-    graphActionPrettyPrint,
 )
 where
 
+import Data.Aeson
 import Data.Hashable
 import Data.Text
 import GHC.Generics
@@ -27,7 +29,7 @@ data NodeType
     = ObjectN
     | AgentN
     | PlaceN
-    deriving (Eq, Ord, Show, Generic)
+    deriving (Eq, Ord, Show, Generic, ToJSON, FromJSON)
 
 instance Hashable NodeType
 
@@ -51,7 +53,7 @@ data NodeContent = NodeContent
     , description :: Text
     , thumbnailUrl :: Maybe Text
     }
-    deriving (Show)
+    deriving (Show, Generic, ToJSON)
 
 data Node = Fail ClientError | Ok NodeContent deriving (Show)
 
@@ -69,7 +71,7 @@ data Edge = Edge
     , to :: NodeId
     , info :: Text
     }
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Generic, ToJSON)
 
 data PartEdgeTo = PartEdgeTo
     { to :: NodeId
@@ -89,18 +91,5 @@ mkEdgeFrom nidFrom PartEdgeTo{to = nidTo, info = txt} = Edge{from = nidFrom, to 
 mkEdgeTo :: NodeId -> PartEdgeFrom -> Edge
 mkEdgeTo nidTo PartEdgeFrom{from = nidFrom, info = txt} = Edge{from = nidFrom, to = nidTo, info = txt}
 
-data GraphAction
-    = AddNode NodeId Node
-    | AddEdge Edge
-    deriving (Show)
-
-graphActionPrettyPrint :: GraphAction -> IO ()
-graphActionPrettyPrint (AddNode nid n) =
-    putStrLn $ prettyPrintNodeId nid <> " ::= " <> prettyPrintNode n
-graphActionPrettyPrint (AddEdge Edge{from = fid, to = tid, info = inf}) =
-    putStrLn $
-        prettyPrintNodeId fid
-            <> " -> "
-            <> prettyPrintNodeId tid
-            <> " because "
-            <> unpack inf
+instance FromJSON NodeId
+instance ToJSON NodeId

@@ -11,9 +11,10 @@ where
 
 import Data.Kind
 import Data.Set
-import Domain.Model (Edge (..), GraphAction (..), Node (..), NodeId)
+import Domain.Model (Edge (..), Node (..), NodeId)
 import MonadFulfil
 import MonadWait
+import TePapa.Convert (GraphAction (..))
 
 data FetchResult w o
     = AlreadyThere Node
