@@ -1,4 +1,6 @@
 module Main where
 
+import Domain.Server (runApp)
+
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = runApp

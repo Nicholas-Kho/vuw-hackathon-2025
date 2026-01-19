@@ -1,4 +1,9 @@
-module TePapa.Env (getApiKey, getSemaphore, loadDotEnv) where
+module TePapa.Env (
+    getApiKey,
+    getPort,
+    getSemaphore,
+    loadDotEnv,
+) where
 
 import qualified Configuration.Dotenv as Dotenv
 import Control.Concurrent (QSem, newQSem)
@@ -27,3 +32,15 @@ getSemaphore =
             case readMaybe @Int x of
                 Nothing -> newQSem 8
                 Just k -> newQSem k
+
+getPort :: IO Int
+getPort = do
+    lookupEnv "PORT" >>= \case
+        Nothing -> pure 8080
+        Just rawPort ->
+            case readMaybe @Int rawPort of
+                Nothing -> pure 8080
+                Just k ->
+                    if k <= 2048
+                        then error "Please pick a port number above 2048."
+                        else pure k

@@ -86,6 +86,7 @@ common tepapa-client-deps
         , text
         , ttrie
         , vector
+        , warp
 
 library
     import: warnings, base-deps, tepapa-client-deps, dohie, default-exts
