@@ -4,6 +4,7 @@ module Api.Backend (
     BackendApi,
     ClientGraphAction (..),
     InitialGameState (..),
+    ExpandParams (..),
 ) where
 
 import Data.Aeson
