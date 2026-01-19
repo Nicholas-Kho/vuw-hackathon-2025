@@ -24,9 +24,9 @@ data AppEnv = AppEnv
     }
 
 newtype AppM a = AppM
-    { unAppM :: RandT StdGen (ReaderT AppEnv IO) a
+    { unAppM :: ReaderT AppEnv IO a
     }
-    deriving (Functor, Applicative, Monad, MonadIO, MonadReader AppEnv, MonadRandom)
+    deriving (Functor, Applicative, Monad, MonadIO, MonadReader AppEnv)
 
 instance ApiM AppM where
     runReq needsKey = do
@@ -47,6 +47,4 @@ getInitialEnv = do
     pure $ AppEnv{graph = initialGraph, apiKey = ApiKey key, clientEnv = env}
 
 runAppM :: AppM a -> AppEnv -> IO a
-runAppM action env = do
-    gen <- newStdGen
-    runReaderT (evalRandT (unAppM action) gen) env
+runAppM action env = runReaderT (unAppM action) env
