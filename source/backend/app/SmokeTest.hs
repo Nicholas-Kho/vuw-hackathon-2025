@@ -2,10 +2,13 @@ module Main (main) where
 
 import App
 import Cache.TVarGraphStore (showCache)
+import Control.Concurrent
 import Control.Monad (forM_)
 import Control.Monad.IO.Class
-import Control.Monad.Reader (asks)
-import Domain.Model
+import Control.Monad.Reader (MonadReader (ask), asks)
+import FetchM (runFetchConc)
+import FetchStore.TePapaFetchStore
+import GHC.Conc
 import Servant.Client
 import TePapa.Client
 import TePapa.Decode (ExternalId (..), MuseumResource (..), TePapaReference (..))
@@ -42,9 +45,18 @@ repl = do
             liftIO $ print res
             repl
         ObjectNeighs eid -> do
-            neighActions <- fetchFromAPI $ getNeighs (TePapaReference{namespace = ObjectR, eid = ExternalId eid})
+            ncap <- liftIO $ getNumCapabilities
+            liftIO . putStrLn $ "Running with " <> (show ncap) <> "capabilities"
+            qsem <- liftIO $ newQSem 8
+            fetchStore <- liftIO . atomically $ emptyStore
+            env <- ask
+            let fetchComp = getNeighs (TePapaReference{namespace = ObjectR, eid = ExternalId eid})
+            neighActions <- liftIO $ runFetchConc qsem atomically (doQueryIO env) fetchStore fetchComp
             forM_ neighActions $ liftIO . putStrLn . prettyPrintDiscovery
             repl
+
+doQueryIO :: AppEnv -> FetchReq a -> IO a
+doQueryIO appEnv req = (doQuery req) `runAppM` appEnv
 
 getUserAction :: IO UserAction
 getUserAction = do

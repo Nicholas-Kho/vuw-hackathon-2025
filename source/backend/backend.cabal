@@ -69,6 +69,7 @@ common default-exts
 common tepapa-client-deps
     build-depends:
         aeson
+        , async
         , bytestring
         , containers
         , dotenv >= 0.7
@@ -146,3 +147,7 @@ executable smoke-test
         servant-client,
         text,
     default-language: GHC2024
+    ghc-options:
+        -threaded
+        -O3
+        -with-rtsopts=-N
