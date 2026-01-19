@@ -9,8 +9,10 @@ where
 import Api.TePapa
 import Cache.Interface
 import Cache.TVarGraphStore
+import Control.Concurrent (QSem)
 import Control.Monad.Random.Strict
 import Control.Monad.Reader
+import FetchStore.TePapaFetchStore
 import GHC.Conc
 import Network.HTTP.Client.TLS
 import Servant.Client
@@ -19,8 +21,10 @@ import TePapa.Env
 
 data AppEnv = AppEnv
     { graph :: Graph
+    , fetchStore :: Store
     , apiKey :: ApiKey
     , clientEnv :: ClientEnv
+    , semaphore :: QSem
     }
 
 newtype AppM a = AppM
@@ -41,10 +45,20 @@ getClientEnv = do
 
 getInitialEnv :: IO AppEnv
 getInitialEnv = do
+    loadDotEnv
     key <- getApiKey
     initialGraph <- atomically blankGraph
+    initialFetchStore <- atomically emptyStore
     env <- getClientEnv
-    pure $ AppEnv{graph = initialGraph, apiKey = ApiKey key, clientEnv = env}
+    sem <- getSemaphore
+    pure $
+        AppEnv
+            { graph = initialGraph
+            , apiKey = ApiKey key
+            , clientEnv = env
+            , semaphore = sem
+            , fetchStore = initialFetchStore
+            }
 
 runAppM :: AppM a -> AppEnv -> IO a
 runAppM action env = runReaderT (unAppM action) env

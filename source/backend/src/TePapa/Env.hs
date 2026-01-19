@@ -1,8 +1,10 @@
-module TePapa.Env (getApiKey) where
+module TePapa.Env (getApiKey, getSemaphore, loadDotEnv) where
 
 import qualified Configuration.Dotenv as Dotenv
+import Control.Concurrent (QSem, newQSem)
 import Data.Text
 import System.Environment
+import Text.Read (readMaybe)
 
 expectKey :: Maybe String -> String
 expectKey (Just key) = key
@@ -11,6 +13,17 @@ expectKey Nothing =
         "The environment variable 'API_KEY' doesn't exist. Make sure you have a .env file with this variable!"
 
 getApiKey :: IO Text
-getApiKey = do
-    Dotenv.loadFile Dotenv.defaultConfig
+getApiKey =
     pack . expectKey <$> lookupEnv "API_KEY"
+
+loadDotEnv :: IO ()
+loadDotEnv = Dotenv.loadFile Dotenv.defaultConfig
+
+getSemaphore :: IO QSem
+getSemaphore =
+    lookupEnv "MAX_CONCURRENT_HTTP" >>= \case
+        Nothing -> newQSem 8
+        Just x ->
+            case readMaybe @Int x of
+                Nothing -> newQSem 8
+                Just k -> newQSem k
