@@ -11,11 +11,10 @@ import Data.Aeson
 import Domain.Model
 import GHC.Generics
 import Servant.API
-import TePapa.Convert (GraphAction)
 
 type BackendApi =
     "start" :> Get '[JSON] InitialGameState
-        :<|> "expand" :> ReqBody '[JSON] ExpandParams :> Post '[JSON] [GraphAction]
+        :<|> "expand" :> ReqBody '[JSON] ExpandParams :> Post '[JSON] [ClientGraphAction]
 
 data ClientGraphAction
     = AddNode NodeId NodeContent
