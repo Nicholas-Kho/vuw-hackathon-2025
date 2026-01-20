@@ -21,6 +21,7 @@ data Graph = Graph
       edgesFrom :: M.Map NodeId (S.Set PartEdgeTo)
     , -- Edges to KEY from VALUES
       edgesTo :: M.Map NodeId (S.Set PartEdgeFrom)
+    , keys :: TVar (S.Set NodeId)
     , toDelete :: TVar (S.Set NodeId)
     , isLocked :: TVar Bool
     }
@@ -38,7 +39,9 @@ instance GraphStore Graph where
             <*> M.empty
             <*> M.empty
             <*> newTVar S.empty
+            <*> newTVar S.empty
             <*> newTVar False
+    listKeys = readTVar . keys
     outgoingEdges graph nid =
         waitForLock graph >> M.lookup nid (edgesFrom graph) >>= \case
             Nothing -> pure Nothing
@@ -72,10 +75,12 @@ instance GraphStore Graph where
             Nothing -> do
                 obligation <- newEmptyTMVar
                 M.insert nid obligation (nodes g)
+                modifyTVar' (keys g) (S.insert nid)
                 pure (Proceed obligation)
     deleteNode g nid = do
         waitForLock g
         modifyTVar' (toDelete g) (S.insert nid)
+        modifyTVar' (keys g) (S.delete nid)
         res <-
             M.lookup nid (nodes g) >>= \case
                 Nothing -> pure Missing

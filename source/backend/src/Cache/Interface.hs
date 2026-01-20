@@ -36,6 +36,7 @@ class (Monad (StoreM g)) => GraphStore g where
     readNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
     deleteNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
     claimFetch :: g -> NodeId -> StoreM g (FetchResult (Wait (StoreM g)) (NodeObligation g))
+    listKeys :: g -> StoreM g (Set NodeId)
 
 runAction ::
     ( GraphStore g
