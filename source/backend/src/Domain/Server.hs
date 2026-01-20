@@ -3,13 +3,20 @@ module Domain.Server (runApp) where
 import Api.Backend
 import App
 import Control.Monad.Except (ExceptT (..))
+import Control.Monad.Random.Strict
 import Network.Wai.Handler.Warp (run)
 import Servant
 import TePapa.Convert (GraphAction)
 import TePapa.Env (getPort, loadDotEnv)
 
-nt :: AppEnv -> AppM a -> Handler a
-nt env appAction = Handler . ExceptT $ (Right <$> runAppM appAction env)
+type RAppM = RandT StdGen AppM
+
+-- TODO: Make this more readable, and catch errors thrown in AppM so they
+-- don't crash the server thread.
+nt :: AppEnv -> RAppM a -> Handler a
+nt env appAction = do
+    gen <- newStdGen
+    Handler . ExceptT $ Right <$> (evalRandT appAction gen) `runAppM` env
 
 app :: AppEnv -> Application
 app appEnv =
@@ -24,11 +31,11 @@ runApp = do
     putStrLn $ "Listening on port " <> (show port)
     run port (app appEnv)
 
-server :: ServerT BackendApi AppM
+server :: ServerT BackendApi RAppM
 server = serveStart :<|> serveExpand
 
-serveExpand :: ExpandParams -> AppM [GraphAction]
+serveExpand :: ExpandParams -> RAppM [GraphAction]
 serveExpand params = error "todo"
 
-serveStart :: AppM InitialGameState
+serveStart :: RAppM InitialGameState
 serveStart = error "todo"
