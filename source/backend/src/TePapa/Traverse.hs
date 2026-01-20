@@ -13,7 +13,6 @@ module TePapa.Traverse (
     prettyPrintDiscovery,
 ) where
 
-import Control.Monad
 import qualified Data.Text as T
 import FetchM (FetchM, fetch, fork, runFetch)
 import Servant.Client (ClientError)

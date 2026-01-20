@@ -5,6 +5,7 @@ import App
 import Control.Monad.Except (ExceptT (..))
 import Network.Wai.Handler.Warp (run)
 import Servant
+import TePapa.Convert (GraphAction)
 import TePapa.Env (getPort, loadDotEnv)
 
 nt :: AppEnv -> AppM a -> Handler a
@@ -26,7 +27,7 @@ runApp = do
 server :: ServerT BackendApi AppM
 server = serveStart :<|> serveExpand
 
-serveExpand :: ExpandParams -> AppM [ClientGraphAction]
+serveExpand :: ExpandParams -> AppM [GraphAction]
 serveExpand params = error "todo"
 
 serveStart :: AppM InitialGameState

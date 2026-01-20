@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -7,9 +8,11 @@ module TePapa.Convert (
     graphActionPrettyPrint,
 ) where
 
+import Data.Aeson
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Domain.Model
+import GHC.Generics
 import GHC.Records (HasField)
 import TePapa.CommonObject
 import TePapa.Decode
@@ -18,7 +21,7 @@ import TePapa.Traverse
 data GraphAction
     = AddNode NodeId Node
     | AddEdge Edge
-    deriving (Show)
+    deriving (Show, Generic, ToJSON)
 
 graphActionPrettyPrint :: GraphAction -> IO ()
 graphActionPrettyPrint (AddNode nid n) =
@@ -35,9 +38,8 @@ discoveryToAction :: Discovery -> [GraphAction]
 discoveryToAction d =
     case d of
         FoundThing _ tthing ->
-            maybe [] (\(nid, ncon) -> [AddNode nid (Ok ncon)]) (tePapaThingToNode tthing)
-        ErrorFetching tref cerr ->
-            maybe [] (\nid -> [AddNode nid (Fail cerr)]) (trefToNodeId tref)
+            maybe [] (\(nid, ncon) -> [AddNode nid ncon]) (tePapaThingToNode tthing)
+        ErrorFetching _ _ -> []
         FoundLink fromTref toTref why ->
             case Edge
                 <$> (trefToNodeId fromTref)
@@ -61,7 +63,7 @@ class Describable a where
     describe :: a -> T.Text
 
 class NodeLike a where
-    getContent :: a -> NodeContent
+    getContent :: a -> Node
     mkId :: a -> NodeId
 
 nodeContentFromCommon ::
@@ -69,9 +71,9 @@ nodeContentFromCommon ::
     , Describable a
     ) =>
     a ->
-    NodeContent
+    Node
 nodeContentFromCommon a =
-    NodeContent
+    Node
         { title = a.com.title
         , thumbnailUrl = Nothing
         , description = describe a
@@ -139,7 +141,7 @@ instance NodeLike AgentResponse where
     mkId (Prs p) = NodeId{unNodeId = (PlaceN, unId p.com.eid)}
     mkId (Org o) = NodeId{unNodeId = (PlaceN, unId o.com.eid)}
 
-tePapaThingToNode :: TePapaThing -> Maybe (NodeId, NodeContent)
+tePapaThingToNode :: TePapaThing -> Maybe (NodeId, Node)
 tePapaThingToNode thing =
     case thing of
         APerson p -> Just (mkId p, getContent p)

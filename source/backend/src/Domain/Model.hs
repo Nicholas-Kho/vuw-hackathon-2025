@@ -5,7 +5,6 @@
 module Domain.Model (
     Edge (..),
     Node (..),
-    NodeContent (..),
     NodeId (..),
     NodeType (..),
     PartEdgeFrom (..),
@@ -48,20 +47,16 @@ nodeIdToExternal NodeId{unNodeId = (nt, x)} =
         AgentN -> TePapaReference{namespace = AgentR, eid = ExternalId x}
         PlaceN -> TePapaReference{namespace = PlaceR, eid = ExternalId x}
 
-data NodeContent = NodeContent
+data Node = Node
     { title :: Text
     , description :: Text
     , thumbnailUrl :: Maybe Text
     }
     deriving (Show, Generic, ToJSON)
 
-data Node = Fail ClientError | Ok NodeContent deriving (Show)
-
 prettyPrintNode :: Node -> String
-prettyPrintNode (Fail cerr) = "FAIL: " <> (Prelude.show cerr)
-prettyPrintNode (Ok nc) =
-    "OK: "
-        <> (unpack . title $ nc)
+prettyPrintNode nc =
+    (unpack . title $ nc)
         <> ": "
         <> (Prelude.take 15 . unpack . description $ nc)
         <> (if (Data.Text.length . description $ nc) > 15 then "..." else "")
