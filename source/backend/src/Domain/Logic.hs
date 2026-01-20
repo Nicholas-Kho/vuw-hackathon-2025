@@ -3,12 +3,21 @@
 module Domain.Logic (pickRandomFromStore)
 where
 
+import App (AppEnv (graph), AppM, fetchStore, runAppM, semaphore)
 import Cache.Interface
+import Control.Concurrent.Async (mapConcurrently)
+import Control.Concurrent.STM (atomically)
+import Control.Monad (forM, forM_)
 import Control.Monad.Random.Strict (MonadRandom (getRandomR))
+import Control.Monad.Reader (MonadReader (ask))
+import Control.Monad.Reader.Class (asks)
 import Control.Monad.State.Strict
 import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Model
+import FetchM (runFetchConc)
+import TePapa.Convert (GraphAction, discoveryToAction)
+import TePapa.Traverse (Discovery, TFetch, doQuery)
 
 randomFromNEL :: (MonadRandom m) => N.NonEmpty a -> m a
 randomFromNEL nel = do
@@ -54,3 +63,25 @@ pickRandomHelper liftSM store =
                 ItWasThere x -> pure . Just $ (key, x)
                 NeedToWait h ->
                     (lift . liftSM $ await h) >>= pure . Just . (key,)
+
+doTFetch :: TFetch a -> AppM a
+doTFetch fetch = do
+    env <- ask
+    let fstore = fetchStore env
+    let sem = semaphore env
+    let doQueryIO e r = doQuery r `runAppM` e
+    liftIO $ runFetchConc sem (liftIO . atomically) (doQueryIO env) fstore fetch
+
+processDiscovery :: Discovery -> AppM [GraphAction]
+processDiscovery d = do
+    let acts = discoveryToAction d
+    store <- asks graph
+    forM_ acts $ liftIO . atomically . runAction store
+    pure acts
+
+processDiscoveriesConc :: [Discovery] -> AppM [GraphAction]
+processDiscoveriesConc ds = do
+    e <- ask
+    let processDiscoveryIO env d = (processDiscovery d) `runAppM` env
+    -- TODO: Proper error handling if a thread dies!
+    liftIO $ concat <$> mapConcurrently (processDiscoveryIO e) ds

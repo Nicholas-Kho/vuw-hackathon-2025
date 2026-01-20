@@ -5,6 +5,7 @@ module TePapa.Traverse (
     Discovery (..),
     EdgeReason (..),
     FetchReq (..),
+    TFetch,
     doQuery,
     fetchFromAPI,
     getDirectNeighs,
