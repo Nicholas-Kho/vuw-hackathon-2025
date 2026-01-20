@@ -23,6 +23,7 @@ data Graph = Graph
       edgesTo :: M.Map NodeId (S.Set PartEdgeFrom)
     , keys :: TVar (S.Set NodeId)
     , toDelete :: TVar (S.Set NodeId)
+    , root :: (NodeId, Node)
     , isLocked :: TVar Bool
     }
 
@@ -33,15 +34,17 @@ waitForLock graph = do
 
 instance GraphStore Graph where
     type StoreM Graph = STM
-    blankGraph =
+    initGraph rt =
         Graph
             <$> M.empty
             <*> M.empty
             <*> M.empty
             <*> newTVar S.empty
             <*> newTVar S.empty
+            <*> pure rt
             <*> newTVar False
     listKeys = readTVar . keys
+    getRoot graph = pure $ root graph
     outgoingEdges graph nid =
         waitForLock graph >> M.lookup nid (edgesFrom graph) >>= \case
             Nothing -> pure Nothing

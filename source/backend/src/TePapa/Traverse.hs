@@ -11,6 +11,7 @@ module TePapa.Traverse (
     getDirectNeighs,
     getNeighs,
     getNeighborsViaCats,
+    getNodeById,
     prettyPrintDiscovery,
 ) where
 
@@ -56,6 +57,11 @@ type TFetch a = FetchM FetchReq a
 
 forMFork :: [a] -> (a -> TFetch b) -> TFetch [b]
 forMFork xs f = fork (f <$> xs)
+
+getNodeById :: TePapaReference -> TFetch Discovery
+getNodeById tref = do
+    res <- fetch (GetId tref)
+    pure (responseToDiscovery tref res)
 
 getNeighs :: TePapaReference -> TFetch [Discovery]
 getNeighs ofId = (<>) <$> getDirectNeighs ofId <*> getNeighborsViaCats ofId

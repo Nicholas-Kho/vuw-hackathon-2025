@@ -32,11 +32,12 @@ class (Monad (StoreM g)) => GraphStore g where
     type StoreM g :: Type -> Type
     outgoingEdges :: g -> NodeId -> StoreM g (Maybe (Set Edge))
     link :: g -> Edge -> StoreM g ()
-    blankGraph :: StoreM g g
+    initGraph :: (NodeId, Node) -> StoreM g g
     readNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
     deleteNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
     claimFetch :: g -> NodeId -> StoreM g (FetchResult (Wait (StoreM g)) (NodeObligation g))
     listKeys :: g -> StoreM g (Set NodeId)
+    getRoot :: g -> StoreM g (NodeId, Node)
 
 runAction ::
     ( GraphStore g

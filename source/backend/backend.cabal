@@ -95,6 +95,7 @@ library
         Api.TePapa
         , Api.Backend
         , App
+        , Bootstrap
         , Cache.Interface
         , Cache.TVarGraphStore
         , Cache.Store

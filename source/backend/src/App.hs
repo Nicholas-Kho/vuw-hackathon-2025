@@ -7,6 +7,7 @@ module App (
 where
 
 import Api.TePapa
+import Bootstrap (fetchSeed)
 import Cache.Interface
 import Cache.TVarGraphStore
 import Control.Concurrent (QSem)
@@ -47,10 +48,12 @@ getInitialEnv :: IO AppEnv
 getInitialEnv = do
     loadDotEnv
     key <- getApiKey
-    initialGraph <- atomically blankGraph
     initialFetchStore <- atomically emptyStore
     env <- getClientEnv
     sem <- getSemaphore
+    seed <- getSeed
+    rootNode <- fetchSeed key env seed
+    initialGraph <- atomically (initGraph rootNode)
     pure $
         AppEnv
             { graph = initialGraph
