@@ -140,6 +140,12 @@ executable backend
     -- Base language which the package is written in.
     default-language: GHC2024
 
+    ghc-options:
+        -threaded
+        -with-rtsopts=-N
+        -O1
+
+
 executable smoke-test
     import: warnings, base-deps, dohie, default-exts
     main-is: SmokeTest.hs
