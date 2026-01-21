@@ -1,20 +1,39 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Cache.Interface (
     FetchResult (..),
+    GraphAction (..),
     GraphStore (..),
     MonadWait (..),
     ReadResult (..),
-    runAction,
+    graphActionPrettyPrint,
 )
 where
 
+import Data.Aeson (ToJSON)
 import Data.Kind
 import Data.Set
-import Domain.Model (Edge (..), Node (..), NodeId)
-import MonadFulfil
+import qualified Data.Text as T
+import Domain.Model (Edge (..), Node (..), NodeId, prettyPrintNode, prettyPrintNodeId)
+import GHC.Generics (Generic)
 import MonadWait
-import TePapa.Convert (GraphAction (..))
+
+data GraphAction
+    = AddNode NodeId Node
+    | AddEdge Edge
+    deriving (Show, Generic, ToJSON)
+
+graphActionPrettyPrint :: GraphAction -> IO ()
+graphActionPrettyPrint (AddNode nid n) =
+    putStrLn $ prettyPrintNodeId nid <> " ::= " <> prettyPrintNode n
+graphActionPrettyPrint (AddEdge Edge{from = fid, to = tid, info = inf}) =
+    putStrLn $
+        prettyPrintNodeId fid
+            <> " -> "
+            <> prettyPrintNodeId tid
+            <> " because "
+            <> T.unpack inf
 
 data FetchResult w o
     = AlreadyThere Node
@@ -26,33 +45,11 @@ data ReadResult w
     | NeedToWait (w Node)
     | Missing
 
-type NodeObligation g = Fulfil (StoreM g) Node
-
 class (Monad (StoreM g)) => GraphStore g where
     type StoreM g :: Type -> Type
+    runAction :: g -> GraphAction -> StoreM g ()
     outgoingEdges :: g -> NodeId -> StoreM g (Maybe (Set Edge))
-    link :: g -> Edge -> StoreM g ()
     initGraph :: (NodeId, Node) -> StoreM g g
     readNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
-    deleteNode :: g -> NodeId -> StoreM g (ReadResult (Wait (StoreM g)))
-    claimFetch :: g -> NodeId -> StoreM g (FetchResult (Wait (StoreM g)) (NodeObligation g))
     listKeys :: g -> StoreM g (Set NodeId)
     getRoot :: g -> StoreM g (NodeId, Node)
-
-runAction ::
-    ( GraphStore g
-    , MonadFulfil (StoreM g)
-    ) =>
-    g ->
-    GraphAction ->
-    StoreM g ()
-runAction g action = do
-    case action of
-        AddNode nid n -> do
-            claimFetch g nid >>= \case
-                -- Fetching a node which is already there, ignore the op.
-                AlreadyThere _ -> pure ()
-                -- Someone else is already getting it, ignore the op.
-                WaitForResult _ -> pure ()
-                Proceed obligation -> fulfil obligation n
-        AddEdge e -> link g e

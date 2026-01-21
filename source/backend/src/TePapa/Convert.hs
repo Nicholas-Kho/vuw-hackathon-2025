@@ -3,36 +3,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module TePapa.Convert (
-    GraphAction (..),
     discoveryToAction,
-    graphActionPrettyPrint,
 ) where
 
-import Data.Aeson
+import Cache.Interface (GraphAction (..))
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Domain.Model
-import GHC.Generics
 import GHC.Records (HasField)
 import TePapa.CommonObject
 import TePapa.Decode
 import TePapa.Traverse
-
-data GraphAction
-    = AddNode NodeId Node
-    | AddEdge Edge
-    deriving (Show, Generic, ToJSON)
-
-graphActionPrettyPrint :: GraphAction -> IO ()
-graphActionPrettyPrint (AddNode nid n) =
-    putStrLn $ prettyPrintNodeId nid <> " ::= " <> prettyPrintNode n
-graphActionPrettyPrint (AddEdge Edge{from = fid, to = tid, info = inf}) =
-    putStrLn $
-        prettyPrintNodeId fid
-            <> " -> "
-            <> prettyPrintNodeId tid
-            <> " because "
-            <> T.unpack inf
 
 discoveryToAction :: Discovery -> [GraphAction]
 discoveryToAction d =

@@ -3,6 +3,7 @@
 module Bootstrap (fetchSeed) where
 
 import Api.TePapa (ApiKey (ApiKey))
+import Cache.Interface (GraphAction (..))
 import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT, ask, runReaderT)
 import qualified Data.Text as T
 import Domain.Model
@@ -10,7 +11,7 @@ import FetchM (runFetch)
 import Servant.Client (ClientEnv, runClientM)
 import System.Exit (die)
 import TePapa.Client (ApiM (..))
-import TePapa.Convert (GraphAction (..), discoveryToAction)
+import TePapa.Convert (discoveryToAction)
 import TePapa.Decode (TePapaReference)
 import TePapa.Traverse (doQuery, getNodeById)
 

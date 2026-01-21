@@ -2,6 +2,7 @@ module Domain.Server (runApp) where
 
 import Api.Backend
 import App
+import Cache.Interface (GraphAction (..))
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Except (ExceptT (..))
 import Control.Monad.Random.Strict
@@ -9,7 +10,6 @@ import Control.Monad.Reader (asks)
 import Domain.Logic (pickRandomFromStore)
 import Network.Wai.Handler.Warp (run)
 import Servant
-import TePapa.Convert (GraphAction (AddNode))
 import TePapa.Env (getPort, loadDotEnv)
 
 type RAppM = RandT StdGen AppM

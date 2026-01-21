@@ -6,11 +6,11 @@ module Api.Backend (
     ExpandParams (..),
 ) where
 
+import Cache.Interface (GraphAction)
 import Data.Aeson
 import Domain.Model
 import GHC.Generics
 import Servant.API
-import TePapa.Convert (GraphAction)
 
 type BackendApi =
     "start" :> Get '[JSON] InitialGameState

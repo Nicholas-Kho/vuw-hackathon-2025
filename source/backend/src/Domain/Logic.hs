@@ -16,7 +16,7 @@ import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Model
 import FetchM (runFetchConc)
-import TePapa.Convert (GraphAction, discoveryToAction)
+import TePapa.Convert (discoveryToAction)
 import TePapa.Traverse (Discovery, TFetch, doQuery)
 
 randomFromNEL :: (MonadRandom m) => N.NonEmpty a -> m a

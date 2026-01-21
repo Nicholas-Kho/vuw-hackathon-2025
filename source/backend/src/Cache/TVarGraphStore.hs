@@ -1,13 +1,12 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Cache.TVarGraphStore (Graph, sweepDeleted, showCache)
+module Cache.TVarGraphStore (Graph, showCache)
 where
 
 import Cache.Interface
 import Control.Concurrent.STM
 import qualified Control.Concurrent.STM.Map as M
-import Control.Exception
 import Control.Monad (forM, forM_)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Maybe (fromMaybe)
@@ -22,7 +21,6 @@ data Graph = Graph
     , -- Edges to KEY from VALUES
       edgesTo :: M.Map NodeId (S.Set PartEdgeFrom)
     , keys :: TVar (S.Set NodeId)
-    , toDelete :: TVar (S.Set NodeId)
     , root :: (NodeId, Node)
     , isLocked :: TVar Bool
     }
@@ -40,7 +38,6 @@ instance GraphStore Graph where
             <*> M.empty
             <*> M.empty
             <*> newTVar S.empty
-            <*> newTVar S.empty
             <*> pure rt
             <*> newTVar False
     listKeys = readTVar . keys
@@ -49,16 +46,6 @@ instance GraphStore Graph where
         waitForLock graph >> M.lookup nid (edgesFrom graph) >>= \case
             Nothing -> pure Nothing
             Just partialEdgeSet -> pure . Just $ S.map (mkEdgeFrom nid) partialEdgeSet
-    link graph edge = do
-        waitForLock graph
-        -- Set PartEdgeFrom
-        esTo <- fromMaybe S.empty <$> M.lookup (edge.to) (graph.edgesTo)
-        -- Set PartEdgeTo
-        esFrom <- fromMaybe S.empty <$> M.lookup (edge.from) (graph.edgesFrom)
-        let partTo = PartEdgeTo{to = edge.to, info = edge.info}
-        let partFrom = PartEdgeFrom{from = edge.from, info = edge.info}
-        M.insert edge.from (S.insert partTo esFrom) graph.edgesFrom
-        M.insert edge.to (S.insert partFrom esTo) graph.edgesTo
 
     readNode g nid = do
         waitForLock g
@@ -68,48 +55,25 @@ instance GraphStore Graph where
                 tryReadTMVar tmHandle >>= \case
                     Nothing -> pure (NeedToWait tmHandle)
                     Just n -> pure (ItWasThere n)
-    claimFetch g nid = do
-        waitForLock g
-        M.lookup nid (nodes g) >>= \case
-            Just tmHandle ->
-                tryReadTMVar tmHandle >>= \case
-                    Nothing -> pure (WaitForResult tmHandle)
-                    Just n -> pure (AlreadyThere n)
-            Nothing -> do
-                obligation <- newEmptyTMVar
-                M.insert nid obligation (nodes g)
-                modifyTVar' (keys g) (S.insert nid)
-                pure (Proceed obligation)
-    deleteNode g nid = do
-        waitForLock g
-        modifyTVar' (toDelete g) (S.insert nid)
-        modifyTVar' (keys g) (S.delete nid)
-        res <-
-            M.lookup nid (nodes g) >>= \case
-                Nothing -> pure Missing
-                Just tmHandle ->
-                    tryReadTMVar tmHandle >>= \case
-                        Nothing -> pure (NeedToWait tmHandle)
-                        Just n -> pure (ItWasThere n)
 
-        M.delete nid (nodes g)
-        pure res
-
--- The delete function in the interface just marks stuff for deletion.
--- To actually free the memory, we need to call this.
-sweepDeleted :: (MonadIO m) => Graph -> m ()
-sweepDeleted graph = do
-    toDelete <- liftIO . atomically $ do
-        writeTVar (isLocked graph) True
-        s <- readTVar (toDelete graph)
-        writeTVar (toDelete graph) (S.empty)
-        pure s
-    liftIO $
-        flip finally (atomically $ writeTVar (isLocked graph) False) $
-            forM_ toDelete $ \k -> do
-                M.unsafeDelete k (nodes graph)
-                M.unsafeDelete k (edgesFrom graph)
-                M.unsafeDelete k (edgesTo graph)
+    runAction g action = do
+        waitForLock g
+        case action of
+            AddNode nid n ->
+                M.lookup nid (nodes g) >>= \case
+                    Nothing -> newTMVar n >>= \mv -> M.insert nid mv (nodes g)
+                    -- This means the node is cached or another thread is writing,
+                    -- so ignore the operation
+                    Just _ -> pure ()
+            AddEdge edge -> do
+                -- Set PartEdgeFrom
+                esTo <- fromMaybe S.empty <$> M.lookup (edge.to) (g.edgesTo)
+                -- Set PartEdgeTo
+                esFrom <- fromMaybe S.empty <$> M.lookup (edge.from) (g.edgesFrom)
+                let partTo = PartEdgeTo{to = edge.to, info = edge.info}
+                let partFrom = PartEdgeFrom{from = edge.from, info = edge.info}
+                M.insert edge.from (S.insert partTo esFrom) g.edgesFrom
+                M.insert edge.to (S.insert partFrom esTo) g.edgesTo
 
 showCache :: (MonadIO m) => Graph -> m ()
 showCache g = do
