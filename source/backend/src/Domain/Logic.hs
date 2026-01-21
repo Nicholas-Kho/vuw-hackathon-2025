@@ -7,7 +7,7 @@ import App (AppEnv (graph), AppM, fetchStore, runAppM, semaphore)
 import Cache.Interface
 import Control.Concurrent.Async (mapConcurrently)
 import Control.Concurrent.STM (atomically)
-import Control.Monad (forM, forM_)
+import Control.Monad (forM_)
 import Control.Monad.Random.Strict (MonadRandom (getRandomR))
 import Control.Monad.Reader (MonadReader (ask))
 import Control.Monad.Reader.Class (asks)
@@ -40,10 +40,12 @@ pickRandomFromStore ::
     ) =>
     (forall t. StoreM g t -> m t) ->
     g ->
-    m (Maybe (NodeId, Node))
+    m (NodeId, Node)
 pickRandomFromStore liftSM graph = do
     keys <- liftSM $ listKeys graph
-    evalStateT (pickRandomHelper liftSM graph) keys
+    evalStateT (pickRandomHelper liftSM graph) keys >>= \case
+        Nothing -> liftSM $ getRoot graph
+        Just r -> pure r
 
 pickRandomHelper ::
     ( MonadRandom m
