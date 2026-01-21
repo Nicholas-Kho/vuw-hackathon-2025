@@ -14,6 +14,8 @@ import qualified Data.Set as S
 import Data.Text (unpack)
 import Domain.Model
 
+-- TODO: Physical deletion sweeps to free memory
+
 data Graph = Graph
     { nodes :: M.Map NodeId (TMVar Node)
     , -- Edges from KEY to VALUES
