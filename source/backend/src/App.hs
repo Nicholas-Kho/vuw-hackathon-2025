@@ -53,7 +53,7 @@ getInitialEnv = do
     sem <- getSemaphore
     seed <- getSeed
     rootNode <- fetchSeed key env seed
-    initialGraph <- atomically (initGraph rootNode)
+    initialGraph <- atomically (initStore seed rootNode)
     pure $
         AppEnv
             { graph = initialGraph

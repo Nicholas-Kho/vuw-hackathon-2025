@@ -6,7 +6,7 @@ module Api.Backend (
     ExpandParams (..),
 ) where
 
-import Cache.Interface (GraphAction)
+import Cache.NodeId (NodeId)
 import Data.Aeson
 import Domain.Model
 import GHC.Generics
@@ -14,12 +14,12 @@ import Servant.API
 
 type BackendApi =
     "start" :> Get '[JSON] InitialGameState
-        :<|> "expand" :> ReqBody '[JSON] ExpandParams :> Post '[JSON] [GraphAction]
+        :<|> "expand" :> ReqBody '[JSON] ExpandParams :> Post '[JSON] [(NodeId, Node)]
 
 data InitialGameState = InitialGameState
     { startAt :: NodeId
     , endAt :: NodeId
-    , subgraph :: [GraphAction]
+    , subgraph :: [(NodeId, Node)]
     }
     deriving (Generic, ToJSON)
 

@@ -2,11 +2,9 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TePapa.Convert (
-    discoveryToAction,
-) where
+module TePapa.Convert () where
 
-import Cache.Interface (GraphAction (..))
+import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Domain.Model
@@ -14,24 +12,6 @@ import GHC.Records (HasField)
 import TePapa.CommonObject
 import TePapa.Decode
 import TePapa.Traverse
-
-discoveryToAction :: Discovery -> [GraphAction]
-discoveryToAction d =
-    case d of
-        FoundThing _ tthing ->
-            maybe [] (\(nid, ncon) -> [AddNode nid ncon]) (tePapaThingToNode tthing)
-        ErrorFetching _ _ -> []
-        FoundLink fromTref toTref why ->
-            case Edge
-                <$> (trefToNodeId fromTref)
-                <*> (trefToNodeId toTref)
-                <*> (pure $ edgeReasonToTxt why) of
-                Nothing -> []
-                Just e -> [AddEdge e, AddEdge (flipEdge e)]
-
-flipEdge :: Edge -> Edge
-flipEdge Edge{to = tid, info = inf, from = fid} =
-    Edge{to = fid, info = inf, from = tid}
 
 edgeReasonToTxt :: EdgeReason -> T.Text
 edgeReasonToTxt r =
@@ -44,20 +24,20 @@ class Describable a where
     describe :: a -> T.Text
 
 class NodeLike a where
-    getContent :: a -> Node
-    mkId :: a -> NodeId
+    getContent :: a -> NodeContent
 
 nodeContentFromCommon ::
     ( HasField "com" a CommonFields
     , Describable a
     ) =>
     a ->
-    Node
+    NodeContent
 nodeContentFromCommon a =
-    Node
+    NodeContent
         { title = a.com.title
         , thumbnailUrl = Nothing
         , description = describe a
+        , incomingEdges = M.empty
         }
 
 instance Describable Person where
@@ -92,52 +72,34 @@ instance Describable Place where
 
 instance NodeLike Person where
     getContent = nodeContentFromCommon
-    mkId x = NodeId{unNodeId = (AgentN, unId x.com.eid)}
 
 instance NodeLike Organization where
     getContent = nodeContentFromCommon
-    mkId x = NodeId{unNodeId = (AgentN, unId x.com.eid)}
 
 instance NodeLike Artefact where
     getContent = nodeContentFromCommon
-    mkId x = NodeId{unNodeId = (ObjectN, unId x.com.eid)}
 
 instance NodeLike Specimen where
     getContent = nodeContentFromCommon
-    mkId x = NodeId{unNodeId = (ObjectN, unId x.com.eid)}
 
 instance NodeLike Place where
     getContent = nodeContentFromCommon
-    mkId x = NodeId{unNodeId = (PlaceN, unId x.com.eid)}
 
 instance NodeLike ObjectResponse where
     getContent (Art a) = getContent a
     getContent (Spc s) = getContent s
-    mkId (Art a) = NodeId{unNodeId = (PlaceN, unId a.com.eid)}
-    mkId (Spc s) = NodeId{unNodeId = (PlaceN, unId s.com.eid)}
 
 instance NodeLike AgentResponse where
     getContent (Prs p) = getContent p
     getContent (Org o) = getContent o
-    mkId (Prs p) = NodeId{unNodeId = (PlaceN, unId p.com.eid)}
-    mkId (Org o) = NodeId{unNodeId = (PlaceN, unId o.com.eid)}
 
-tePapaThingToNode :: TePapaThing -> Maybe (NodeId, Node)
+tePapaThingToNode :: TePapaThing -> Maybe NodeContent
 tePapaThingToNode thing =
     case thing of
-        APerson p -> Just (mkId p, getContent p)
-        AnOrg o -> Just (mkId o, getContent o)
-        AnArtefact a -> Just (mkId a, getContent a)
-        ASpecimen s -> Just (mkId s, getContent s)
-        APlace p -> Just (mkId p, getContent p)
+        APerson p -> Just $ getContent p
+        AnOrg o -> Just $ getContent o
+        AnArtefact a -> Just $ getContent a
+        ASpecimen s -> Just $ getContent s
+        APlace p -> Just $ getContent p
         ATopic _ -> Nothing
         ACategory _ -> Nothing
-
-trefToNodeId :: TePapaReference -> Maybe NodeId
-trefToNodeId tref =
-    case tref.namespace of
-        ObjectR -> Just $ NodeId{unNodeId = (ObjectN, unId tref.eid)}
-        AgentR -> Just $ NodeId{unNodeId = (AgentN, unId tref.eid)}
-        PlaceR -> Just $ NodeId{unNodeId = (PlaceN, unId tref.eid)}
-        ConceptR -> Nothing
-        TopicR -> Nothing

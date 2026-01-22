@@ -3,88 +3,40 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Domain.Model (
-    Edge (..),
+    EdgeInfo,
     Node (..),
-    NodeId (..),
-    NodeType (..),
-    PartEdgeFrom (..),
-    PartEdgeTo (..),
-    mkEdgeFrom,
-    mkEdgeTo,
-    nodeIdToExternal,
+    NodeContent (..),
     prettyPrintNode,
-    prettyPrintNodeId,
 )
 where
 
+import Cache.NodeId (NodeId)
 import Data.Aeson
-import Data.Hashable
+import Data.Hashable (Hashable)
+import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import Data.Text
+import qualified Data.Text as T
 import GHC.Generics
-import Servant.Client (ClientError)
-import TePapa.Decode (ExternalId (..), MuseumResource (..), TePapaReference (..))
 
-data NodeType
-    = ObjectN
-    | AgentN
-    | PlaceN
-    deriving (Eq, Ord, Show, Generic, ToJSON, FromJSON)
-
-instance Hashable NodeType
-
-newtype NodeId = NodeId {unNodeId :: (NodeType, Int)}
-    deriving (Eq, Ord, Show, Generic)
-
-instance Hashable NodeId
-
-prettyPrintNodeId :: NodeId -> String
-prettyPrintNodeId NodeId{unNodeId = (nt, x)} = (Prelude.show nt) <> "/" <> (Prelude.show x)
-
-nodeIdToExternal :: NodeId -> TePapaReference
-nodeIdToExternal NodeId{unNodeId = (nt, x)} =
-    case nt of
-        ObjectN -> TePapaReference{namespace = ObjectR, eid = ExternalId x}
-        AgentN -> TePapaReference{namespace = AgentR, eid = ExternalId x}
-        PlaceN -> TePapaReference{namespace = PlaceR, eid = ExternalId x}
-
-data Node = Node
+data NodeContent = NodeContent
     { title :: Text
     , description :: Text
     , thumbnailUrl :: Maybe Text
+    , incomingEdges :: M.Map NodeId (S.Set EdgeInfo)
     }
-    deriving (Show, Generic, ToJSON)
+    deriving (Show, Eq, Generic, ToJSON, Hashable)
 
-prettyPrintNode :: Node -> String
+data Node
+    = Unexpanded NodeContent
+    | Expanded NodeContent (M.Map NodeId (S.Set EdgeInfo))
+    deriving (Eq, Generic, Hashable, ToJSON)
+
+type EdgeInfo = T.Text
+
+prettyPrintNode :: NodeContent -> String
 prettyPrintNode nc =
     (unpack . title $ nc)
         <> ": "
         <> (Prelude.take 15 . unpack . description $ nc)
         <> (if (Data.Text.length . description $ nc) > 15 then "..." else "")
-
-data Edge = Edge
-    { from :: NodeId
-    , to :: NodeId
-    , info :: Text
-    }
-    deriving (Eq, Ord, Show, Generic, ToJSON)
-
-data PartEdgeTo = PartEdgeTo
-    { to :: NodeId
-    , info :: Text
-    }
-    deriving (Eq, Ord)
-
-data PartEdgeFrom = PartEdgeFrom
-    { from :: NodeId
-    , info :: Text
-    }
-    deriving (Eq, Ord)
-
-mkEdgeFrom :: NodeId -> PartEdgeTo -> Edge
-mkEdgeFrom nidFrom PartEdgeTo{to = nidTo, info = txt} = Edge{from = nidFrom, to = nidTo, info = txt}
-
-mkEdgeTo :: NodeId -> PartEdgeFrom -> Edge
-mkEdgeTo nidTo PartEdgeFrom{from = nidFrom, info = txt} = Edge{from = nidFrom, to = nidTo, info = txt}
-
-instance FromJSON NodeId
-instance ToJSON NodeId

@@ -2,12 +2,12 @@ module Domain.Server (runApp) where
 
 import Api.Backend
 import App
-import Cache.Interface (GraphAction (..))
+import Cache.NodeId (NodeId)
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Except (ExceptT (..))
 import Control.Monad.Random.Strict
 import Control.Monad.Reader (asks)
-import Domain.Logic (pickRandomFromStore)
+import Domain.Model (Node)
 import Network.Wai.Handler.Warp (run)
 import Servant
 import TePapa.Env (getPort, loadDotEnv)
@@ -37,16 +37,8 @@ runApp = do
 server :: ServerT BackendApi RAppM
 server = serveStart :<|> serveExpand
 
-serveExpand :: ExpandParams -> RAppM [GraphAction]
+serveExpand :: ExpandParams -> RAppM [(NodeId, Node)]
 serveExpand params = error "todo"
 
 serveStart :: RAppM InitialGameState
-serveStart = do
-    store <- lift $ asks graph
-    (startId, startContent) <- pickRandomFromStore (liftIO . atomically) store
-    pure $
-        InitialGameState
-            { subgraph = [AddNode startId startContent]
-            , endAt = startId
-            , startAt = startId
-            }
+serveStart = error "todo"

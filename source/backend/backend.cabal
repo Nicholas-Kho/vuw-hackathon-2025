@@ -97,6 +97,7 @@ library
         , App
         , Bootstrap
         , Cache.Interface
+        , Cache.NodeId
         , Cache.TVarGraphStore
         , Cache.Store
         , Domain.Model
