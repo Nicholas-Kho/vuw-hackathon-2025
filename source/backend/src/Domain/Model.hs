@@ -6,6 +6,9 @@ module Domain.Model (
     EdgeInfo,
     Node (..),
     NodeContent (..),
+    addIncoming,
+    addOutgoing,
+    mkNode,
     prettyPrintNode,
 )
 where
@@ -23,14 +26,35 @@ data NodeContent = NodeContent
     { title :: Text
     , description :: Text
     , thumbnailUrl :: Maybe Text
-    , incomingEdges :: M.Map NodeId (S.Set EdgeInfo)
     }
     deriving (Show, Eq, Generic, ToJSON, Hashable)
 
-data Node
-    = Unexpanded NodeContent
-    | Expanded NodeContent (M.Map NodeId (S.Set EdgeInfo))
-    deriving (Eq, Generic, Hashable, ToJSON)
+data Node = Node
+    { content :: NodeContent
+    , incomingEdges :: M.Map NodeId (S.Set EdgeInfo)
+    , outgoingEdges :: M.Map NodeId (S.Set EdgeInfo)
+    }
+    deriving (Generic, ToJSON)
+
+mkNode :: NodeContent -> Node
+mkNode nc =
+    Node
+        { content = nc
+        , incomingEdges = M.empty
+        , outgoingEdges = M.empty
+        }
+
+addIncoming :: Node -> NodeId -> EdgeInfo -> Node
+addIncoming n nfrom e =
+    n
+        { incomingEdges = M.insertWith S.union nfrom (S.singleton e) (incomingEdges n)
+        }
+
+addOutgoing :: Node -> NodeId -> EdgeInfo -> Node
+addOutgoing n nto e =
+    n
+        { incomingEdges = M.insertWith S.union nto (S.singleton e) (outgoingEdges n)
+        }
 
 type EdgeInfo = T.Text
 

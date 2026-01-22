@@ -37,7 +37,6 @@ nodeContentFromCommon a =
         { title = a.com.title
         , thumbnailUrl = Nothing
         , description = describe a
-        , incomingEdges = M.empty
         }
 
 instance Describable Person where

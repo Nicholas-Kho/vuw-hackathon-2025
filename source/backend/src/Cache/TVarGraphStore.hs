@@ -14,7 +14,7 @@ import Domain.Model
 import TePapa.Decode (TePapaReference)
 
 data Graph = Graph
-    { nodes :: M.Map NodeId Node
+    { nodes :: M.Map NodeId NodeContent
     , internalToExternal :: M.Map NodeId TePapaReference
     , -- Edges from KEY to VALUEs
       edgesFrom :: M.Map TePapaReference (S.Set (TePapaReference, EdgeInfo))
@@ -31,11 +31,10 @@ instance GraphStore Graph where
         inToEx <- M.empty
         edgesFrom <- M.empty
         edgesTo <- M.empty
-        let rootNode = Unexpanded conts
-        let rootId = mkNodeId $ hash rootNode
-        M.insert rootId rootNode initialNodes
+        let rootId = mkNodeId . hash $ conts
+        M.insert rootId conts initialNodes
         M.insert rootId eid inToEx
-        keySet <- newTVar (S.insert rootId S.empty)
+        keySet <- newTVar (S.singleton rootId)
         pure $
             Graph
                 { nodes = initialNodes
