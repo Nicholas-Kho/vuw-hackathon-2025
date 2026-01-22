@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TePapa.Convert () where
+module TePapa.Convert (tePapaThingToNode) where
 
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)

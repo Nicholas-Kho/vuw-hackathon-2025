@@ -123,8 +123,7 @@ neighsViaRelatedCat comingFrom comingFromWhy catInfo = do
                     )
                 $ things
 
--- TODO: Later integrate some cache for request deduplication here
--- Fetching policy should also come in here
+-- TODO: Fetching policy should also come in here
 fetchFromAPI :: (ApiM m) => TFetch a -> m a
 fetchFromAPI = runFetch doQuery
 
