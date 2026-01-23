@@ -88,10 +88,7 @@ instance GraphStore Graph where
             M.lookup nid (nodes g) >>= \case
                 Just nc -> pure nc
                 Nothing -> error "Invarint violated: node ID not in store.nodes!"
-        externalId <-
-            M.lookup nid (internalToExternal g) >>= \case
-                Just nc -> pure nc
-                Nothing -> error "Invarint violated: node ID not in store.internalToExternal!"
+        externalId <- getExternal g nid
         -- find and build edges
         -- We have to convert to a list here because sets don't have a mapM.
         outList <- M.lookup externalId (edgesFrom g) >>= pure . S.elems . fromMaybe S.empty
@@ -114,3 +111,8 @@ instance GraphStore Graph where
         oldTSet <- M.lookup to (edgesTo g) >>= pure . fromMaybe S.empty
         let newTSet = S.insert (from, info) oldTSet
         M.insert to newTSet (edgesTo g)
+
+    getExternal g nid = do
+        M.lookup nid (internalToExternal g) >>= \case
+            Just nc -> pure nc
+            Nothing -> error "Invarint violated: node ID not in store.internalToExternal!"

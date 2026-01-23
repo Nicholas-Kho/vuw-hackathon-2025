@@ -19,3 +19,4 @@ class (Monad (StoreM g)) => GraphStore g where
     addEdge :: g -> TePapaReference -> TePapaReference -> EdgeInfo -> StoreM g ()
     getKeys :: g -> StoreM g (NodeId, Set NodeId)
     getNode :: g -> NodeId -> StoreM g Node
+    getExternal :: g -> NodeId -> StoreM g TePapaReference
