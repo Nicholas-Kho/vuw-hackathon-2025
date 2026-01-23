@@ -11,6 +11,7 @@ venv/
 .stack-work/
 _stack-work/
 dist-newstyle/
+.hie/
 # SQLite database files
 *.sqlite
 *.sqlite3
