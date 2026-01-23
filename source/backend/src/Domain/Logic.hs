@@ -1,13 +1,18 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Domain.Logic (randomFromStore, drunkardsWalk)
+module Domain.Logic (
+    drunkardsWalk,
+    expandNode,
+    lookupNodes,
+    randomFromStore,
+    verifyNodeId,
+)
 where
 
 import App (AppEnv (..), AppM, runAppM)
 import Cache.Interface (GraphStore (getNode), addEdge, addNode, getExternal, getKeys)
-import Cache.NodeId (NodeId)
-import Control.Concurrent.Async (forConcurrently_)
-import Control.Monad (forM)
+import Cache.NodeId (NodeId, mkNodeId, unNodeId)
+import Control.Concurrent.Async (forConcurrently, forConcurrently_)
 import Control.Monad.Random.Strict (MonadIO (liftIO), MonadRandom (getRandomR), lift)
 import Control.Monad.Reader (ask, asks)
 import Control.Monad.State.Strict (StateT, evalStateT, gets, modify')
@@ -102,10 +107,16 @@ drunkardsWalk liftAppM start steps = do
                 , stepsLeft = steps
                 }
     path <- evalStateT (drunkardsWalkHelper liftAppM) initialState
-    g <- liftAppM $ asks graph
-    let lookupNode = liftAppM . liftIO . atomically . getNode g
-    forM path $ \nid -> do
-        node <- lookupNode nid
+    liftAppM $ lookupNodes path
+
+lookupNodes :: (Traversable t) => t NodeId -> AppM (t (NodeId, Node))
+lookupNodes nids = do
+    g <- asks graph
+    env <- ask
+    let lookupNode = liftIO . atomically . getNode g
+    let lookupNodeIO e nid = (lookupNode nid) `runAppM` e
+    liftIO . forConcurrently nids $ \nid -> do
+        node <- lookupNodeIO env nid
         pure (nid, node)
 
 runTFetch :: TFetch a -> AppM a
@@ -133,3 +144,12 @@ processDiscoveries ds = do
     env <- ask
     let processDiscoveryIO e d = (processDiscovery d) `runAppM` e
     liftIO $ forConcurrently_ ds (processDiscoveryIO env)
+
+verifyNodeId :: Int -> AppM (Maybe NodeId)
+verifyNodeId x = do
+    g <- asks graph
+    (rootKey, rest) <- liftIO . atomically $ getKeys g
+    let allKeysRaw = S.map unNodeId $ S.insert rootKey rest
+    if x `S.member` allKeysRaw
+        then pure $ Just (mkNodeId x)
+        else pure $ Nothing

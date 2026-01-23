@@ -6,7 +6,8 @@ import Cache.NodeId (NodeId)
 import Control.Monad.Except (ExceptT (..))
 import Control.Monad.Random.Strict
 import qualified Data.List.NonEmpty as N
-import Domain.Logic (drunkardsWalk, randomFromStore)
+import qualified Data.Set as S
+import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
 import Domain.Model (Node)
 import Network.Wai.Handler.Warp (run)
 import Servant
@@ -37,8 +38,14 @@ runApp = do
 server :: ServerT BackendApi RAppM
 server = serveStart :<|> serveExpand
 
-serveExpand :: ExpandParams -> RAppM [(NodeId, Node)]
-serveExpand params = error "todo"
+serveExpand :: ExpandParams -> RAppM (Maybe [(NodeId, Node)])
+serveExpand ExpandParams{expandAboutId = unid} =
+    lift (verifyNodeId . toInt $ unid) >>= \case
+        Nothing -> pure Nothing
+        Just nid -> do
+            outIds <- lift $ expandNode nid
+            results <- lift $ lookupNodes (S.toList outIds)
+            pure . Just $ results
 
 serveStart :: RAppM InitialGameState
 serveStart = do
