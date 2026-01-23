@@ -15,11 +15,11 @@
             system-fileio = pkgs.haskell.lib.dontCheck super.system-fileio;
           };
         };
-        backend = haskellPkgs.callCabal2nix "backend" ./. { };
+        muselinks = haskellPkgs.callCabal2nix "muselinks" ./. { };
       in {
-        packages.default = backend;
+        packages.default = muselinks;
         devShells.default = haskellPkgs.shellFor {
-          packages = p: [ backend ];
+          packages = p: [ muselinks ];
           nativeBuildInputs = with pkgs; [
             haskellPkgs.haskell-language-server
             haskellPkgs.fourmolu

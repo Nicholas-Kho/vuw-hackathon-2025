@@ -11,7 +11,7 @@ cabal-version:      3.8
 --   http://haskell.org/cabal/users-guide/
 --
 -- The name of the package.
-name:               backend
+name:               muselinks
 
 -- The package version.
 -- See the Haskell package versioning policy (PVP) for standards
@@ -114,11 +114,9 @@ library
         , TePapa.Decode
         , TePapa.Env
         , TePapa.Traverse
-    build-depends:
-        -- ...
     default-language: GHC2024
 
-executable backend
+executable muselinks
     -- Import common warning flags.
     import:           warnings, base-deps, dohie, default-exts
 
@@ -133,7 +131,7 @@ executable backend
 
     -- Other library packages from which modules are imported.
     build-depends:
-        backend
+        muselinks
 
     -- Directories containing source files.
     hs-source-dirs:   app
@@ -152,7 +150,7 @@ executable smoke-test
     main-is: SmokeTest.hs
     hs-source-dirs: app
     build-depends:
-        backend,
+        muselinks,
         mtl,
         optparse-applicative,
         servant-client,
@@ -160,5 +158,5 @@ executable smoke-test
     default-language: GHC2024
     ghc-options:
         -threaded
-        -O3
+        -O1
         -with-rtsopts=-N
