@@ -1,15 +1,13 @@
 module Main (main) where
 
 import App
-import Cache.TVarGraphStore (showCache)
 import Control.Concurrent
 import Control.Monad (forM_)
 import Control.Monad.IO.Class
-import Control.Monad.Reader (MonadReader (ask), asks)
+import Control.Monad.Reader (MonadReader (ask))
 import FetchM (runFetch, runFetchConc)
 import FetchStore.TePapaFetchStore
 import GHC.Conc
-import Servant.Client
 import TePapa.Client
 import TePapa.Decode (ExternalId (..), MuseumResource (..), TePapaReference (..))
 import TePapa.Traverse
@@ -35,10 +33,6 @@ repl = do
         PlaceById eid -> do
             res <- runReq $ getPlace eid
             liftIO $ print res
-            repl
-        ShowCache -> do
-            store <- asks graph
-            showCache store
             repl
         CatRelated eid -> do
             res <- runReq $ getConceptRelated eid (Just 10)
@@ -68,7 +62,6 @@ getUserAction = do
     userInput <- getLine
     case Prelude.words userInput of
         ["quit"] -> pure Quit
-        ["show"] -> pure ShowCache
         [action, idRaw] ->
             case mkAction action idRaw of
                 Nothing -> getUserAction
@@ -87,16 +80,10 @@ mkAction action idRaw = do
         "objectNeighsSeq" -> pure (ObjectNeighs idInt False)
         _ -> Nothing
 
-showRes :: (Show a) => Either ClientError a -> IO ()
-showRes = \case
-    Left clientError -> print clientError
-    Right x -> print x
-
 data UserAction
     = ObjectById Int
     | AgentById Int
     | PlaceById Int
     | CatRelated Int
     | ObjectNeighs Int Bool
-    | ShowCache
     | Quit
