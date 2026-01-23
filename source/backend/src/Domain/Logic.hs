@@ -1,22 +1,17 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Domain.Logic ()
+module Domain.Logic (randomFromStore)
 where
 
-import App (AppEnv (graph), AppM, fetchStore, runAppM, semaphore)
-import Cache.Interface
-import Control.Concurrent.Async (mapConcurrently)
-import Control.Concurrent.STM (atomically)
-import Control.Monad (forM_)
-import Control.Monad.Random.Strict (MonadRandom (getRandomR))
-import Control.Monad.Reader (MonadReader (ask))
-import Control.Monad.Reader.Class (asks)
-import Control.Monad.State.Strict
+import App (AppEnv (graph), AppM)
+import Cache.Interface (GraphStore (getNode), getKeys)
+import Cache.NodeId (NodeId)
+import Control.Monad.Random.Strict (MonadIO (liftIO), MonadRandom (getRandomR))
+import Control.Monad.Reader (asks)
 import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
-import Domain.Model
-import FetchM (runFetchConc)
-import TePapa.Traverse (Discovery, TFetch, doQuery, getNodeById)
+import Domain.Model (Node)
+import GHC.Conc (atomically)
 
 randomFromNEL :: (MonadRandom m) => N.NonEmpty a -> m a
 randomFromNEL nel = do
@@ -31,3 +26,14 @@ randomFromSet s =
     case setToNEL s of
         Nothing -> pure Nothing
         Just x -> Just <$> randomFromNEL x
+
+randomFromStore :: (MonadRandom m) => (forall t. AppM t -> m t) -> m (NodeId, Node)
+randomFromStore liftAppM = do
+    store <- liftAppM $ asks graph
+    (rootKey, storeKeys) <- liftAppM . liftIO . atomically . getKeys $ store
+    nid <-
+        randomFromSet storeKeys >>= \case
+            Nothing -> pure rootKey
+            Just k -> pure k
+    node <- liftAppM . liftIO . atomically $ getNode store nid
+    pure (nid, node)

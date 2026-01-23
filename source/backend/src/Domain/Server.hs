@@ -7,6 +7,7 @@ import Control.Concurrent.STM (atomically)
 import Control.Monad.Except (ExceptT (..))
 import Control.Monad.Random.Strict
 import Control.Monad.Reader (asks)
+import Domain.Logic (randomFromStore)
 import Domain.Model (Node)
 import Network.Wai.Handler.Warp (run)
 import Servant
@@ -41,4 +42,11 @@ serveExpand :: ExpandParams -> RAppM [(NodeId, Node)]
 serveExpand params = error "todo"
 
 serveStart :: RAppM InitialGameState
-serveStart = error "todo"
+serveStart = do
+    (nid, node) <- randomFromStore lift
+    pure $
+        InitialGameState
+            { subgraph = [(nid, node)]
+            , startAt = nid
+            , endAt = nid
+            }
