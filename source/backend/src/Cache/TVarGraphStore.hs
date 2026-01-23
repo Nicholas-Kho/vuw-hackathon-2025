@@ -79,6 +79,7 @@ instance GraphStore Graph where
         -- TODO: Detect and handle duplicate content and/or external IDs.
         let nid = mkNodeId . hash $ content
         M.insert nid eid (internalToExternal g)
+        M.insert eid nid (externalToInternal g)
         M.insert nid content (nodes g)
         modifyTVar' (keys g) (S.insert nid)
         pure nid

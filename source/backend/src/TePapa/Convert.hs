@@ -2,9 +2,8 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TePapa.Convert (tePapaThingToNode) where
+module TePapa.Convert (tePapaThingToNode, edgeReasonToTxt) where
 
-import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Domain.Model

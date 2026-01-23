@@ -3,11 +3,10 @@ module Domain.Server (runApp) where
 import Api.Backend
 import App
 import Cache.NodeId (NodeId)
-import Control.Concurrent.STM (atomically)
 import Control.Monad.Except (ExceptT (..))
 import Control.Monad.Random.Strict
-import Control.Monad.Reader (asks)
-import Domain.Logic (randomFromStore)
+import qualified Data.List.NonEmpty as N
+import Domain.Logic (drunkardsWalk, randomFromStore)
 import Domain.Model (Node)
 import Network.Wai.Handler.Warp (run)
 import Servant
@@ -43,10 +42,11 @@ serveExpand params = error "todo"
 
 serveStart :: RAppM InitialGameState
 serveStart = do
-    (nid, node) <- randomFromStore lift
+    (nid, _) <- randomFromStore lift
+    path <- drunkardsWalk lift nid 10
     pure $
         InitialGameState
-            { subgraph = [(nid, node)]
+            { subgraph = N.toList path
             , startAt = nid
-            , endAt = nid
+            , endAt = fst . N.last $ path
             }
