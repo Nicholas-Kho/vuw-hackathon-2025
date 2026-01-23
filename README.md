@@ -10,12 +10,10 @@ This project uses Nix to define the development environment and build system. In
 nix develop
 ```
 
-This will provide all of the required tools and dependencies for development. Once you are in the dev-shell, you can run
- - `cabal run` in `source/backend` to build and run the backend.
- - `TODO` in `source/frontend` to build and run the frontend.
+This will provide all of the required tools and dependencies for development. Once you are in the dev-shell, you can run `cabal run muselinks` to run the app. Alternatively, you may use `nix run` / `nix build` to build the application without entering a dev-shell.
 
-### .env:
-in `source/backend`, create a `.env` file containing the following:
+### Configuration:
+in the root of the repository, create a `.env` file containing the following:
 ```
 API_KEY=<Your key here>
 ```
