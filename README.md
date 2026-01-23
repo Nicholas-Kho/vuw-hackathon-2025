@@ -18,8 +18,11 @@ This will provide all of the required tools and dependencies for development. On
 in `source/backend`, create a `.env` file containing the following:
 ```
 API_KEY=<Your key here>
-PORT=<Port the backend should run on. Default to 8080>
 ```
+You may wish to also set the following variables:
 
-### Database:
-There is a minimal `seed.sqlite3`. You can make a copy named `db.sqlite3` to get a local development database. Please do not commit database related files, as they can grow large, produce noisy diffs, and cause unnecessary merge conflicts. You may, however, commit the `seed.sqlite3` file if you change the database schema or something related.
+`MAX_CONCURRENT_HTTP=`: An integer that is at least `1`. Defaults to `8`. Determines the maximum number of in-flight HTTP requests to the Te Papa Collections API. Low values may noticeably increase the fetch time of new nodes. High values risk triggering ratelimits.
+
+`PORT=`: An integer that is at least `2048`. Defaults to `8080`. Determines the port the backend server runs on.
+
+`SEED=`: A Te Papa Collections reference of the form `NAMESPACE/ID`, where `NAMESPACE` is one of: `object`, `agent`, `place` and `ID` is a positive integer. Defaults to `object/1227923`. Determines the first node in the graph. During startup, the server attempts to parse this reference, look up the object, and convert it to a node. If this fails, the server process exits. You can find different seed objects and their identifiers using the [Te Papa Collections API browser](https://data.tepapa.govt.nz/docs/apibrowser.html). The `Type` field of your chosen object corresponds to `NAMESPACE`, and the `Id` field corresponds to `ID`.
