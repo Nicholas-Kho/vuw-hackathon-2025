@@ -1,7 +1,7 @@
 # VUW Hackathon 2025 - MuseLinks
 
-## **MAIN IS CURRENTLY NOT WORKING!**
-We are in the middle of re-writing the back end and front end. As of now, the backend builds, but is just set to query an API endpoint. This notice will be removed when necessary.
+## Note
+This project is still in a very early stage. The front end is currently in development. The server serves an API to query the game graph (See `Api.Backend` for the Servant spec.) but does not serve an `index.html` or any other static files.
 
 ## Building and development
 
