@@ -15,7 +15,7 @@
             system-fileio = pkgs.haskell.lib.dontCheck super.system-fileio;
           };
         };
-        backend = haskellPkgs.callCabal2nix "backend" ./source/backend { };
+        backend = haskellPkgs.callCabal2nix "backend" ./. { };
       in {
         packages.default = backend;
         devShells.default = haskellPkgs.shellFor {
