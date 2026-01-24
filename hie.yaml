@@ -2,6 +2,7 @@ cradle:
   cabal:
     # Include your library and both executables
     components:
-      - "backend:lib"
-      - "backend:exe:backend"
-      - "backend:exe:smoke-test"
+      - "muselinks:lib"
+      - "muselinks:exe:api-codegen"
+      - "muselinks:exe:muselinks"
+      - "muselinks:exe:smoke-test"
