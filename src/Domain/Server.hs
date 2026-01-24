@@ -36,7 +36,10 @@ runApp = do
     run port (app appEnv)
 
 server :: ServerT BackendApi RAppM
-server = serveStart :<|> serveExpand
+server = apiServer :<|> serveStatic
+
+apiServer :: ServerT ApiRoutes RAppM
+apiServer = serveStart :<|> serveExpand
 
 serveExpand :: ExpandParams -> RAppM (Maybe [(NodeId, Node)])
 serveExpand ExpandParams{expandAboutId = unid} =
@@ -57,3 +60,6 @@ serveStart = do
             , startAt = nid
             , endAt = fst . N.last $ path
             }
+
+serveStatic :: ServerT Raw RAppM
+serveStatic = serveDirectoryFileServer "static/"
