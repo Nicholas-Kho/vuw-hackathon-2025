@@ -10,11 +10,11 @@ import Servant.Elm
 
 main :: IO ()
 main = do
-    outputDir <- pure "frontend/src/Generated"
+    outputDir <- pure "frontend/src/"
     pure ()
     generateElmModule
-        ["Generated"]
-        "BackendApi"
+        ["Generated", "BackendApi"]
+        ""
         outputDir
         [ DefineElm (Proxy @NodeId)
         , DefineElm (Proxy @NodeContent)
