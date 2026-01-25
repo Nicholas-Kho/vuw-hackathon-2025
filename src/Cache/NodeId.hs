@@ -1,13 +1,16 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Cache.NodeId (NodeId, unNodeId, mkNodeId) where
 
 import Data.Aeson
 import Data.Hashable (Hashable)
 import qualified Data.Text as T
 import GHC.Generics
+import Servant.Elm
 import Text.Read (readMaybe)
 
 newtype NodeId = MkNodeId {unNodeId :: Int}
-    deriving (Eq, Ord, Generic, Show, ToJSONKey)
+    deriving (Eq, Ord, Generic, Show, ToJSONKey, FromJSONKey)
 
 instance Hashable NodeId
 
@@ -29,3 +32,5 @@ instance FromJSON NodeId where
 -- node ID and looking it up will probably result in a crash.
 mkNodeId :: Int -> NodeId
 mkNodeId = MkNodeId
+
+deriveElmDef Servant.Elm.defaultOptions ''NodeId

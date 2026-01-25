@@ -81,6 +81,7 @@ common tepapa-client-deps
         , mtl
         , servant
         , servant-client
+        , servant-elm
         , servant-server
         , stm
         , text

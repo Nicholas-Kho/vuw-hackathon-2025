@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Domain.Model (
     EdgeInfo,
@@ -14,27 +15,27 @@ module Domain.Model (
 where
 
 import Cache.NodeId (NodeId)
-import Data.Aeson
 import Data.Hashable (Hashable)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text
 import qualified Data.Text as T
 import GHC.Generics
+import Servant.Elm
 
 data NodeContent = NodeContent
     { title :: Text
     , description :: Text
     , thumbnailUrl :: Maybe Text
     }
-    deriving (Show, Eq, Generic, ToJSON, Hashable)
+    deriving (Show, Eq, Generic, Hashable)
 
 data Node = Node
     { content :: NodeContent
     , incomingEdges :: M.Map NodeId (S.Set EdgeInfo)
     , outgoingEdges :: M.Map NodeId (S.Set EdgeInfo)
     }
-    deriving (Generic, ToJSON)
+    deriving (Generic)
 
 mkNode :: NodeContent -> Node
 mkNode nc =
@@ -64,3 +65,6 @@ prettyPrintNode nc =
         <> ": "
         <> (Prelude.take 15 . unpack . description $ nc)
         <> (if (Data.Text.length . description $ nc) > 15 then "..." else "")
+
+deriveBoth defaultOptions ''NodeContent
+deriveBoth defaultOptions ''Node

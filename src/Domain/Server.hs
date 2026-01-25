@@ -2,13 +2,11 @@ module Domain.Server (runApp) where
 
 import Api.Backend
 import App
-import Cache.NodeId (NodeId)
 import Control.Monad.Except (ExceptT (..))
 import Control.Monad.Random.Strict
 import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
-import Domain.Model (Node)
 import Network.Wai.Handler.Warp (run)
 import Servant
 import TePapa.Env (getPort, loadDotEnv)
@@ -41,14 +39,14 @@ server = apiServer :<|> serveStatic
 apiServer :: ServerT ApiRoutes RAppM
 apiServer = serveStart :<|> serveExpand
 
-serveExpand :: ExpandParams -> RAppM (Maybe [(NodeId, Node)])
+serveExpand :: ExpandParams -> RAppM (Maybe Subgraph)
 serveExpand ExpandParams{expandAboutId = unid} =
     lift (verifyNodeId . toInt $ unid) >>= \case
         Nothing -> pure Nothing
         Just nid -> do
             outIds <- lift $ expandNode nid
             results <- lift $ lookupNodes (S.toList outIds)
-            pure . Just $ results
+            pure . Just . Subgraph $ results
 
 serveStart :: RAppM InitialGameState
 serveStart = do
@@ -56,7 +54,7 @@ serveStart = do
     path <- drunkardsWalk lift nid 10
     pure $
         InitialGameState
-            { subgraph = N.toList path
+            { subgraph = Subgraph $ N.toList path
             , startAt = nid
             , endAt = fst . N.last $ path
             }

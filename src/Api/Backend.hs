@@ -1,18 +1,20 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Api.Backend (
     ApiRoutes,
     BackendApi,
     InitialGameState (..),
     ExpandParams (..),
+    Subgraph (..),
     UnverifiedNodeId (..),
 ) where
 
 import Cache.NodeId (NodeId)
-import Data.Aeson
 import Domain.Model
 import GHC.Generics
 import Servant.API
+import Servant.Elm
 
 -- The api/expand endpoint returns a Maybe because the API caller is not trusted, and so
 -- we need to verify their input first. However, we make the guarantee that all node IDs
@@ -21,25 +23,33 @@ import Servant.API
 
 type ApiRoutes =
     "start" :> Get '[JSON] InitialGameState
-        :<|> "expand" :> ReqBody '[JSON] ExpandParams :> Post '[JSON] (Maybe [(NodeId, Node)])
+        :<|> "expand" :> ReqBody '[JSON] ExpandParams :> Post '[JSON] (Maybe Subgraph)
 
 type BackendApi =
     "api" :> ApiRoutes
         :<|> Raw
 
+data Subgraph = Subgraph
+    { contents :: [(NodeId, Node)]
+    }
+    deriving (Generic)
+
 data InitialGameState = InitialGameState
     { startAt :: NodeId
     , endAt :: NodeId
-    , subgraph :: [(NodeId, Node)]
+    , subgraph :: Subgraph
     }
-    deriving (Generic, ToJSON)
+    deriving (Generic)
 
 data ExpandParams = ExpandParams
     { expandAboutId :: UnverifiedNodeId
     }
-    deriving (Generic, FromJSON)
+    deriving (Generic)
 
 newtype UnverifiedNodeId = UnverifiedNodeId {toInt :: Int}
     deriving (Generic)
 
-instance FromJSON UnverifiedNodeId
+deriveBoth defaultOptions ''Subgraph
+deriveBoth defaultOptions ''InitialGameState
+deriveBoth defaultOptions ''UnverifiedNodeId
+deriveBoth defaultOptions ''ExpandParams
