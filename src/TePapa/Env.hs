@@ -3,6 +3,7 @@ module TePapa.Env (
     getPort,
     getSeed,
     getSemaphore,
+    getStaticPath,
     loadDotEnv,
 ) where
 
@@ -76,3 +77,9 @@ parseNamespace s =
         "agent" -> Just AgentR
         "place" -> Just PlaceR
         _nomatch -> Nothing
+
+getStaticPath :: IO FilePath
+getStaticPath = do
+    lookupEnv "STATIC_PATH" >>= \case
+        Nothing -> pure "static/"
+        Just p -> pure p

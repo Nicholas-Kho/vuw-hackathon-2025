@@ -9,7 +9,7 @@ import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
 import Network.Wai.Handler.Warp (run)
 import Servant
-import TePapa.Env (getPort, loadDotEnv)
+import TePapa.Env (getPort, getStaticPath, loadDotEnv)
 
 type RAppM = RandT StdGen AppM
 
@@ -20,21 +20,19 @@ nt env appAction = do
     gen <- newStdGen
     Handler . ExceptT $ Right <$> (evalRandT appAction gen) `runAppM` env
 
-app :: AppEnv -> Application
-app appEnv =
+app :: AppEnv -> FilePath -> Application
+app appEnv staticPath =
     serve (Proxy @BackendApi) $
-        hoistServer (Proxy @BackendApi) (nt appEnv) server
+        hoistServer (Proxy @BackendApi) (nt appEnv) (apiServer :<|> serveStatic staticPath)
 
 runApp :: IO ()
 runApp = do
     loadDotEnv
     port <- getPort
     appEnv <- getInitialEnv
+    staticPath <- getStaticPath
     putStrLn $ "Listening on port " <> (show port)
-    run port (app appEnv)
-
-server :: ServerT BackendApi RAppM
-server = apiServer :<|> serveStatic
+    run port (app appEnv staticPath)
 
 apiServer :: ServerT ApiRoutes RAppM
 apiServer = serveStart :<|> serveExpand
@@ -59,5 +57,5 @@ serveStart = do
             , endAt = fst . N.last $ path
             }
 
-serveStatic :: ServerT Raw RAppM
-serveStatic = serveDirectoryFileServer "static/"
+serveStatic :: FilePath -> ServerT Raw RAppM
+serveStatic = serveDirectoryFileServer

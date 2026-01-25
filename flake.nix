@@ -41,10 +41,13 @@
         packages.default = pkgs.symlinkJoin {
           name = "muselinks";
           paths = [ muselinks-server muselinks-frontend ];
+          nativeBuildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
             mkdir -p $out/static
             ln -s ${muselinks-frontend}/index.html $out/static/index.html
             ln -s ${muselinks-frontend}/assets $out/static/assets
+            rm -f $out/bin/muselinks
+            makeWrapper ${muselinks-server}/bin/muselinks $out/bin/muselinks --set STATIC_PATH $out/static
           '';
         };
         devShells.default = haskellPkgs.shellFor {
