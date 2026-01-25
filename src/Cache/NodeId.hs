@@ -1,36 +1,28 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Cache.NodeId (NodeId, unNodeId, mkNodeId) where
+module Cache.NodeId (NodeId, mkNodeId) where
 
 import Data.Aeson
 import Data.Hashable (Hashable)
 import qualified Data.Text as T
 import GHC.Generics
 import Servant.Elm
-import Text.Read (readMaybe)
 
-newtype NodeId = MkNodeId {unNodeId :: Int}
+{-
+We store these as text internally so that JSON and Elm don't treat these as numbers
+and cause silent integer overflows. Elm Ints are signed 32 bit whereas Haskell ones
+can be signed 64 bit, and JS uses doubles (-2^53 to 2^53 - 1) to store numbers.
+-}
+newtype NodeId = MkNodeId {content :: T.Text}
     deriving (Eq, Ord, Generic, Show, ToJSONKey, FromJSONKey)
 
 instance Hashable NodeId
-
--- When we send node IDs to javascript, we convert them to strings
--- because JS numbers are weird and will cause problems
-
-instance ToJSON NodeId where
-    toJSON MkNodeId{unNodeId = x} = String . T.show $ x
-
-instance FromJSON NodeId where
-    parseJSON = withText "nodeId" $ \nidt ->
-        case readMaybe (T.unpack nidt) of
-            Nothing -> fail $ "Invalid NodeId " <> (T.unpack nidt)
-            Just x -> pure . mkNodeId $ x
 
 -- DO NOT use this unless you are implementing a graph cache!
 -- Graph caches have the invariant that looking up a node ID never fails,
 -- which is enforced only by returning IDs on creation. Making an arbitrary
 -- node ID and looking it up will probably result in a crash.
 mkNodeId :: Int -> NodeId
-mkNodeId = MkNodeId
+mkNodeId = MkNodeId . T.show
 
-deriveElmDef Servant.Elm.defaultOptions ''NodeId
+deriveBoth Servant.Elm.defaultOptions ''NodeId

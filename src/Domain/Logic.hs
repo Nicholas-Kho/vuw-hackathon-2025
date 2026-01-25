@@ -11,7 +11,7 @@ where
 
 import App (AppEnv (..), AppM, runAppM)
 import Cache.Interface (GraphStore (getNode), addEdge, addNode, getExternal, getKeys)
-import Cache.NodeId (NodeId, mkNodeId, unNodeId)
+import Cache.NodeId (NodeId, mkNodeId)
 import Control.Concurrent.Async (forConcurrently, forConcurrently_)
 import Control.Monad.Random.Strict (MonadIO (liftIO), MonadRandom (getRandomR), lift)
 import Control.Monad.Reader (ask, asks)
@@ -149,7 +149,7 @@ verifyNodeId :: Int -> AppM (Maybe NodeId)
 verifyNodeId x = do
     g <- asks graph
     (rootKey, rest) <- liftIO . atomically $ getKeys g
-    let allKeysRaw = S.map unNodeId $ S.insert rootKey rest
-    if x `S.member` allKeysRaw
-        then pure $ Just (mkNodeId x)
-        else pure $ Nothing
+    let allKeys = S.insert rootKey rest
+    if (mkNodeId x) `S.member` allKeys
+        then pure . Just . mkNodeId $ x
+        else pure Nothing
