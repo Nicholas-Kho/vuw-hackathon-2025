@@ -1,5 +1,49 @@
 {
   "nodes": {
+    "elm-spa": {
+      "inputs": {
+        "nixpkgs": [
+          "mkElmDerivation",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1706301604,
+        "narHash": "sha256-n6LDjnPCTLbKTrRgeZhlLTfY6V45xNYcb4NYEMuO4jg=",
+        "owner": "jeslie0",
+        "repo": "elm-spa",
+        "rev": "4c82e18d5fcf9d4c027f0ef0e89204dd87584f7f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeslie0",
+        "repo": "elm-spa",
+        "type": "github"
+      }
+    },
+    "elm-watch": {
+      "inputs": {
+        "nixpkgs": [
+          "mkElmDerivation",
+          "nixpkgs"
+        ],
+        "npm-fix": "npm-fix",
+        "npmlock2nix": "npmlock2nix"
+      },
+      "locked": {
+        "lastModified": 1706304401,
+        "narHash": "sha256-992cypnhoRbsGkDc5/X241rafBML4EP0EuT6cBcaY/8=",
+        "owner": "jeslie0",
+        "repo": "elm-watch",
+        "rev": "2f1c6c0e69b163c15e2ce66f543c38021b2a0ea3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeslie0",
+        "repo": "elm-watch",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "systems": "systems"
@@ -35,7 +79,43 @@
         "type": "indirect"
       }
     },
+    "mkElmDerivation": {
+      "inputs": {
+        "elm-spa": "elm-spa",
+        "elm-watch": "elm-watch",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1769306638,
+        "narHash": "sha256-++1aTjbdU64Mb/mQrT/gQ44cJBabmTi/fR5iMIcR5IE=",
+        "owner": "jeslie0",
+        "repo": "mkElmDerivation",
+        "rev": "ab5affe77b6c94015e3a54f83f45e8f77a98518e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeslie0",
+        "repo": "mkElmDerivation",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
+      "locked": {
+        "lastModified": 1767242400,
+        "narHash": "sha256-knFaYjeg7swqG1dljj1hOxfg39zrIy8pfGuicjm9s+o=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "c04833a1e584401bb63c1a63ddc51a71e6aa457a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1753939845,
         "narHash": "sha256-K2ViRJfdVGE8tpJejs8Qpvvejks1+A4GQej/lBk5y7I=",
@@ -51,11 +131,50 @@
         "type": "github"
       }
     },
+    "npm-fix": {
+      "inputs": {
+        "nixpkgs": [
+          "mkElmDerivation",
+          "elm-watch",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1706304213,
+        "narHash": "sha256-XN9ESRSOANR0iFbEMMY1C1jvgZlYJsXQYVAHxxRmn+c=",
+        "owner": "jeslie0",
+        "repo": "npm-lockfile-fix",
+        "rev": "e9851274afa12b04d98e694ed089aa9cde8d7349",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeslie0",
+        "repo": "npm-lockfile-fix",
+        "type": "github"
+      }
+    },
+    "npmlock2nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1673447413,
+        "narHash": "sha256-sJM82Sj8yfQYs9axEmGZ9Evzdv/kDcI9sddqJ45frrU=",
+        "owner": "nix-community",
+        "repo": "npmlock2nix",
+        "rev": "9197bbf397d76059a76310523d45df10d2e4ca81",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "npmlock2nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-parts": "flake-parts",
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "mkElmDerivation": "mkElmDerivation",
+        "nixpkgs": "nixpkgs_2"
       }
     },
     "systems": {
