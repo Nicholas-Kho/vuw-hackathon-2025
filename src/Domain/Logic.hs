@@ -19,7 +19,7 @@ import Control.Monad.State.Strict (StateT, evalStateT, gets, modify')
 import qualified Data.List.NonEmpty as N
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Domain.Model (Node (outgoingEdges))
+import Domain.Model (EdgeInfo (..), Node (outgoingEdges))
 import FetchM (runFetchConc)
 import GHC.Conc (atomically)
 import TePapa.Convert (edgeReasonToTxt, tePapaThingToNode)
@@ -136,8 +136,8 @@ processDiscovery d = do
             Nothing -> pure ()
             Just c -> liftIO . atomically $ addNode g tref c >> pure ()
         FoundLink t1 t2 why -> do
-            liftIO . atomically $ addEdge g t1 t2 (edgeReasonToTxt why)
-            liftIO . atomically $ addEdge g t2 t1 (edgeReasonToTxt why)
+            liftIO . atomically $ addEdge g t1 t2 (EdgeInfo $ edgeReasonToTxt why)
+            liftIO . atomically $ addEdge g t2 t1 (EdgeInfo $ edgeReasonToTxt why)
 
 processDiscoveries :: [Discovery] -> AppM ()
 processDiscoveries ds = do

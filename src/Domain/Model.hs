@@ -4,7 +4,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Domain.Model (
-    EdgeInfo,
+    EdgeInfo (..),
     Node (..),
     NodeContent (..),
     addIncoming,
@@ -57,7 +57,8 @@ addOutgoing n nto e =
         { incomingEdges = M.insertWith S.union nto (S.singleton e) (outgoingEdges n)
         }
 
-type EdgeInfo = T.Text
+newtype EdgeInfo = EdgeInfo {text :: T.Text}
+    deriving (Eq, Ord, Show)
 
 prettyPrintNode :: NodeContent -> String
 prettyPrintNode nc =
@@ -66,5 +67,6 @@ prettyPrintNode nc =
         <> (Prelude.take 15 . unpack . description $ nc)
         <> (if (Data.Text.length . description $ nc) > 15 then "..." else "")
 
+deriveBoth defaultOptions ''EdgeInfo
 deriveBoth defaultOptions ''NodeContent
 deriveBoth defaultOptions ''Node

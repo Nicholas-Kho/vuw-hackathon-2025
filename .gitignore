@@ -4,3 +4,5 @@ dist-newstyle/
 # Generated from the build process; shouldn't be committed.
 static/
 frontend/elm-stuff
+# API bindings made by servant-elm
+frontend/src/Generated
