@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Main (main) where
 
@@ -7,11 +6,15 @@ import Api.Backend
 import Cache.NodeId (NodeId)
 import Domain.Model (Node, NodeContent)
 import Servant.Elm
+import System.Environment (getArgs)
+import System.Exit (die)
 
 main :: IO ()
 main = do
-    outputDir <- pure "frontend/src/"
-    pure ()
+    args <- getArgs
+    outputDir <- case args of
+        [p] -> pure p
+        _other -> die "Please call this program with an output directory as the one and only argument."
     generateElmModule
         ["Generated", "BackendApi"]
         ""
