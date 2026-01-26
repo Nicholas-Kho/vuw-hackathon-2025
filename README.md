@@ -31,13 +31,13 @@ nix develop
 ```
 This will provide all of the required tools and dependencies for development. In the dev shell, you may use:
  - `ghciwatch` for live compiler feedback on the Haskell part of the project
- - `elm reactor` for live compiler feedback on the Elm part of the project as well as a development server. You should run this in `frontend/`. 
- - `cabal run api-codegen <path to frontend/src>` to generate the Elm API bindings. You must do this if you change the backend API spec or any types deriving Elm definitions.
+ - `elm reactor` for live compiler feedback on the Elm part of the project as well as a development server. You should run this in `frontend/`. You will probably also want to set `USE_CORS=true` in the `.env` file.
+ - `cabal run api-codegen -- <path to frontend/src> -l <port the main server is on>` to generate the Elm API bindings. You must do this if you change the backend API spec or any types deriving Elm definitions.
  - `cabal run muselinks` to run the main app
 
 If it's your first time in the dev-shell, you should run
 ```
-cabal run api-codegen frontend/src
+cabal run api-codegen -- frontend/src -l 8080
 ```
 before developing or running the frontend to ensure the backend bindings are there. Elm should complain pretty loud if you forget to do this, or if the bindings are outdated.
 
@@ -55,3 +55,5 @@ You may wish to also set the following variables:
 `SEED=`: A Te Papa Collections reference of the form `NAMESPACE/ID`, where `NAMESPACE` is one of: `object`, `agent`, `place` and `ID` is a positive integer. Defaults to `object/1227923`. Determines the first node in the graph. During startup, the server attempts to parse this reference, look up the object, and convert it to a node. If this fails, the server process exits. You can find different seed objects and their identifiers using the [Te Papa Collections API browser](https://data.tepapa.govt.nz/docs/apibrowser.html). The `Type` field of your chosen object corresponds to `NAMESPACE`, and the `Id` field corresponds to `ID`.
 
 `STATIC_PATH`: The path to the directory where the server will serve static files from. Defaults to `static/`. If you are running the server via `nix run`, this variable will already be set.
+
+`USE_CORS`: Either `true` or `false`. Defaults to `false`. Determines whether or not the server allows cross-origin resource sharing. This is useful to enable when working on the frontend with `elm reactor`, as in this case the Elm server will be on a different port than the main server. 
