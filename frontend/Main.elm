@@ -1,8 +1,7 @@
 module Main exposing (main)
 
-import Html exposing (text)
-import Test exposing (helloStr)
+import Game exposing (main)
 
 
 main =
-    text helloStr
+    Game.main

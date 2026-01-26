@@ -13,7 +13,9 @@
             "elm/http": "2.0.0",
             "elm/json": "1.1.4",
             "elm/url": "1.0.0",
-            "joakin/elm-canvas": "5.0.0"
+            "escherlies/elm-vectors": "1.1.0",
+            "joakin/elm-canvas": "5.0.0",
+            "krisajenkins/remotedata": "6.1.0"
         },
         "indirect": {
             "avh4/elm-color": "1.0.0",
