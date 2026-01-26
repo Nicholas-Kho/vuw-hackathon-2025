@@ -7,6 +7,7 @@ import Control.Monad.Random.Strict
 import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
+import Domain.Model (elmify)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
@@ -47,7 +48,7 @@ serveExpand ExpandParams{expandAboutId = unid} =
         Just nid -> do
             outIds <- lift $ expandNode nid
             results <- lift $ lookupNodes (S.toList outIds)
-            pure . Just . Subgraph $ results
+            pure . Just . Subgraph $ (fmap (\(x, c) -> (x, elmify c)) results)
 
 serveStart :: RAppM InitialGameState
 serveStart = do
@@ -55,7 +56,7 @@ serveStart = do
     path <- drunkardsWalk lift nid 10
     pure $
         InitialGameState
-            { subgraph = Subgraph $ N.toList path
+            { subgraph = Subgraph $ fmap (\(x, c) -> (x, elmify c)) (N.toList path)
             , startAt = nid
             , endAt = fst . N.last $ path
             }

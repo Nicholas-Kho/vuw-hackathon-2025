@@ -5,7 +5,7 @@ module Main (main) where
 import Api.Backend
 import Cache.NodeId (NodeId)
 import qualified Data.Text as T
-import Domain.Model (EdgeInfo, Node, NodeContent)
+import Domain.Model (EdgeInfo, NodeContent, NodeElm)
 import Options.Applicative
 import Servant.Elm
 
@@ -28,7 +28,7 @@ main = do
         (outputDir args)
         [ DefineElm (Proxy @NodeId)
         , DefineElm (Proxy @NodeContent)
-        , DefineElm (Proxy @Node)
+        , DefineElm (Proxy @NodeElm)
         , DefineElm (Proxy @InitialGameState)
         , DefineElm (Proxy @UnverifiedNodeId)
         , DefineElm (Proxy @ExpandParams)

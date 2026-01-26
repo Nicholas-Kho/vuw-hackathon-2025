@@ -4,6 +4,7 @@ import Browser
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
+import Http exposing (Error(..))
 import RemoteData exposing (RemoteData(..), WebData, fromResult)
 
 
@@ -39,11 +40,30 @@ view wd =
         Loading ->
             text "loading"
 
-        Failure _ ->
-            text "fail"
+        Failure err ->
+            showErr err
 
         Success _ ->
             text "OK!"
+
+
+showErr : Error -> Html Msg
+showErr err =
+    case err of
+        NetworkError ->
+            text "Network error"
+
+        Timeout ->
+            text "timeout"
+
+        BadUrl s ->
+            text s
+
+        BadStatus s ->
+            text <| String.fromInt <| s
+
+        BadBody b ->
+            text b
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

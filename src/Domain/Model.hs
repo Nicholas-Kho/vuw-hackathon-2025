@@ -7,8 +7,8 @@ module Domain.Model (
     EdgeInfo (..),
     Node (..),
     NodeContent (..),
-    addIncoming,
-    addOutgoing,
+    NodeElm (..),
+    elmify,
     mkNode,
     prettyPrintNode,
 )
@@ -30,12 +30,38 @@ data NodeContent = NodeContent
     }
     deriving (Show, Eq, Generic, Hashable)
 
+newtype EdgeInfo = EdgeInfo {text :: T.Text}
+    deriving (Eq, Ord, Show)
+
 data Node = Node
     { content :: NodeContent
     , incomingEdges :: M.Map NodeId (S.Set EdgeInfo)
     , outgoingEdges :: M.Map NodeId (S.Set EdgeInfo)
     }
     deriving (Generic)
+
+-- A more Elm-friendly representation of node which it can parse from JSON.
+data NodeElm = NodeElm
+    { content :: NodeContent
+    , incomingEdges :: [(NodeId, [EdgeInfo])]
+    , outgoingEdges :: [(NodeId, [EdgeInfo])]
+    }
+    deriving (Generic)
+
+elmify :: Node -> NodeElm
+elmify
+    Node
+        { content = c
+        , incomingEdges = inc
+        , outgoingEdges = out
+        } =
+        NodeElm
+            { content = c
+            , incomingEdges = changeMap inc
+            , outgoingEdges = changeMap out
+            }
+      where
+        changeMap m = (\(nid, s) -> (nid, S.elems s)) <$> M.toList m
 
 mkNode :: NodeContent -> Node
 mkNode nc =
@@ -44,21 +70,6 @@ mkNode nc =
         , incomingEdges = M.empty
         , outgoingEdges = M.empty
         }
-
-addIncoming :: Node -> NodeId -> EdgeInfo -> Node
-addIncoming n nfrom e =
-    n
-        { incomingEdges = M.insertWith S.union nfrom (S.singleton e) (incomingEdges n)
-        }
-
-addOutgoing :: Node -> NodeId -> EdgeInfo -> Node
-addOutgoing n nto e =
-    n
-        { incomingEdges = M.insertWith S.union nto (S.singleton e) (outgoingEdges n)
-        }
-
-newtype EdgeInfo = EdgeInfo {text :: T.Text}
-    deriving (Eq, Ord, Show)
 
 prettyPrintNode :: NodeContent -> String
 prettyPrintNode nc =
@@ -69,4 +80,4 @@ prettyPrintNode nc =
 
 deriveBoth defaultOptions ''EdgeInfo
 deriveBoth defaultOptions ''NodeContent
-deriveBoth defaultOptions ''Node
+deriveBoth defaultOptions ''NodeElm

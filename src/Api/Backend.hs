@@ -30,7 +30,7 @@ type BackendApi =
         :<|> Raw
 
 data Subgraph = Subgraph
-    { contents :: [(NodeId, Node)]
+    { contents :: [(NodeId, NodeElm)]
     }
     deriving (Generic)
 
