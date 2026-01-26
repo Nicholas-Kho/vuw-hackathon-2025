@@ -87,6 +87,7 @@ common tepapa-client-deps
         , text
         , ttrie
         , vector
+        , wai-cors
         , warp
 
 library
@@ -153,7 +154,6 @@ executable smoke-test
     build-depends:
         muselinks,
         mtl,
-        optparse-applicative,
         servant-client,
         text,
     default-language: GHC2024
@@ -169,5 +169,7 @@ executable api-codegen
     default-language: GHC2024
     build-depends:
         muselinks,
+        optparse-applicative,
         servant,
-        servant-elm
+        servant-elm,
+        text,

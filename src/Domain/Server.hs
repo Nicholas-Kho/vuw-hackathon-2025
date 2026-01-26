@@ -8,8 +8,9 @@ import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
 import Network.Wai.Handler.Warp (run)
+import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
-import TePapa.Env (getPort, getStaticPath, loadDotEnv)
+import TePapa.Env (getPort, getStaticPath, getUseCors, loadDotEnv)
 
 type RAppM = RandT StdGen AppM
 
@@ -31,8 +32,10 @@ runApp = do
     port <- getPort
     appEnv <- getInitialEnv
     staticPath <- getStaticPath
+    useCors <- getUseCors
+    let cors = if useCors then simpleCors else id
     putStrLn $ "Listening on port " <> (show port)
-    run port (app appEnv staticPath)
+    run port $ cors (app appEnv staticPath)
 
 apiServer :: ServerT ApiRoutes RAppM
 apiServer = serveStart :<|> serveExpand

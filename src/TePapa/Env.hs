@@ -4,6 +4,7 @@ module TePapa.Env (
     getSeed,
     getSemaphore,
     getStaticPath,
+    getUseCors,
     loadDotEnv,
 ) where
 
@@ -83,3 +84,9 @@ getStaticPath = do
     lookupEnv "STATIC_PATH" >>= \case
         Nothing -> pure "static/"
         Just p -> pure p
+
+getUseCors :: IO Bool
+getUseCors = do
+    lookupEnv "USE_CORS" >>= \case
+        Just "true" -> pure True
+        _other -> pure False
