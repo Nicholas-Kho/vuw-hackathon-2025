@@ -29,7 +29,8 @@
           nativeBuildInputs = [ elmPkgs.elm muselinks-api-codegen ];
           buildPhase = ''
             mkdir -p src/Generated
-            ${muselinks-api-codegen}/bin/api-codegen src/Generated
+            # TODO: Later, we won't want to hardcode this.
+            ${muselinks-api-codegen}/bin/api-codegen src/ -l 8080
             elm make Main.elm --output=index.html
           '';
           installPhase = ''

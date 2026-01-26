@@ -4,21 +4,28 @@ module Main (main) where
 
 import Api.Backend
 import Cache.NodeId (NodeId)
+import qualified Data.Text as T
 import Domain.Model (EdgeInfo, Node, NodeContent)
+import Options.Applicative
 import Servant.Elm
-import System.Environment (getArgs)
-import System.Exit (die)
+
+data UserInput = UserInput
+    { outputDir :: FilePath
+    , apiAuthority :: ApiAuthority
+    }
+
+data ApiAuthority
+    = Localhost Int
+    | Host T.Text
 
 main :: IO ()
 main = do
-    args <- getArgs
-    outputDir <- case args of
-        [p] -> pure p
-        _other -> die "Please call this program with an output directory as the one and only argument."
-    generateElmModule
+    args <- execParser userInputPI
+    generateElmModuleWith
+        (mkElmOpts (apiAuthority args))
         ["Generated", "BackendApi"]
         defElmImports
-        outputDir
+        (outputDir args)
         [ DefineElm (Proxy @NodeId)
         , DefineElm (Proxy @NodeContent)
         , DefineElm (Proxy @Node)
@@ -29,3 +36,46 @@ main = do
         , DefineElm (Proxy @EdgeInfo)
         ]
         (Proxy @ApiRoutes)
+
+userInputPI :: ParserInfo UserInput
+userInputPI = info userInputP mempty
+
+userInputP :: Parser UserInput
+userInputP =
+    UserInput
+        <$> strArgument
+            ( help "directory to write API bindings"
+                <> metavar "write-to-dir"
+            )
+        <*> apiHostP
+
+apiHostP :: Parser ApiAuthority
+apiHostP = localhostP <|> domP
+
+domP :: Parser ApiAuthority
+domP =
+    Host
+        <$> strOption
+            ( long "api-auth"
+                <> help "Authority hosting the API without the leading slash"
+            )
+localhostP :: Parser ApiAuthority
+localhostP =
+    Localhost
+        <$> option
+            auto
+            ( short 'l'
+                <> help "The local port to run on"
+                <> showDefault
+                <> metavar "INT"
+            )
+
+mkElmOpts :: ApiAuthority -> ElmOptions
+mkElmOpts (Localhost p) =
+    defElmOptions
+        { urlPrefix = Static $ "http://localhost:" <> (T.show p) <> "/api"
+        }
+mkElmOpts (Host d) =
+    defElmOptions
+        { urlPrefix = Static $ "https://" <> d <> "/api"
+        }
