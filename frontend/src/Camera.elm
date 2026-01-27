@@ -4,6 +4,7 @@ module Camera exposing (..)
 type alias Camera =
     { worldPos : Vec2
     , basis : Mat2
+    , zoomRange : ( Float, Float )
     }
 
 
@@ -28,7 +29,35 @@ mkCamera : Camera
 mkCamera =
     { worldPos = ( 0, 0 )
     , basis = iTwo
+    , zoomRange = ( 0.1, 2 )
     }
+
+
+moveCam : ( Float, Float ) -> Camera -> Camera
+moveCam ( dx, dy ) cam =
+    let
+        ( x, y ) =
+            cam.worldPos
+    in
+    { cam | worldPos = ( x + dx, y + dy ) }
+
+
+zoomCam : Float -> Camera -> Camera
+zoomCam by cam =
+    let
+        ( curZoom, _ ) =
+            cam.basis.row1
+
+        ( minZoom, maxZoom ) =
+            cam.zoomRange
+
+        newZoom =
+            clamp minZoom maxZoom (curZoom + by)
+
+        newBasis =
+            { row1 = ( newZoom, 0 ), row2 = ( 0, newZoom ) }
+    in
+    { cam | basis = newBasis }
 
 
 worldPosToCamPos : Camera -> Vec2 -> Vec2

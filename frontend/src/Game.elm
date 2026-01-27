@@ -175,4 +175,4 @@ tickGame m =
         ( userInputs, resetInp ) =
             PlayerInput.consume m.input
     in
-    { m | input = resetInp }
+    { m | input = resetInp, game = handleInputs userInputs m.game }
