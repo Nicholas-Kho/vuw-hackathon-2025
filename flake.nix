@@ -63,6 +63,7 @@
             elmPkgs.elm-analyse
             elmPkgs.elm-format
             elmPkgs.elm-language-server
+            elmPkgs.elm-live
           ];
         };
       });

@@ -4,6 +4,8 @@ import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Canvas
+import Canvas.Settings
+import Color
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
@@ -97,12 +99,13 @@ showGame ( w, h ) gs =
     Canvas.toHtml ( w, h )
         [ style "border" "10px solid rgba(0,0,0,0.1)"
         , style "display" "block"
-        , style "width" (String.fromInt w ++ "px")
-        , style "height" (String.fromInt h ++ "px")
         , style "box-sizing" "border-box"
         , PlayerInput.scrollAttr Input
         ]
-        []
+        [ Canvas.shapes
+            [ Canvas.Settings.fill Color.red ]
+            [ Canvas.rect ( 50, 30 ) 100 100 ]
+        ]
 
 
 showErr : Error -> String
