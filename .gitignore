@@ -6,3 +6,5 @@ static/
 frontend/elm-stuff
 # API bindings made by servant-elm
 frontend/src/Generated
+# Made by elm-live, shouldn't be committed
+frontend/elm.js
