@@ -3,9 +3,11 @@ module Game exposing (..)
 import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
+import Camera exposing (mkCamera, showCam)
 import Canvas
 import Canvas.Settings
 import Color
+import Drawable exposing (drawCircle)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
@@ -13,6 +15,7 @@ import Html.Attributes exposing (style)
 import Http exposing (Error(..))
 import PlayerInput
 import RemoteData exposing (RemoteData(..))
+import String
 import Task
 
 
@@ -91,20 +94,22 @@ view model =
             text <| "There was an error I can't recover from: " ++ why
 
         Good okm ->
-            showGame okm.size okm.game
+            Html.div []
+                [ showGame okm.size okm.game
+                ]
 
 
 showGame : CanvasSize -> GameState -> Html Msg
 showGame ( w, h ) gs =
     Canvas.toHtml ( w, h )
-        [ style "border" "10px solid rgba(0,0,0,0.1)"
-        , style "display" "block"
+        [ style "display" "block"
         , style "box-sizing" "border-box"
         , PlayerInput.scrollAttr Input
         ]
         [ Canvas.shapes
-            [ Canvas.Settings.fill Color.red ]
-            [ Canvas.rect ( 50, 30 ) 100 100 ]
+            [ Canvas.Settings.fill Color.lightGrey ]
+            [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
+        , Canvas.shapes [] [ drawCircle gs.cam ( 0, 0 ) 50 ]
         ]
 
 
@@ -136,7 +141,13 @@ update msg model =
         Good okm ->
             case msg of
                 Resize w h ->
-                    ( Good { okm | size = ( w, h ) }, Cmd.none )
+                    ( Good
+                        { okm
+                            | size = ( w, h )
+                            , game = resizeCamera ( toFloat w, toFloat h ) okm.game
+                        }
+                    , Cmd.none
+                    )
 
                 Input i ->
                     ( Good { okm | input = PlayerInput.update i okm.input }, Cmd.none )
@@ -166,7 +177,7 @@ handleStartResponse res =
             ( Good
                 { size = ( 500, 500 )
                 , input = PlayerInput.init
-                , game = GameState.fromInitial igs
+                , game = GameState.fromInitial (mkCamera ( 500, 500 )) igs
                 }
             , Task.perform getVpSize getViewport
             )

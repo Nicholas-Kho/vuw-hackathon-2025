@@ -8,6 +8,7 @@ type alias Camera =
     { worldPos : Vec2
     , zoom : Float
     , zoomRange : ( Float, Float )
+    , canvasSize : Vec2
     }
 
 
@@ -15,11 +16,12 @@ type alias Vec2 =
     ( Float, Float )
 
 
-mkCamera : Camera
-mkCamera =
+mkCamera : Vec2 -> Camera
+mkCamera csize =
     { worldPos = ( 0, 0 )
     , zoom = 1
     , zoomRange = ( 0.1, 2 )
+    , canvasSize = csize
     }
 
 
@@ -56,11 +58,14 @@ worldPosToCamPos cam ( x, y ) =
         ( px, py ) =
             cam.worldPos
 
+        ( cx, cy ) =
+            ( Tuple.first cam.canvasSize / 2, Tuple.second cam.canvasSize / 2 )
+
         ( dx, dy ) =
             ( x - px, y - py )
     in
-    ( a * dx + b * dy
-    , c * dx + d * dy
+    ( a * dx + b * dy + cx
+    , c * dx + d * dy + cy
     )
 
 

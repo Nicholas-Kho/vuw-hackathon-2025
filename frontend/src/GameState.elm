@@ -14,12 +14,12 @@ type alias GameState =
     }
 
 
-fromInitial : InitialGameState -> GameState
-fromInitial igs =
+fromInitial : Camera -> InitialGameState -> GameState
+fromInitial cam igs =
     { startAt = igs.startAt
     , endAt = igs.endAt
     , graph = igs.subgraph
-    , cam = mkCamera
+    , cam = cam
     }
 
 
@@ -36,3 +36,15 @@ handleInput uinp gs =
 handleInputs : List UserInput -> GameState -> GameState
 handleInputs uips g =
     foldl handleInput g uips
+
+
+resizeCamera : ( Float, Float ) -> GameState -> GameState
+resizeCamera s gs =
+    let
+        oldCam =
+            gs.cam
+
+        newCam =
+            { oldCam | canvasSize = s }
+    in
+    { gs | cam = newCam }
