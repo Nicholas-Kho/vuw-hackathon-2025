@@ -104,12 +104,12 @@ mkInputs model =
 
 consume : Model -> ( List UserInput, Model )
 consume m =
-    ( mkInputs m, init )
+    ( mkInputs m, { init | mouse = m.mouse } )
 
 
 isBig : Float -> Bool
 isBig f =
-    f > 0.00001
+    abs f > 0
 
 
 goodInput : UserInput -> Bool
