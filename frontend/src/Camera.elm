@@ -1,5 +1,8 @@
 module Camera exposing (..)
 
+import Html exposing (Html)
+import String exposing (fromFloat)
+
 
 type alias Camera =
     { worldPos : Vec2
@@ -59,3 +62,19 @@ worldPosToCamPos cam ( x, y ) =
     ( a * dx + b * dy
     , c * dx + d * dy
     )
+
+
+showCam : Camera -> Html msg
+showCam cam =
+    Html.div []
+        [ Html.h2 []
+            [ Html.text <|
+                "Cam pos: ("
+                    ++ (fromFloat <| Tuple.first cam.worldPos)
+                    ++ ", "
+                    ++ (fromFloat <| Tuple.second cam.worldPos)
+                    ++ ")"
+            ]
+        , Html.h2 []
+            [ Html.text <| "Cam zoom: " ++ fromFloat cam.zoom ]
+        ]
