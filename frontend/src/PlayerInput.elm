@@ -97,7 +97,7 @@ addMove m x y =
 mkInputs : Model -> List UserInput
 mkInputs model =
     List.filter goodInput
-        [ Pan (first model.mouseDelta) (second model.mouseDelta)
+        [ Pan -(first model.mouseDelta) -(second model.mouseDelta)
         , Zoom model.scrolled
         ]
 
