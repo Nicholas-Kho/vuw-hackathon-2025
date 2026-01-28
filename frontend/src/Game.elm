@@ -7,7 +7,7 @@ import Camera exposing (mkCamera, showCam)
 import Canvas
 import Canvas.Settings
 import Color
-import Drawable exposing (drawCircle)
+import Drawable exposing (drawCircle, drawGrid)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
@@ -109,7 +109,10 @@ showGame ( w, h ) gs =
         [ Canvas.shapes
             [ Canvas.Settings.fill Color.lightGrey ]
             [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
-        , Canvas.shapes [] [ drawCircle gs.cam ( 0, 0 ) 50 ]
+        , Canvas.shapes []
+            [ drawGrid gs.cam 50
+            , drawCircle gs.cam ( 0, 0 ) 50
+            ]
         ]
 
 
