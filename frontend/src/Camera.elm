@@ -54,6 +54,26 @@ zoomCam dz cam =
     { cam | zoom = clamp minZoom maxZoom newZoom }
 
 
+vecFromTo : Vec2 -> Vec2 -> Vec2
+vecFromTo ( xa, ya ) ( xb, yb ) =
+    ( xb - xa, yb - ya )
+
+
+zoomAbout : Camera -> Vec2 -> Float -> Camera
+zoomAbout cam curPos dz =
+    let
+        cursorToWorldBefore =
+            camPosToWorldPos cam curPos
+
+        zoomedCam =
+            zoomCam dz cam
+
+        cursorToWorldAfter =
+            camPosToWorldPos zoomedCam curPos
+    in
+    moveCam (vecFromTo cursorToWorldAfter cursorToWorldBefore) zoomedCam
+
+
 worldPosToCamPos : Camera -> Vec2 -> Vec2
 worldPosToCamPos cam ( x, y ) =
     let
@@ -74,6 +94,20 @@ worldPosToCamPos cam ( x, y ) =
     in
     ( a * dx + b * dy + cx
     , c * dx + d * dy + cy
+    )
+
+
+camPosToWorldPos : Camera -> Vec2 -> Vec2
+camPosToWorldPos cam ( x, y ) =
+    let
+        ( px, py ) =
+            cam.worldPos
+
+        ( cx, cy ) =
+            ( Tuple.first cam.canvasSize / 2, Tuple.second cam.canvasSize / 2 )
+    in
+    ( (x - cx) / cam.zoom + px
+    , (y - cy) / cam.zoom + py
     )
 
 

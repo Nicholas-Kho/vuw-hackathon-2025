@@ -1,6 +1,6 @@
 module GameState exposing (..)
 
-import Camera exposing (Camera, moveCam, zoomCam)
+import Camera exposing (Camera, moveCam, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeId, Subgraph)
 import List exposing (foldl)
 import PlayerInput exposing (UserInput(..))
@@ -29,8 +29,8 @@ handleInput uinp gs =
         Pan dx dy ->
             { gs | cam = moveCam ( dx / gs.cam.zoom, dy / gs.cam.zoom ) gs.cam }
 
-        Zoom dz ->
-            { gs | cam = zoomCam dz gs.cam }
+        Zoom dz cp ->
+            { gs | cam = zoomAbout gs.cam cp -dz }
 
 
 handleInputs : List UserInput -> GameState -> GameState

@@ -9,12 +9,13 @@ import Tuple exposing (first, second)
 
 type UserInput
     = Pan Float Float
-    | Zoom Float
+    | Zoom Float ( Float, Float )
 
 
 type Msg
     = MouseDown
     | MouseUp
+    | MouseMoveRelative Float Float
     | MouseMove Float Float
     | MouseScroll Float
 
@@ -28,6 +29,7 @@ type alias Model =
     { mouse : MouseState
     , scrolled : Float
     , mouseDelta : ( Float, Float )
+    , cursorPos : ( Float, Float )
     }
 
 
@@ -36,6 +38,7 @@ init =
     { mouse = Idle
     , scrolled = 0
     , mouseDelta = ( 0, 0 )
+    , cursorPos = ( 0, 0 )
     }
 
 
@@ -46,22 +49,33 @@ scrollAttr liftMsg =
 
 subscriptions : Model -> Sub Msg
 subscriptions m =
-    case m.mouse of
-        Idle ->
-            Events.onMouseDown (Decode.succeed MouseDown)
+    let
+        rest =
+            case m.mouse of
+                Idle ->
+                    Events.onMouseDown (Decode.succeed MouseDown)
 
-        Dragging ->
-            Sub.batch
-                [ Events.onMouseUp (Decode.succeed MouseUp)
-                , Events.onMouseMove mouseMoveDecoder
-                ]
+                Dragging ->
+                    Sub.batch
+                        [ Events.onMouseUp (Decode.succeed MouseUp)
+                        , Events.onMouseMove mouseMoveRelativeDecoder
+                        ]
+    in
+    Sub.batch [ rest, Events.onMouseMove mouseMoveDecoder ]
+
+
+mouseMoveRelativeDecoder : Decode.Decoder Msg
+mouseMoveRelativeDecoder =
+    Decode.map2 MouseMoveRelative
+        (Decode.field "movementX" Decode.float)
+        (Decode.field "movementY" Decode.float)
 
 
 mouseMoveDecoder : Decode.Decoder Msg
 mouseMoveDecoder =
     Decode.map2 MouseMove
-        (Decode.field "movementX" Decode.float)
-        (Decode.field "movementY" Decode.float)
+        (Decode.field "clientX" Decode.float)
+        (Decode.field "clientY" Decode.float)
 
 
 mouseScrollDecoder : Decode.Decoder Msg
@@ -78,8 +92,11 @@ update msg model =
         MouseUp ->
             { model | mouse = Idle }
 
-        MouseMove x y ->
+        MouseMoveRelative x y ->
             { model | mouseDelta = ( x, y ) }
+
+        MouseMove x y ->
+            { model | cursorPos = ( x, y ) }
 
         MouseScroll s ->
             { model | scrolled = model.scrolled + s }
@@ -98,13 +115,13 @@ mkInputs : Model -> List UserInput
 mkInputs model =
     List.filter goodInput
         [ Pan -(first model.mouseDelta) -(second model.mouseDelta)
-        , Zoom model.scrolled
+        , Zoom model.scrolled model.cursorPos
         ]
 
 
 consume : Model -> ( List UserInput, Model )
 consume m =
-    ( mkInputs m, { init | mouse = m.mouse } )
+    ( mkInputs m, { m | scrolled = 0, mouseDelta = ( 0, 0 ) } )
 
 
 isBig : Float -> Bool
@@ -118,7 +135,7 @@ goodInput uinp =
         Pan x y ->
             isBig x || isBig y
 
-        Zoom z ->
+        Zoom z _ ->
             isBig z
 
 
