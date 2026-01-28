@@ -1,6 +1,6 @@
 module GameState exposing (..)
 
-import Camera exposing (Camera, moveCam, zoomAbout)
+import Camera exposing (Camera, moveCam, setAnimation, tickCam, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeId, Subgraph)
 import List exposing (foldl)
 import PlayerInput exposing (UserInput(..))
@@ -31,6 +31,23 @@ handleInput uinp gs =
 
         Zoom dz cp ->
             { gs | cam = zoomAbout gs.cam cp -dz }
+
+        Action PlayerInput.Center ->
+            { gs | cam = setAnimation (snapToOrigin gs.cam) gs.cam }
+
+
+snapToOrigin : Camera -> Camera.Animation
+snapToOrigin cam =
+    { start = cam.worldPos
+    , end = ( 0, 0 )
+    , timeElapsed = 0
+    , duration = 200
+    }
+
+
+handleTick : Float -> GameState -> GameState
+handleTick deltaMs gs =
+    { gs | cam = tickCam deltaMs gs.cam }
 
 
 handleInputs : List UserInput -> GameState -> GameState

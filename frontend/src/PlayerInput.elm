@@ -8,9 +8,14 @@ import Json.Decode as Decode
 import Tuple exposing (first, second)
 
 
+type InputAction
+    = Center
+
+
 type UserInput
     = Pan Float Float
     | Zoom Float ( Float, Float )
+    | Action InputAction
 
 
 type Msg
@@ -19,6 +24,7 @@ type Msg
     | MouseMoveRelative Float Float
     | MouseMove Float Float
     | MouseScroll Float
+    | DidAction InputAction
 
 
 type MouseState
@@ -31,6 +37,7 @@ type alias Model =
     , scrolled : Float
     , mouseDelta : ( Float, Float )
     , cursorPos : ( Float, Float )
+    , bufferedActions : List InputAction
     }
 
 
@@ -40,6 +47,7 @@ init =
     , scrolled = 0
     , mouseDelta = ( 0, 0 )
     , cursorPos = ( 0, 0 )
+    , bufferedActions = []
     }
 
 
@@ -72,7 +80,11 @@ subscriptions m =
                         , Events.onMouseMove mouseMoveRelativeDecoder
                         ]
     in
-    Sub.batch [ rest, Events.onMouseMove mouseMoveDecoder ]
+    Sub.batch
+        [ rest
+        , Events.onMouseMove mouseMoveDecoder
+        , Events.onKeyDown keyPressDecoder
+        ]
 
 
 mouseMoveRelativeDecoder : Decode.Decoder Msg
@@ -94,6 +106,20 @@ mouseScrollDecoder =
     Decode.map MouseScroll (Decode.field "deltaY" Decode.float)
 
 
+keyPressDecoder : Decode.Decoder Msg
+keyPressDecoder =
+    Decode.field "key" Decode.string
+        |> Decode.andThen
+            (\k ->
+                case k of
+                    " " ->
+                        Decode.succeed (DidAction Center)
+
+                    _ ->
+                        Decode.fail "this key doesn't correspond to an action."
+            )
+
+
 update : Msg -> Model -> Model
 update msg model =
     case msg of
@@ -112,6 +138,9 @@ update msg model =
         MouseScroll s ->
             { model | scrolled = model.scrolled + s }
 
+        DidAction a ->
+            { model | bufferedActions = a :: model.bufferedActions }
+
 
 addMove : Model -> Float -> Float -> Model
 addMove m x y =
@@ -128,11 +157,18 @@ mkInputs model =
         [ Pan -(first model.mouseDelta) -(second model.mouseDelta)
         , Zoom model.scrolled model.cursorPos
         ]
+        ++ List.map Action model.bufferedActions
 
 
 consume : Model -> ( List UserInput, Model )
 consume m =
-    ( mkInputs m, { m | scrolled = 0, mouseDelta = ( 0, 0 ) } )
+    ( mkInputs m
+    , { m
+        | scrolled = 0
+        , mouseDelta = ( 0, 0 )
+        , bufferedActions = []
+      }
+    )
 
 
 isBig : Float -> Bool
@@ -148,6 +184,9 @@ goodInput uinp =
 
         Zoom z _ ->
             isBig z
+
+        Action _ ->
+            True
 
 
 showInput : Model -> Html msg

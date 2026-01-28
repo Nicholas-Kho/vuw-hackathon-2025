@@ -9,6 +9,19 @@ type alias Camera =
     , zoom : Float
     , zoomRange : ( Float, Float )
     , canvasSize : Vec2
+    , currentAnimation : Maybe Animation
+    }
+
+
+type alias Animation =
+    MoveAnimation
+
+
+type alias MoveAnimation =
+    { start : Vec2
+    , end : Vec2
+    , timeElapsed : Float
+    , duration : Float
     }
 
 
@@ -22,7 +35,13 @@ mkCamera csize =
     , zoom = 1
     , zoomRange = ( 0.1, 2 )
     , canvasSize = csize
+    , currentAnimation = Nothing
     }
+
+
+setPos : ( Float, Float ) -> Camera -> Camera
+setPos p cam =
+    { cam | worldPos = p }
 
 
 moveCam : ( Float, Float ) -> Camera -> Camera
@@ -125,3 +144,58 @@ showCam cam =
         , Html.h2 []
             [ Html.text <| "Cam zoom: " ++ fromFloat cam.zoom ]
         ]
+
+
+setAnimation : Animation -> Camera -> Camera
+setAnimation anim cam =
+    { cam | currentAnimation = Just anim }
+
+
+tickAnimationTime : Float -> Animation -> Animation
+tickAnimationTime deltaMs move =
+    { move | timeElapsed = move.timeElapsed + deltaMs }
+
+
+applyAnimation : Animation -> Camera -> Camera
+applyAnimation anim cam =
+    let
+        elapsedPercent =
+            anim.timeElapsed / anim.duration
+
+        ( ix, iy ) =
+            anim.start
+
+        ( ex, ey ) =
+            anim.end
+
+        ( dx, dy ) =
+            ( ex - ix, ey - iy )
+
+        ( x, y ) =
+            ( ix + elapsedPercent * dx, iy + elapsedPercent * dy )
+    in
+    { cam | worldPos = ( x, y ) }
+
+
+tickCam : Float -> Camera -> Camera
+tickCam deltaMs cam =
+    case cam.currentAnimation of
+        Nothing ->
+            cam
+
+        Just anim ->
+            let
+                animTick =
+                    tickAnimationTime deltaMs anim
+
+                nextAnim =
+                    if animTick.timeElapsed > animTick.duration then
+                        Nothing
+
+                    else
+                        Just animTick
+
+                newCam =
+                    applyAnimation anim cam
+            in
+            { newCam | currentAnimation = nextAnim }

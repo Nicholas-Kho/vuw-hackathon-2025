@@ -33,7 +33,7 @@ subs : Model -> Sub Msg
 subs m =
     Sub.batch
         [ onResize Resize
-        , onAnimationFrameDelta (\_ -> Tick)
+        , onAnimationFrameDelta Tick
         , getInputSubs m
         ]
 
@@ -69,7 +69,7 @@ type Msg
     = StartResponse (Result Http.Error InitialGameState)
     | Resize Int Int
     | Input PlayerInput.Msg
-    | Tick
+    | Tick Float
 
 
 init : ( Model, Cmd Msg )
@@ -154,8 +154,8 @@ update msg model =
                 Input i ->
                     ( Good { okm | input = PlayerInput.update i okm.input }, Cmd.none )
 
-                Tick ->
-                    ( Good (tickGame okm), Cmd.none )
+                Tick delta ->
+                    ( Good (tickGame delta okm), Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -185,10 +185,13 @@ handleStartResponse res =
             )
 
 
-tickGame : OkModel -> OkModel
-tickGame m =
+tickGame : Float -> OkModel -> OkModel
+tickGame deltaMs m =
     let
         ( userInputs, resetInp ) =
             PlayerInput.consume m.input
     in
-    { m | input = resetInp, game = handleInputs userInputs m.game }
+    { m
+        | input = resetInp
+        , game = handleTick deltaMs <| handleInputs userInputs m.game
+    }
