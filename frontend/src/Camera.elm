@@ -6,6 +6,7 @@ module Camera exposing
     , moveCam
     , panTo
     , showCam
+    , stopAnimation
     , tickCam
     , worldPosToCamPos
     , zoomAbout
@@ -313,3 +314,8 @@ focusOn pos zoom cam =
                     , targetZoom = clampedZoom
                     }
     }
+
+
+stopAnimation : Camera -> Camera
+stopAnimation cam =
+    { cam | currentAnimation = Nothing }
