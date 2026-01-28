@@ -38,11 +38,10 @@ handleInput uinp gs =
 
 snapToOrigin : Camera -> Camera.Animation
 snapToOrigin cam =
-    { start = cam.worldPos
-    , end = ( 0, 0 )
-    , timeElapsed = 0
-    , duration = 200
-    }
+    Camera.PanTo
+        { cur = cam.worldPos
+        , target = ( 0, 0 )
+        }
 
 
 handleTick : Float -> GameState -> GameState

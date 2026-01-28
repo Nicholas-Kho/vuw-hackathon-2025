@@ -13,15 +13,13 @@ type alias Camera =
     }
 
 
-type alias Animation =
-    MoveAnimation
+type Animation
+    = PanTo PanParams
 
 
-type alias MoveAnimation =
-    { start : Vec2
-    , end : Vec2
-    , timeElapsed : Float
-    , duration : Float
+type alias PanParams =
+    { cur : Vec2
+    , target : Vec2
     }
 
 
@@ -76,6 +74,30 @@ zoomCam dz cam =
 vecFromTo : Vec2 -> Vec2 -> Vec2
 vecFromTo ( xa, ya ) ( xb, yb ) =
     ( xb - xa, yb - ya )
+
+
+vAdd : Vec2 -> Vec2 -> Vec2
+vAdd ( x1, y1 ) ( x2, y2 ) =
+    ( x1 + x2, y1 + y2 )
+
+
+vMinus : Vec2 -> Vec2 -> Vec2
+vMinus ( x1, y1 ) ( x2, y2 ) =
+    ( x1 - x2, y1 - y2 )
+
+
+vScale : Float -> Vec2 -> Vec2
+vScale a ( x, y ) =
+    ( a * x, a * y )
+
+
+vDistSqare : Vec2 -> Vec2 -> Float
+vDistSqare v1 v2 =
+    let
+        ( dx, dy ) =
+            vMinus v1 v2
+    in
+    (dx * dx) + (dy * dy)
 
 
 zoomAbout : Camera -> Vec2 -> Float -> Camera
@@ -151,30 +173,41 @@ setAnimation anim cam =
     { cam | currentAnimation = Just anim }
 
 
-tickAnimationTime : Float -> Animation -> Animation
-tickAnimationTime deltaMs move =
-    { move | timeElapsed = move.timeElapsed + deltaMs }
+tickAnimation : Float -> Animation -> Maybe Animation
+tickAnimation deltaMs anim =
+    case anim of
+        PanTo pms ->
+            let
+                k =
+                    8
+
+                deltaS =
+                    deltaMs / 1000
+
+                alpha =
+                    1 - e ^ (-k * deltaS)
+
+                nextPos =
+                    vAdd pms.cur <| vScale alpha (vMinus pms.target pms.cur)
+
+                areWeThere =
+                    vDistSqare pms.cur pms.target < 1
+
+                nextParams =
+                    { pms | cur = nextPos }
+            in
+            if areWeThere then
+                Nothing
+
+            else
+                Just (PanTo nextParams)
 
 
 applyAnimation : Animation -> Camera -> Camera
 applyAnimation anim cam =
-    let
-        elapsedPercent =
-            anim.timeElapsed / anim.duration
-
-        ( ix, iy ) =
-            anim.start
-
-        ( ex, ey ) =
-            anim.end
-
-        ( dx, dy ) =
-            ( ex - ix, ey - iy )
-
-        ( x, y ) =
-            ( ix + elapsedPercent * dx, iy + elapsedPercent * dy )
-    in
-    { cam | worldPos = ( x, y ) }
+    case anim of
+        PanTo pms ->
+            { cam | worldPos = pms.cur }
 
 
 tickCam : Float -> Camera -> Camera
@@ -185,15 +218,8 @@ tickCam deltaMs cam =
 
         Just anim ->
             let
-                animTick =
-                    tickAnimationTime deltaMs anim
-
                 nextAnim =
-                    if animTick.timeElapsed > animTick.duration then
-                        Nothing
-
-                    else
-                        Just animTick
+                    tickAnimation deltaMs anim
 
                 newCam =
                     applyAnimation anim cam
