@@ -1,4 +1,16 @@
-module Camera exposing (..)
+module Camera exposing
+    ( Camera
+    , Vec2
+    , focusOn
+    , mkCamera
+    , moveCam
+    , panTo
+    , showCam
+    , tickCam
+    , worldPosToCamPos
+    , zoomAbout
+    , zoomCam
+    )
 
 import Html exposing (Html)
 import String exposing (fromFloat)
@@ -15,6 +27,15 @@ type alias Camera =
 
 type Animation
     = PanTo PanParams
+    | FocusOn FocusOnParams
+
+
+type alias FocusOnParams =
+    { currentPos : Vec2
+    , targetPos : Vec2
+    , currentZoom : Float
+    , targetZoom : Float
+    }
 
 
 type alias PanParams =
@@ -37,11 +58,6 @@ mkCamera csize =
     }
 
 
-setPos : ( Float, Float ) -> Camera -> Camera
-setPos p cam =
-    { cam | worldPos = p }
-
-
 moveCam : ( Float, Float ) -> Camera -> Camera
 moveCam ( dx, dy ) cam =
     let
@@ -54,6 +70,36 @@ moveCam ( dx, dy ) cam =
 exp : Float -> Float
 exp x =
     e ^ x
+
+
+expInterp : Float -> Float -> Float -> Float -> Float
+expInterp k deltaMs current target =
+    let
+        deltaS =
+            deltaMs / 1000
+
+        alpha =
+            1 - e ^ (-k * deltaS)
+
+        nextPos =
+            current + (target - current) * alpha
+    in
+    nextPos
+
+
+expInterpVec : Float -> Float -> Vec2 -> Vec2 -> Vec2
+expInterpVec k deltaMs current target =
+    let
+        deltaS =
+            deltaMs / 1000
+
+        alpha =
+            1 - e ^ (-k * deltaS)
+
+        nextPos =
+            vecFromTo current target |> vScale alpha |> vAdd current
+    in
+    nextPos
 
 
 zoomCam : Float -> Camera -> Camera
@@ -72,8 +118,8 @@ zoomCam dz cam =
 
 
 vecFromTo : Vec2 -> Vec2 -> Vec2
-vecFromTo ( xa, ya ) ( xb, yb ) =
-    ( xb - xa, yb - ya )
+vecFromTo a b =
+    vMinus b a
 
 
 vAdd : Vec2 -> Vec2 -> Vec2
@@ -168,33 +214,19 @@ showCam cam =
         ]
 
 
-setAnimation : Animation -> Camera -> Camera
-setAnimation anim cam =
-    { cam | currentAnimation = Just anim }
-
-
 tickAnimation : Float -> Animation -> Maybe Animation
 tickAnimation deltaMs anim =
     case anim of
-        PanTo pms ->
+        PanTo params ->
             let
-                k =
-                    8
-
-                deltaS =
-                    deltaMs / 1000
-
-                alpha =
-                    1 - e ^ (-k * deltaS)
-
                 nextPos =
-                    vAdd pms.cur <| vScale alpha (vMinus pms.target pms.cur)
+                    expInterpVec 8 deltaMs params.cur params.target
 
                 areWeThere =
-                    vDistSqare pms.cur pms.target < 1
+                    vDistSqare params.cur nextPos < 1
 
                 nextParams =
-                    { pms | cur = nextPos }
+                    { params | cur = nextPos }
             in
             if areWeThere then
                 Nothing
@@ -202,12 +234,42 @@ tickAnimation deltaMs anim =
             else
                 Just (PanTo nextParams)
 
+        FocusOn params ->
+            let
+                nextPos =
+                    expInterpVec 8 deltaMs params.currentPos params.targetPos
+
+                nextZoom =
+                    expInterp 2 deltaMs params.currentZoom params.targetZoom
+
+                areWeTherePos =
+                    vDistSqare params.currentPos params.targetPos < 1
+
+                areWeThereZoom =
+                    abs (params.currentZoom - params.targetZoom) < 0.1
+
+                areWeThere =
+                    areWeTherePos && areWeThereZoom
+
+                nextAnim =
+                    FocusOn { params | currentPos = nextPos, currentZoom = nextZoom }
+            in
+            if areWeThere then
+                Nothing
+
+            else
+                Just nextAnim
+
 
 applyAnimation : Animation -> Camera -> Camera
 applyAnimation anim cam =
     case anim of
         PanTo pms ->
             { cam | worldPos = pms.cur }
+
+        FocusOn pms ->
+            -- Assumes that the torget zoom is in an acceptable range.
+            { cam | worldPos = pms.currentPos, zoom = pms.currentZoom }
 
 
 tickCam : Float -> Camera -> Camera
@@ -225,3 +287,29 @@ tickCam deltaMs cam =
                     applyAnimation anim cam
             in
             { newCam | currentAnimation = nextAnim }
+
+
+panTo : Vec2 -> Camera -> Camera
+panTo pos cam =
+    { cam | currentAnimation = Just <| PanTo <| { cur = cam.worldPos, target = pos } }
+
+
+focusOn : Vec2 -> Float -> Camera -> Camera
+focusOn pos zoom cam =
+    let
+        ( minZoom, maxZoom ) =
+            cam.zoomRange
+
+        clampedZoom =
+            clamp minZoom maxZoom zoom
+    in
+    { cam
+        | currentAnimation =
+            Just <|
+                FocusOn <|
+                    { currentPos = cam.worldPos
+                    , currentZoom = cam.zoom
+                    , targetPos = pos
+                    , targetZoom = clampedZoom
+                    }
+    }
