@@ -147,8 +147,8 @@ vDistSqare v1 v2 =
     (dx * dx) + (dy * dy)
 
 
-zoomAbout : Camera -> Vec2 -> Float -> Camera
-zoomAbout cam curPos dz =
+zoomAbout : Vec2 -> Float -> Camera -> Camera
+zoomAbout curPos dz cam =
     let
         cursorToWorldBefore =
             camPosToWorldPos cam curPos

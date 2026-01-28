@@ -36,8 +36,8 @@ handleInput uinp gs =
             in
             { gs | cam = stopAnimation <| moveCam panBy gs.cam }
 
-        Zoom dz cp ->
-            { gs | cam = stopAnimation <| zoomAbout gs.cam cp -dz }
+        Zoom dz cursorPos ->
+            { gs | cam = stopAnimation <| zoomAbout cursorPos -dz <| gs.cam }
 
         Action PlayerInput.Center ->
             { gs | cam = camToWorldOrigin gs.cam }
