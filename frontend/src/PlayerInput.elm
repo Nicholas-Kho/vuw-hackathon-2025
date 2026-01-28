@@ -2,6 +2,7 @@ module PlayerInput exposing (..)
 
 import Browser.Events as Events
 import Html exposing (Attribute, Html, text)
+import Html.Attributes exposing (style)
 import Html.Events
 import Json.Decode as Decode
 import Tuple exposing (first, second)
@@ -45,6 +46,16 @@ init =
 scrollAttr : (Msg -> parentMsg) -> Attribute parentMsg
 scrollAttr liftMsg =
     Html.Events.on "wheel" (Decode.map liftMsg mouseScrollDecoder)
+
+
+grabbyCursor : Model -> Attribute msg
+grabbyCursor m =
+    case m.mouse of
+        Dragging ->
+            style "cursor" "grabbing"
+
+        Idle ->
+            style "cursor" "grab"
 
 
 subscriptions : Model -> Sub Msg

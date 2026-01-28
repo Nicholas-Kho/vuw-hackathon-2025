@@ -3,11 +3,11 @@ module Game exposing (..)
 import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
-import Camera exposing (mkCamera, showCam)
+import Camera exposing (mkCamera)
 import Canvas
 import Canvas.Settings
 import Color
-import Drawable exposing (drawCircle, drawGrid, renderGrid)
+import Drawable exposing (drawCircle, renderGrid)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
@@ -95,22 +95,23 @@ view model =
 
         Good okm ->
             Html.div []
-                [ showGame okm.size okm.game
+                [ showGame okm.size okm
                 ]
 
 
-showGame : CanvasSize -> GameState -> Html Msg
-showGame ( w, h ) gs =
+showGame : CanvasSize -> OkModel -> Html Msg
+showGame ( w, h ) okm =
     Canvas.toHtml ( w, h )
         [ style "display" "block"
         , style "box-sizing" "border-box"
         , PlayerInput.scrollAttr Input
+        , PlayerInput.grabbyCursor okm.input
         ]
         [ Canvas.shapes
             [ Canvas.Settings.fill Color.lightGrey ]
             [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
-        , Canvas.shapes [] [ drawCircle gs.cam ( 0, 0 ) 50 ]
-        , renderGrid gs.cam 100
+        , Canvas.shapes [] [ drawCircle okm.game.cam ( 0, 0 ) 50 ]
+        , renderGrid okm.game.cam 100
         ]
 
 
