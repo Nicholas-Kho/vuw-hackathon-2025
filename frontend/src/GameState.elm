@@ -30,7 +30,7 @@ handleInput uinp gs =
             { gs | cam = moveCam ( dx / gs.cam.zoom, dy / gs.cam.zoom ) gs.cam }
 
         Zoom dz ->
-            { gs | cam = zoomCam (dz / 256) gs.cam }
+            { gs | cam = zoomCam dz gs.cam }
 
 
 handleInputs : List UserInput -> GameState -> GameState

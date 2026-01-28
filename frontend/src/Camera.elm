@@ -34,16 +34,24 @@ moveCam ( dx, dy ) cam =
     { cam | worldPos = ( x + dx, y + dy ) }
 
 
+exp : Float -> Float
+exp x =
+    e ^ x
+
+
 zoomCam : Float -> Camera -> Camera
-zoomCam by cam =
+zoomCam dz cam =
     let
         ( minZoom, maxZoom ) =
             cam.zoomRange
 
+        sensitivity =
+            0.002
+
         newZoom =
-            clamp minZoom maxZoom (cam.zoom + by)
+            cam.zoom * exp (-dz * sensitivity)
     in
-    { cam | zoom = newZoom }
+    { cam | zoom = clamp minZoom maxZoom newZoom }
 
 
 worldPosToCamPos : Camera -> Vec2 -> Vec2
