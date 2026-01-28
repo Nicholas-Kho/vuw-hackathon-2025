@@ -2,6 +2,8 @@ module Drawable exposing (..)
 
 import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
+import Canvas.Settings exposing (stroke)
+import Color exposing (rgba)
 
 
 drawCircle : Camera -> Vec2 -> Float -> Canvas.Shape
@@ -115,3 +117,24 @@ drawGrid cam squareSize =
             List.map (\y -> mkLine ( worldLeft, y ) ( worldRight, y )) ys
     in
     drawLines <| List.map (worldLineToCamLine cam) <| linesV ++ linesH
+
+
+renderGrid : Camera -> Float -> Canvas.Renderable
+renderGrid cam gridSize =
+    let
+        minZoom =
+            Tuple.first cam.zoomRange
+
+        gridAlphaMinor =
+            clamp 0.01 1 (sqrt cam.zoom - sqrt minZoom)
+
+        gridAlphaMajor =
+            clamp 0.1 1 (sqrt cam.zoom - sqrt minZoom)
+
+        gridColor =
+            rgba 0 0 0
+    in
+    Canvas.group []
+        [ Canvas.shapes [ stroke <| gridColor gridAlphaMinor ] [ drawGrid cam gridSize ]
+        , Canvas.shapes [ stroke <| gridColor gridAlphaMajor ] [ drawGrid cam (gridSize * 5) ]
+        ]
