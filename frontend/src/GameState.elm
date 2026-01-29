@@ -3,6 +3,7 @@ module GameState exposing (..)
 import Camera exposing (Camera, camPosToWorldPos, focusOn, moveCam, stopAnimation, tickCam, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeId, Subgraph)
 import List exposing (foldl)
+import Navigation exposing (Nav, initNav)
 import PlayerInput exposing (UserInput(..))
 
 
@@ -10,6 +11,7 @@ type alias GameState =
     { startAt : NodeId
     , endAt : NodeId
     , graph : Subgraph
+    , nav : Nav
     , cam : Camera
     }
 
@@ -20,6 +22,7 @@ fromInitial cam igs =
     , endAt = igs.endAt
     , graph = igs.subgraph
     , cam = cam
+    , nav = initNav igs.startAt
     }
 
 
