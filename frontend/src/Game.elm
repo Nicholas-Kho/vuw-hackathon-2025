@@ -152,7 +152,11 @@ update msg model =
                     )
 
                 Input i ->
-                    ( Good { okm | input = PlayerInput.update i okm.input }, Cmd.none )
+                    let
+                        ( newInputModel, inputCmds ) =
+                            PlayerInput.update i okm.input
+                    in
+                    ( Good { okm | input = newInputModel }, Cmd.map Input inputCmds )
 
                 Tick delta ->
                     ( Good (tickGame delta okm), Cmd.none )

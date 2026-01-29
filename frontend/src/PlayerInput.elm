@@ -5,11 +5,14 @@ import Html exposing (Attribute, Html, text)
 import Html.Attributes exposing (style)
 import Html.Events
 import Json.Decode as Decode
+import Task
+import Time
 import Tuple exposing (first, second)
 
 
 type InputAction
     = Center
+    | Click ( Float, Float )
 
 
 type UserInput
@@ -25,10 +28,11 @@ type Msg
     | MouseMove Float Float
     | MouseScroll Float
     | DidAction InputAction
+    | GotTime Time.Posix
 
 
 type MouseState
-    = Dragging
+    = Dragging ( Float, Float ) Time.Posix
     | Idle
 
 
@@ -59,7 +63,7 @@ scrollAttr liftMsg =
 grabbyCursor : Model -> Attribute msg
 grabbyCursor m =
     case m.mouse of
-        Dragging ->
+        Dragging _ _ ->
             style "cursor" "grabbing"
 
         Idle ->
@@ -74,7 +78,7 @@ subscriptions m =
                 Idle ->
                     Events.onMouseDown (Decode.succeed MouseDown)
 
-                Dragging ->
+                Dragging _ _ ->
                     Sub.batch
                         [ Events.onMouseUp (Decode.succeed MouseUp)
                         , Events.onMouseMove mouseMoveRelativeDecoder
@@ -120,26 +124,81 @@ keyPressDecoder =
             )
 
 
-update : Msg -> Model -> Model
+simple : Model -> ( Model, Cmd msg )
+simple m =
+    ( m, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MouseDown ->
-            { model | mouse = Dragging }
+            ( model, Task.perform GotTime Time.now )
+
+        GotTime t ->
+            simple <| updateClickTime t model
 
         MouseUp ->
-            { model | mouse = Idle }
+            ( model, Task.perform GotTime Time.now )
 
         MouseMoveRelative x y ->
-            { model | mouseDelta = ( x, y ) }
+            simple { model | mouseDelta = ( x, y ) }
 
         MouseMove x y ->
-            { model | cursorPos = ( x, y ) }
+            simple { model | cursorPos = ( x, y ) }
 
         MouseScroll s ->
-            { model | scrolled = model.scrolled + s }
+            simple { model | scrolled = model.scrolled + s }
 
         DidAction a ->
-            { model | bufferedActions = a :: model.bufferedActions }
+            simple { model | bufferedActions = a :: model.bufferedActions }
+
+
+timeDifferenceMs : Time.Posix -> Time.Posix -> Int
+timeDifferenceMs a b =
+    let
+        ams =
+            Time.posixToMillis a
+
+        bms =
+            Time.posixToMillis b
+    in
+    ams - bms
+
+
+wasAClick : Int -> ( Float, Float ) -> ( Float, Float ) -> Bool
+wasAClick clickDurationMs startPos endPos =
+    let
+        ( sx, sy ) =
+            startPos
+
+        ( ex, ey ) =
+            endPos
+
+        ( dx, dy ) =
+            ( ex - sx, ey - sy )
+
+        distanceMovedSquare =
+            (dx * dx) + (dy * dy)
+    in
+    distanceMovedSquare < 16 && clickDurationMs < 135
+
+
+updateClickTime : Time.Posix -> Model -> Model
+updateClickTime t model =
+    case model.mouse of
+        Idle ->
+            { model | mouse = Dragging model.cursorPos t }
+
+        Dragging startPos startedAtTime ->
+            if wasAClick (timeDifferenceMs t startedAtTime) startPos model.cursorPos then
+                { model
+                    | bufferedActions = Click startPos :: model.bufferedActions
+                    , mouse = Idle
+                }
+
+            else
+                { model | mouse = Idle }
 
 
 addMove : Model -> Float -> Float -> Model
@@ -185,7 +244,7 @@ goodInput uinp =
         Zoom z _ ->
             isBig z
 
-        Action _ ->
+        _ ->
             True
 
 

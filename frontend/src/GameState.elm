@@ -39,7 +39,7 @@ handleInput uinp gs =
         Zoom dz cursorPos ->
             { gs | cam = stopAnimation <| zoomAbout cursorPos -dz <| gs.cam }
 
-        Action PlayerInput.Center ->
+        Action _ ->
             { gs | cam = camToWorldOrigin gs.cam }
 
 
