@@ -4,6 +4,7 @@ import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
 import Color exposing (rgba)
+import Tree exposing (PolarNode, Tree, toPolarNodes)
 
 
 drawCircle : Camera -> Vec2 -> Float -> Canvas.Shape
@@ -138,3 +139,31 @@ renderGrid cam gridSize =
         [ Canvas.shapes [ stroke <| gridColor gridAlphaMinor ] [ drawGrid cam gridSize ]
         , Canvas.shapes [ stroke <| gridColor gridAlphaMajor ] [ drawGrid cam (gridSize * 5) ]
         ]
+
+
+mkCartesian : PolarNode a -> ( Float, Float )
+mkCartesian pn =
+    let
+        r =
+            toFloat pn.depth * 250
+
+        x =
+            r * cos pn.angle
+
+        y =
+            r * sin pn.angle
+    in
+    ( x, y )
+
+
+drawTree : Camera -> Tree () -> Canvas.Renderable
+drawTree cam t =
+    let
+        mkCircle p =
+            drawCircle cam p 20
+
+        circles =
+            toPolarNodes t
+                |> List.map (mkCartesian >> mkCircle)
+    in
+    Canvas.shapes [] circles

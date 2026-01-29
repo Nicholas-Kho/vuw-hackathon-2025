@@ -7,7 +7,7 @@ import Camera exposing (mkCamera)
 import Canvas
 import Canvas.Settings
 import Color
-import Drawable exposing (drawCircle, renderGrid)
+import Drawable exposing (drawCircle, drawTree, renderGrid)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
@@ -17,6 +17,7 @@ import PlayerInput
 import RemoteData exposing (RemoteData(..))
 import String
 import Task
+import Tree exposing (testTree)
 
 
 main : Program () Model Msg
@@ -110,8 +111,8 @@ showGame ( w, h ) okm =
         [ Canvas.shapes
             [ Canvas.Settings.fill Color.lightGrey ]
             [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
-        , Canvas.shapes [] [ drawCircle okm.game.cam ( 0, 0 ) 50 ]
         , renderGrid okm.game.cam 100
+        , drawTree okm.game.cam testTree
         ]
 
 

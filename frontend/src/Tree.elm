@@ -4,6 +4,7 @@ module Tree exposing
     , depth
     , map
     , maxLayerWidth
+    , testTree
     , toPolarNodes
     )
 
@@ -153,3 +154,28 @@ toPolarNodes t =
             map spreadToPlr <| spreadChildren t
     in
     toPolarNodesHelper 0 mappedTree
+
+
+testTree : Tree ()
+testTree =
+    Node ()
+        [ Node ()
+            [ Node () []
+            , Node ()
+                [ Node () []
+                , Node () []
+                ]
+            , Node () []
+            ]
+        , Node ()
+            [ Node () []
+            ]
+        , Node ()
+            [ Node ()
+                [ Node () []
+                , Node () []
+                , Node () []
+                ]
+            ]
+        , Node () []
+        ]
