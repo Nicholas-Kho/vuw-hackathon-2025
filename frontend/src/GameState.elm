@@ -1,7 +1,8 @@
 module GameState exposing (..)
 
+import BackendWrapper exposing (Subgraph, xformSubgraph)
 import Camera exposing (Camera, camPosToWorldPos, focusOn, moveCam, stopAnimation, tickCam, zoomAbout)
-import Generated.BackendApi exposing (InitialGameState, NodeId, Subgraph)
+import Generated.BackendApi exposing (InitialGameState, NodeId)
 import List exposing (foldl)
 import Navigation exposing (Nav, initNav)
 import PlayerInput exposing (UserInput(..))
@@ -20,7 +21,7 @@ fromInitial : Camera -> InitialGameState -> GameState
 fromInitial cam igs =
     { startAt = igs.startAt
     , endAt = igs.endAt
-    , graph = igs.subgraph
+    , graph = xformSubgraph igs.subgraph
     , cam = cam
     , nav = initNav igs.startAt
     }
