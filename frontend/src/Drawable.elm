@@ -4,7 +4,7 @@ import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
 import Color exposing (rgba)
-import Tree exposing (PolarNode, Tree, toPolarNodes)
+import Tree exposing (PolarNode, Tree, toPolarEdges, toPolarNodes)
 
 
 drawCircle : Camera -> Vec2 -> Float -> Canvas.Shape
@@ -156,14 +156,38 @@ mkCartesian pn =
     ( x, y )
 
 
-drawTree : Camera -> Tree () -> Canvas.Renderable
-drawTree cam t =
+treeNodes : Camera -> Tree () -> List Canvas.Shape
+treeNodes cam t =
     let
         mkCircle p =
             drawCircle cam p 20
-
-        circles =
-            toPolarNodes t
-                |> List.map (mkCartesian >> mkCircle)
     in
-    Canvas.shapes [] circles
+    toPolarNodes t
+        |> List.map (mkCartesian >> mkCircle)
+
+
+treeEdges : Camera -> Tree a -> Canvas.Shape
+treeEdges cam t =
+    let
+        pToScreen =
+            mkCartesian >> Camera.worldPosToCamPos cam
+
+        eToLine e =
+            let
+                start =
+                    pToScreen e.from
+
+                end =
+                    pToScreen e.to
+            in
+            mkLine start end
+    in
+    t
+        |> toPolarEdges
+        |> List.map eToLine
+        |> drawLines
+
+
+drawTree : Camera -> Tree () -> Canvas.Renderable
+drawTree cam t =
+    Canvas.shapes [] (treeEdges cam t :: treeNodes cam t)

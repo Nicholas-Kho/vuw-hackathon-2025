@@ -1,13 +1,15 @@
 module Tree exposing
     ( PolarNode
     , Tree(..)
-    , depth
     , map
     , maxLayerWidth
+    , mkEdges
     , testTree
+    , toPolarEdges
     , toPolarNodes
     )
 
+import List exposing (concatMap)
 import Time exposing (ZoneName(..))
 
 
@@ -20,9 +22,26 @@ map fn (Node x children) =
     Node (fn x) (List.map (map fn) children)
 
 
-depth : Tree a -> Int
-depth (Node _ children) =
-    1 + List.foldl max 0 (List.map depth children)
+flatten : Tree a -> List a
+flatten (Node x cs) =
+    x :: List.concatMap flatten cs
+
+
+depthWithHelp : Int -> (Int -> a -> b) -> Tree a -> Tree b
+depthWithHelp soFar fn (Node x cs) =
+    let
+        newContent =
+            fn soFar x
+
+        newChildren =
+            List.map (depthWithHelp (soFar + 1) fn) cs
+    in
+    Node newContent newChildren
+
+
+depthWith : (Int -> a -> b) -> Tree a -> Tree b
+depthWith =
+    depthWithHelp 0
 
 
 maxLayerWidth : Tree a -> Int
@@ -136,24 +155,48 @@ type alias PolarNode a =
     }
 
 
-toPolarNodesHelper : Int -> Tree (PolarNode a) -> List (PolarNode a)
-toPolarNodesHelper dpth (Node pn cs) =
-    { pn | depth = dpth } :: List.concatMap (toPolarNodesHelper (dpth + 1)) cs
+spreadToPlr : Spread a -> PolarNode a
+spreadToPlr spr =
+    { content = spr.content
+    , depth = -1
+    , angle = (spr.startAngle + spr.endAngle) / 2
+    }
 
 
 toPolarNodes : Tree a -> List (PolarNode a)
 toPolarNodes t =
-    let
-        spreadToPlr spr =
-            { content = spr.content
-            , depth = -1
-            , angle = (spr.startAngle + spr.endAngle) / 2
-            }
+    t
+        |> spreadChildren
+        |> map spreadToPlr
+        |> depthWith (\d p -> { p | depth = d })
+        |> flatten
 
-        mappedTree =
-            map spreadToPlr <| spreadChildren t
+
+type alias Edge a =
+    { from : a
+    , to : a
+    }
+
+
+mkEdges : Tree a -> List (Edge a)
+mkEdges (Node x cs) =
+    let
+        childEdges =
+            concatMap mkEdges cs
+
+        rootEdges =
+            List.map (\(Node y _) -> { from = x, to = y }) cs
     in
-    toPolarNodesHelper 0 mappedTree
+    rootEdges ++ childEdges
+
+
+toPolarEdges : Tree a -> List (Edge (PolarNode a))
+toPolarEdges t =
+    t
+        |> spreadChildren
+        |> map spreadToPlr
+        |> depthWith (\d p -> { p | depth = d })
+        |> mkEdges
 
 
 testTree : Tree ()
