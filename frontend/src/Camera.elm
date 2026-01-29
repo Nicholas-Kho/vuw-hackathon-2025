@@ -1,6 +1,7 @@
 module Camera exposing
     ( Camera
     , Vec2
+    , camPosToWorldPos
     , focusOn
     , mkCamera
     , moveCam
