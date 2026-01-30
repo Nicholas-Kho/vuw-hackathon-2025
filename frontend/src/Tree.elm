@@ -7,6 +7,7 @@ module Tree exposing
     , maxLayerWidth
     , mkCartesian
     , mkEdges
+    , singleton
     , testTree
     , toPolarEdges
     , toPolarNodes
@@ -229,6 +230,11 @@ layoutTree tree =
     tree
         |> toPolarNodes
         |> List.map mkCartesian
+
+
+singleton : a -> Tree a
+singleton x =
+    Node x []
 
 
 testTree : Tree ()

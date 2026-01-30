@@ -4,7 +4,7 @@ import BackendWrapper exposing (Subgraph, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NavTree, getTree)
+import Navigation exposing (NavTree, getTree, insertNeighborsAt)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
@@ -70,7 +70,7 @@ handleClick pos gs =
             gs
 
         Just nid ->
-            gs
+            { gs | nav = insertNeighborsAt gs.nav nid (getNeighbors nid gs.graph) }
 
 
 getClickedNode : List (WithPos NodeId) -> Vec2 -> Maybe NodeId
