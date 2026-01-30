@@ -1,22 +1,19 @@
-module Navigation exposing
-    ( Nav
-    , initNav
-    )
+module Navigation exposing (..)
 
+import BackendWrapper exposing (Node, Subgraph, getNode)
 import Generated.BackendApi exposing (NodeId)
-import Set exposing (Set)
+import Tree exposing (Tree(..))
 
 
-type alias Nav =
-    { selected : NodeId
-    , history : List NodeId
-    , expanded : Set NodeId
-    }
+type alias NavTree =
+    Tree NodeId
 
 
-initNav : NodeId -> Nav
-initNav from =
-    { selected = from
-    , history = []
-    , expanded = Set.empty
-    }
+singleton : NodeId -> NavTree
+singleton nid =
+    Node nid []
+
+
+toNodeTree : Subgraph -> NavTree -> Tree (Maybe Node)
+toNodeTree sg =
+    Tree.map (getNode sg)

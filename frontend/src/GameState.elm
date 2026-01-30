@@ -4,7 +4,7 @@ import BackendWrapper exposing (Subgraph, xformSubgraph)
 import Camera exposing (Camera, camPosToWorldPos, focusOn, moveCam, stopAnimation, tickCam, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeId)
 import List exposing (foldl)
-import Navigation exposing (Nav, initNav)
+import Navigation exposing (NavTree)
 import PlayerInput exposing (UserInput(..))
 
 
@@ -12,7 +12,8 @@ type alias GameState =
     { startAt : NodeId
     , endAt : NodeId
     , graph : Subgraph
-    , nav : Nav
+    , nav : NavTree
+    , focus : NodeId
     , cam : Camera
     }
 
@@ -22,8 +23,9 @@ fromInitial cam igs =
     { startAt = igs.startAt
     , endAt = igs.endAt
     , graph = xformSubgraph igs.subgraph
+    , nav = Navigation.singleton igs.startAt
     , cam = cam
-    , nav = initNav igs.startAt
+    , focus = igs.startAt
     }
 
 

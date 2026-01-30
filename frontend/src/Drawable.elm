@@ -1,5 +1,6 @@
 module Drawable exposing (..)
 
+import BackendWrapper exposing (Node)
 import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
@@ -191,3 +192,26 @@ treeEdges cam t =
 drawTree : Camera -> Tree () -> Canvas.Renderable
 drawTree cam t =
     Canvas.shapes [] (treeEdges cam t :: treeNodes cam t)
+
+
+drawMNode : Camera -> Vec2 -> Maybe Node -> Canvas.Renderable
+drawMNode cam pos mn =
+    case mn of
+        Nothing ->
+            Canvas.shapes [ Canvas.Settings.fill Color.black ] [ drawCircle cam pos 20 ]
+
+        Just _ ->
+            Canvas.shapes [ Canvas.Settings.fill Color.red ] [ drawCircle cam pos 20 ]
+
+
+drawMNodeTree : Camera -> Tree (Maybe Node) -> Canvas.Renderable
+drawMNodeTree cam t =
+    let
+        nodes =
+            toPolarNodes t
+                |> List.map (\p -> drawMNode cam (mkCartesian p) p.content)
+
+        edges =
+            Canvas.shapes [] [ treeEdges cam t ]
+    in
+    Canvas.group [] (edges :: nodes)

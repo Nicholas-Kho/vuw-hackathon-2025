@@ -9,6 +9,7 @@ module Tree exposing
     , toPolarNodes
     )
 
+import BackendWrapper exposing (Node, Subgraph)
 import List exposing (concatMap)
 import Time exposing (ZoneName(..))
 

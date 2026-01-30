@@ -1,6 +1,11 @@
 module BackendWrapper exposing
     ( Node
     , Subgraph
+    , addNode
+    , getContent
+    , getNode
+    , getOutgoing
+    , keys
     , xformSubgraph
     )
 
@@ -22,13 +27,38 @@ getContent (Node n) =
     n.content
 
 
+getOutgoing : Node -> List NodeId
+getOutgoing (Node n) =
+    n.outgoingEdges |> Dict.keys |> List.map wrapNodeId
+
+
 type Subgraph
     = Subgraph (Dict String Node)
+
+
+keys : Subgraph -> List NodeId
+keys (Subgraph d) =
+    Dict.keys d |> List.map wrapNodeId
+
+
+getNode : Subgraph -> NodeId -> Maybe Node
+getNode (Subgraph d) nid =
+    Dict.get (unwrapNodeId nid) d
+
+
+addNode : Subgraph -> NodeId -> Node -> Subgraph
+addNode (Subgraph d) nid node =
+    Subgraph (Dict.insert (unwrapNodeId nid) node d)
 
 
 unwrapNodeId : NodeId -> String
 unwrapNodeId (NodeId nid) =
     nid.content
+
+
+wrapNodeId : String -> NodeId
+wrapNodeId s =
+    NodeId { content = s }
 
 
 unwrapEdgeInfo : EdgeInfo -> String

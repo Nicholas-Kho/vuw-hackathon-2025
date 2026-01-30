@@ -7,17 +7,17 @@ import Camera exposing (mkCamera)
 import Canvas
 import Canvas.Settings
 import Color
-import Drawable exposing (drawCircle, drawTree, renderGrid)
+import Drawable exposing (drawMNodeTree, renderGrid)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
 import Html.Attributes exposing (style)
 import Http exposing (Error(..))
+import Navigation
 import PlayerInput
 import RemoteData exposing (RemoteData(..))
 import String
 import Task
-import Tree exposing (testTree)
 
 
 main : Program () Model Msg
@@ -112,7 +112,7 @@ showGame ( w, h ) okm =
             [ Canvas.Settings.fill Color.lightGrey ]
             [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
         , renderGrid okm.game.cam 100
-        , drawTree okm.game.cam testTree
+        , drawMNodeTree okm.game.cam (Navigation.toNodeTree okm.game.graph okm.game.nav)
         ]
 
 
