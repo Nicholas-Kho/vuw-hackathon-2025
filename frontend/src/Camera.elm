@@ -9,6 +9,7 @@ module Camera exposing
     , showCam
     , stopAnimation
     , tickCam
+    , vDistSqare
     , worldPosToCamPos
     , zoomAbout
     , zoomCam

@@ -6,6 +6,7 @@ module BackendWrapper exposing
     , getNode
     , getOutgoing
     , keys
+    , unwrapNodeId
     , xformSubgraph
     )
 
