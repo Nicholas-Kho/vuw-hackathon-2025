@@ -1,11 +1,12 @@
 module GameState exposing (..)
 
-import BackendWrapper exposing (Subgraph, xformSubgraph)
-import Camera exposing (Camera, camPosToWorldPos, focusOn, moveCam, stopAnimation, tickCam, zoomAbout)
+import BackendWrapper exposing (Subgraph, getNode, getOutgoing, xformSubgraph)
+import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NavTree)
+import Navigation exposing (NavTree, getTree)
 import PlayerInput exposing (UserInput(..))
+import Tree exposing (WithPos, layoutTree)
 
 
 type alias GameState =
@@ -49,7 +50,50 @@ handleInput uinp gs =
             { gs | cam = camToWorldOrigin gs.cam }
 
         Action (PlayerInput.Click pos) ->
-            { gs | cam = zoomInOn (camPosToWorldPos gs.cam pos) gs.cam }
+            handleClick pos gs
+
+
+handleClick : Vec2 -> GameState -> GameState
+handleClick pos gs =
+    let
+        nodePositionsWorld =
+            layoutTree <| getTree gs.nav
+
+        clickPosWorld =
+            Camera.camPosToWorldPos gs.cam pos
+
+        clickedNode =
+            getClickedNode nodePositionsWorld clickPosWorld
+    in
+    case clickedNode of
+        Nothing ->
+            gs
+
+        Just nid ->
+            gs
+
+
+getClickedNode : List (WithPos NodeId) -> Vec2 -> Maybe NodeId
+getClickedNode ns clickWorld =
+    let
+        clickCounts n =
+            vDistSqare clickWorld n.pos < 400
+    in
+    List.filter clickCounts ns |> List.head |> Maybe.map .content
+
+
+getNeighbors : NodeId -> Subgraph -> List NodeId
+getNeighbors nid sg =
+    let
+        node =
+            getNode sg nid
+    in
+    case node of
+        Nothing ->
+            []
+
+        Just n ->
+            getOutgoing n
 
 
 camToWorldOrigin : Camera -> Camera

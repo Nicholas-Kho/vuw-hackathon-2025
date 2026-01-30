@@ -18,6 +18,7 @@ import PlayerInput
 import RemoteData exposing (RemoteData(..))
 import String
 import Task
+import Tree exposing (toPolarNodes)
 
 
 main : Program () Model Msg
@@ -96,12 +97,19 @@ view model =
 
         Good okm ->
             Html.div []
-                [ showGame okm.size okm
+                [ showGame okm
                 ]
 
 
-showGame : CanvasSize -> OkModel -> Html Msg
-showGame ( w, h ) okm =
+showGame : OkModel -> Html Msg
+showGame okm =
+    let
+        ( w, h ) =
+            okm.size
+
+        cam =
+            okm.game.cam
+    in
     Canvas.toHtml ( w, h )
         [ style "display" "block"
         , style "box-sizing" "border-box"
@@ -111,8 +119,8 @@ showGame ( w, h ) okm =
         [ Canvas.shapes
             [ Canvas.Settings.fill Color.lightGrey ]
             [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
-        , renderGrid okm.game.cam 100
-        , drawMNodeTree okm.game.cam (Navigation.toNodeTree okm.game.graph okm.game.nav)
+        , renderGrid cam 100
+        , drawMNodeTree cam (Navigation.toNodeTree okm.game.graph okm.game.nav)
         ]
 
 
