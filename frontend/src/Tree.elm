@@ -1,15 +1,18 @@
 module Tree exposing
     ( PolarNode
     , Tree(..)
+    , WithPos
+    , layoutTree
     , map
     , maxLayerWidth
+    , mkCartesian
     , mkEdges
     , testTree
     , toPolarEdges
     , toPolarNodes
     )
 
-import BackendWrapper exposing (Node, Subgraph)
+import BackendWrapper exposing (Node)
 import List exposing (concatMap)
 import Time exposing (ZoneName(..))
 
@@ -198,6 +201,34 @@ toPolarEdges t =
         |> map spreadToPlr
         |> depthWith (\d p -> { p | depth = d })
         |> mkEdges
+
+
+mkCartesian : PolarNode a -> WithPos a
+mkCartesian pn =
+    let
+        r =
+            toFloat pn.depth * 250
+
+        x =
+            r * cos pn.angle
+
+        y =
+            r * sin pn.angle
+    in
+    { pos = ( x, y ), content = pn.content }
+
+
+type alias WithPos a =
+    { pos : ( Float, Float )
+    , content : a
+    }
+
+
+layoutTree : Tree a -> List (WithPos a)
+layoutTree tree =
+    tree
+        |> toPolarNodes
+        |> List.map mkCartesian
 
 
 testTree : Tree ()

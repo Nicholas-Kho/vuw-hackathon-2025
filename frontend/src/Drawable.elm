@@ -5,7 +5,7 @@ import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
 import Color exposing (rgba)
-import Tree exposing (PolarNode, Tree, toPolarEdges, toPolarNodes)
+import Tree exposing (PolarNode, Tree, mkCartesian, toPolarEdges, toPolarNodes)
 
 
 drawCircle : Camera -> Vec2 -> Float -> Canvas.Shape
@@ -142,36 +142,11 @@ renderGrid cam gridSize =
         ]
 
 
-mkCartesian : PolarNode a -> ( Float, Float )
-mkCartesian pn =
-    let
-        r =
-            toFloat pn.depth * 250
-
-        x =
-            r * cos pn.angle
-
-        y =
-            r * sin pn.angle
-    in
-    ( x, y )
-
-
-treeNodes : Camera -> Tree () -> List Canvas.Shape
-treeNodes cam t =
-    let
-        mkCircle p =
-            drawCircle cam p 20
-    in
-    toPolarNodes t
-        |> List.map (mkCartesian >> mkCircle)
-
-
 treeEdges : Camera -> Tree a -> Canvas.Shape
 treeEdges cam t =
     let
         pToScreen =
-            mkCartesian >> Camera.worldPosToCamPos cam
+            mkCartesian >> .pos >> Camera.worldPosToCamPos cam
 
         eToLine e =
             let
@@ -189,11 +164,6 @@ treeEdges cam t =
         |> drawLines
 
 
-drawTree : Camera -> Tree () -> Canvas.Renderable
-drawTree cam t =
-    Canvas.shapes [] (treeEdges cam t :: treeNodes cam t)
-
-
 drawMNode : Camera -> Vec2 -> Maybe Node -> Canvas.Renderable
 drawMNode cam pos mn =
     case mn of
@@ -209,7 +179,7 @@ drawMNodeTree cam t =
     let
         nodes =
             toPolarNodes t
-                |> List.map (\p -> drawMNode cam (mkCartesian p) p.content)
+                |> List.map (\p -> drawMNode cam (mkCartesian p |> .pos) p.content)
 
         edges =
             Canvas.shapes [] [ treeEdges cam t ]
