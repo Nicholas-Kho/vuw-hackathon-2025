@@ -55,10 +55,14 @@ init =
     }
 
 
-scrollAttr : (Msg -> parentMsg) -> Attribute parentMsg
-scrollAttr liftMsg =
-    Html.Events.preventDefaultOn "wheel"
+inputListenAttrs : (Msg -> parentMsg) -> List (Attribute parentMsg)
+inputListenAttrs liftMsg =
+    [ Html.Events.onMouseDown <| liftMsg MouseDown
+    , Html.Events.onMouseUp <| liftMsg MouseUp
+    , Html.Events.onMouseLeave <| liftMsg MouseUp
+    , Html.Events.preventDefaultOn "wheel"
         (Decode.map (\m -> ( liftMsg m, True )) mouseScrollDecoder)
+    ]
 
 
 grabbyCursor : Model -> Attribute msg
@@ -71,22 +75,10 @@ grabbyCursor m =
             style "cursor" "grab"
 
 
-subscriptions : Model -> Sub Msg
-subscriptions m =
-    let
-        rest =
-            case m.mouse of
-                Idle ->
-                    Events.onMouseDown (Decode.succeed MouseDown)
-
-                Dragging _ _ ->
-                    Sub.batch
-                        [ Events.onMouseUp (Decode.succeed MouseUp)
-                        , Events.onMouseMove mouseMoveRelativeDecoder
-                        ]
-    in
+subscriptions : Sub Msg
+subscriptions =
     Sub.batch
-        [ rest
+        [ Events.onMouseMove mouseMoveRelativeDecoder
         , Events.onMouseMove mouseMoveDecoder
         , Events.onKeyDown keyPressDecoder
         ]
@@ -134,16 +126,31 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MouseDown ->
-            ( model, Task.perform GotTime Time.now )
+            case model.mouse of
+                Idle ->
+                    ( model, Task.perform GotTime Time.now )
+
+                Dragging _ _ ->
+                    simple model
 
         GotTime t ->
             simple <| updateClickTime t model
 
         MouseUp ->
-            ( model, Task.perform GotTime Time.now )
+            case model.mouse of
+                Idle ->
+                    simple model
+
+                Dragging _ _ ->
+                    ( model, Task.perform GotTime Time.now )
 
         MouseMoveRelative x y ->
-            simple { model | mouseDelta = ( x, y ) }
+            case model.mouse of
+                Idle ->
+                    simple model
+
+                Dragging _ _ ->
+                    simple { model | mouseDelta = ( x, y ) }
 
         MouseMove x y ->
             simple { model | cursorPos = ( x, y ) }

@@ -29,27 +29,22 @@ main =
         { init = \_ -> init
         , view = view
         , update = update
-        , subscriptions = subs
+        , subscriptions = \_ -> subs
         }
 
 
-subs : Model -> Sub Msg
-subs m =
+subs : Sub Msg
+subs =
     Sub.batch
         [ onResize Resize
         , onAnimationFrameDelta Tick
-        , getInputSubs m
+        , getInputSubs
         ]
 
 
-getInputSubs : Model -> Sub Msg
-getInputSubs m =
-    case m of
-        Good okm ->
-            Sub.map Input <| PlayerInput.subscriptions okm.input
-
-        _ ->
-            Sub.none
+getInputSubs : Sub Msg
+getInputSubs =
+    Sub.map Input <| PlayerInput.subscriptions
 
 
 type alias CanvasSize =
@@ -161,11 +156,12 @@ showGame okm =
             okm.game.cam
     in
     Canvas.toHtml ( w, h )
-        [ style "display" "block"
-        , style "box-sizing" "border-box"
-        , PlayerInput.grabbyCursor okm.input
-        , PlayerInput.scrollAttr Input
-        ]
+        (PlayerInput.inputListenAttrs Input
+            ++ [ style "display" "block"
+               , style "box-sizing" "border-box"
+               , PlayerInput.grabbyCursor okm.input
+               ]
+        )
         [ Canvas.shapes
             [ Canvas.Settings.fill Color.lightGrey ]
             [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
