@@ -7,14 +7,14 @@ module Navigation exposing
 
 import BackendWrapper exposing (Node, unwrapNodeId)
 import Dict exposing (Dict)
-import Generated.BackendApi exposing (NodeContent, NodeId)
+import Generated.BackendApi exposing (NodeId)
 import Set exposing (Set)
 import Tree exposing (Tree(..))
 
 
 type NavTree
     = NavTree
-        { tree : Tree ( NodeId, NodeContent )
+        { tree : Tree ( NodeId, Node )
 
         -- Careful: These strings are unwrapped NodeIds.
         , members : Set String
@@ -22,12 +22,12 @@ type NavTree
         }
 
 
-getTree : NavTree -> Tree ( NodeId, NodeContent )
+getTree : NavTree -> Tree ( NodeId, Node )
 getTree (NavTree nt) =
     nt.tree
 
 
-singleton : ( NodeId, NodeContent ) -> NavTree
+singleton : ( NodeId, Node ) -> NavTree
 singleton n =
     NavTree
         { tree = Node n []
@@ -56,19 +56,19 @@ addLoop from to (NavTree nt) =
     NavTree { nt | loopsTo = newLoops }
 
 
-addMember : ( NodeId, NodeContent ) -> NavTree -> NavTree
+addMember : NodeId -> NavTree -> NavTree
 addMember x (NavTree nt) =
-    NavTree { nt | members = Set.insert (unwrapNodeId <| Tuple.first x) nt.members }
+    NavTree { nt | members = Set.insert (unwrapNodeId x) nt.members }
 
 
-insertNeighborsAt : NavTree -> NodeId -> List ( NodeId, NodeContent ) -> NavTree
+insertNeighborsAt : NavTree -> NodeId -> List ( NodeId, Node ) -> NavTree
 insertNeighborsAt nt x ns =
     let
         ( alreadyHere, arent ) =
             List.partition (hasNode nt << Tuple.first) ns
 
         addedMembers =
-            List.foldl addMember nt arent
+            List.foldl (addMember << Tuple.first) nt arent
 
         (NavTree newNt) =
             List.foldl (addLoop x << Tuple.first) addedMembers alreadyHere
@@ -79,7 +79,7 @@ insertNeighborsAt nt x ns =
     NavTree { newNt | tree = addedNeighs }
 
 
-insertHelper : Tree ( NodeId, NodeContent ) -> NodeId -> List ( NodeId, NodeContent ) -> Tree ( NodeId, NodeContent )
+insertHelper : Tree ( NodeId, Node ) -> NodeId -> List ( NodeId, Node ) -> Tree ( NodeId, Node )
 insertHelper (Node c cn) x ns =
     if unwrapNodeId (Tuple.first c) == unwrapNodeId x then
         Node c (cn ++ List.map Tree.singleton ns)

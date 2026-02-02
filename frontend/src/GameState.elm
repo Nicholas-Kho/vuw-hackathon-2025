@@ -1,10 +1,10 @@
 module GameState exposing (..)
 
-import BackendWrapper exposing (Subgraph, getNode, getOutgoing, xformSubgraph)
+import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NavTree, getTree)
+import Navigation exposing (NavTree, getTree, insertNeighborsAt)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
@@ -12,25 +12,30 @@ import Tree exposing (WithPos, layoutTree)
 type alias GameState =
     { startAt : NodeId
     , endAt : NodeId
-    , graph : Subgraph
+    , nodeCache : Subgraph
     , nav : NavTree
     , focus : NodeContent
     , cam : Camera
     }
 
 
-fromInitial : NodeContent -> Camera -> InitialGameState -> GameState
+fromInitial : Node -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus cam igs =
     { startAt = igs.startAt
     , endAt = igs.endAt
-    , graph = xformSubgraph igs.subgraph
+    , nodeCache = xformSubgraph igs.subgraph
     , nav = Navigation.singleton ( igs.startAt, initialFocus )
     , cam = cam
-    , focus = initialFocus
+    , focus = getContent initialFocus
     }
 
 
-handleInput : UserInput -> GameState -> GameState
+simple : GameState -> ( GameState, List NodeId )
+simple gs =
+    ( gs, [] )
+
+
+handleInput : UserInput -> GameState -> ( GameState, List NodeId )
 handleInput uinp gs =
     case uinp of
         Pan dx dy ->
@@ -41,19 +46,19 @@ handleInput uinp gs =
                 panBy =
                     ( dx / zoom, dy / zoom )
             in
-            { gs | cam = stopAnimation <| moveCam panBy gs.cam }
+            simple { gs | cam = stopAnimation <| moveCam panBy gs.cam }
 
         Zoom dz cursorPos ->
-            { gs | cam = stopAnimation <| zoomAbout cursorPos -dz <| gs.cam }
+            simple { gs | cam = stopAnimation <| zoomAbout cursorPos -dz <| gs.cam }
 
         Action PlayerInput.Center ->
-            { gs | cam = camToWorldOrigin gs.cam }
+            simple { gs | cam = camToWorldOrigin gs.cam }
 
         Action (PlayerInput.Click pos) ->
             handleClick pos gs
 
 
-handleClick : Vec2 -> GameState -> GameState
+handleClick : Vec2 -> GameState -> ( GameState, List NodeId )
 handleClick pos gs =
     let
         nodePositionsWorld =
@@ -67,13 +72,17 @@ handleClick pos gs =
     in
     case clickedNode of
         Nothing ->
-            gs
+            simple gs
 
-        Just ( _, cont ) ->
-            { gs | focus = cont }
+        Just ( nid, n ) ->
+            let
+                ( updatedTree, stillNeedToFetch ) =
+                    addNeighbors gs.nodeCache nid (getOutgoing n) gs.nav
+            in
+            ( { gs | focus = getContent n, nav = updatedTree }, stillNeedToFetch )
 
 
-getClickedNode : List (WithPos ( NodeId, NodeContent )) -> Vec2 -> Maybe ( NodeId, NodeContent )
+getClickedNode : List (WithPos a) -> Vec2 -> Maybe a
 getClickedNode ns clickWorld =
     let
         clickCounts n =
@@ -82,18 +91,49 @@ getClickedNode ns clickWorld =
     List.filter clickCounts ns |> List.head |> Maybe.map .content
 
 
-getNeighbors : NodeId -> Subgraph -> List NodeId
-getNeighbors nid sg =
-    let
-        node =
-            getNode sg nid
-    in
-    case node of
-        Nothing ->
-            []
+partitionHits : Subgraph -> List NodeId -> ( List ( NodeId, Node ), List NodeId )
+partitionHits =
+    partitionHitsHelper ( [], [] )
 
-        Just n ->
-            getOutgoing n
+
+partitionHitsHelper :
+    ( List ( NodeId, Node ), List NodeId )
+    -> Subgraph
+    -> List NodeId
+    -> ( List ( NodeId, Node ), List NodeId )
+partitionHitsHelper result cache lookupThese =
+    case lookupThese of
+        [] ->
+            result
+
+        nid :: rest ->
+            case getNode cache nid of
+                Nothing ->
+                    partitionHitsHelper (Tuple.mapSecond (\r -> nid :: r) result) cache rest
+
+                Just n ->
+                    partitionHitsHelper (Tuple.mapFirst (\r -> ( nid, n ) :: r) result) cache rest
+
+
+addNeighbors : Subgraph -> NodeId -> List NodeId -> NavTree -> ( NavTree, List NodeId )
+addNeighbors cache parent cids nt =
+    let
+        ( hits, misses ) =
+            partitionHits cache cids
+
+        newTree =
+            insertNeighborsAt nt parent hits
+    in
+    ( newTree, misses )
+
+
+expandCache : Generated.BackendApi.Subgraph -> GameState -> GameState
+expandCache sg gs =
+    let
+        newSg =
+            xformSubgraph sg
+    in
+    { gs | nodeCache = BackendWrapper.union newSg gs.nodeCache }
 
 
 camToWorldOrigin : Camera -> Camera
@@ -111,9 +151,18 @@ handleTick deltaMs gs =
     { gs | cam = tickCam deltaMs gs.cam }
 
 
-handleInputs : List UserInput -> GameState -> GameState
+handleInputs : List UserInput -> GameState -> ( GameState, List NodeId )
 handleInputs uips g =
-    foldl handleInput g uips
+    foldl
+        (\u ( x, is ) ->
+            let
+                ( newGame, newInputs ) =
+                    handleInput u x
+            in
+            ( newGame, is ++ newInputs )
+        )
+        (simple g)
+        uips
 
 
 resizeCamera : ( Float, Float ) -> GameState -> GameState

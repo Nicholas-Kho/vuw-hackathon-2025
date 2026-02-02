@@ -1,6 +1,6 @@
 module Game exposing (..)
 
-import BackendWrapper exposing (getContent, getNode, xformSubgraph)
+import BackendWrapper exposing (getNode, makeExpandParams, xformSubgraph)
 import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
@@ -13,7 +13,7 @@ import Element exposing (Element, fillPortion, layout)
 import Element.Background
 import Element.Border
 import GameState exposing (..)
-import Generated.BackendApi exposing (InitialGameState, getStart)
+import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
 import Html exposing (Html, text)
 import Html.Attributes exposing (style)
 import Http exposing (Error(..))
@@ -65,6 +65,7 @@ type alias OkModel =
 
 type Msg
     = StartResponse (Result Http.Error InitialGameState)
+    | ExpandResponse (Result Http.Error (Maybe Subgraph))
     | Resize Int Int
     | Input PlayerInput.Msg
     | Tick Float
@@ -206,6 +207,14 @@ update msg model =
         UnrecoverableFail _ ->
             ( model, Cmd.none )
 
+        Initialising ->
+            case msg of
+                StartResponse wd ->
+                    handleStartResponse wd
+
+                _ ->
+                    ( Initialising, Cmd.none )
+
         Good okm ->
             case msg of
                 Resize w h ->
@@ -225,18 +234,26 @@ update msg model =
                     ( Good { okm | input = newInputModel }, Cmd.map Input inputCmds )
 
                 Tick delta ->
-                    ( Good (tickGame delta okm), Cmd.none )
+                    tickGame delta okm |> Tuple.mapFirst Good
 
-                _ ->
+                StartResponse _ ->
                     ( model, Cmd.none )
 
-        Initialising ->
-            case msg of
-                StartResponse wd ->
-                    handleStartResponse wd
+                ExpandResponse resp ->
+                    handleExpandResponse okm resp
 
-                _ ->
-                    ( Initialising, Cmd.none )
+
+handleExpandResponse : OkModel -> Result Error (Maybe Subgraph) -> ( Model, Cmd Msg )
+handleExpandResponse okm res =
+    case res of
+        Result.Err e ->
+            ( UnrecoverableFail <| showErr e, Cmd.none )
+
+        Ok Nothing ->
+            ( UnrecoverableFail "Backend could not find requested node ID. This is a bug.", Cmd.none )
+
+        Ok (Just sg) ->
+            ( Good { okm | game = expandCache sg okm.game }, Cmd.none )
 
 
 handleStartResponse : Result Http.Error InitialGameState -> ( Model, Cmd Msg )
@@ -263,19 +280,27 @@ handleStartResponse res =
                     ( Good
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
-                        , game = GameState.fromInitial (getContent focus) initialCamera igs
+                        , game = GameState.fromInitial focus initialCamera igs
                         }
                     , Task.perform getVpSize getViewport
                     )
 
 
-tickGame : Float -> OkModel -> OkModel
+tickGame : Float -> OkModel -> ( OkModel, Cmd Msg )
 tickGame deltaMs m =
     let
         ( userInputs, resetInp ) =
             PlayerInput.consume m.input
+
+        ( newGame, fetchThese ) =
+            handleInputs userInputs m.game
+
+        mkReq nid =
+            postExpand (makeExpandParams nid) ExpandResponse
     in
-    { m
+    ( { m
         | input = resetInp
-        , game = handleTick deltaMs <| handleInputs userInputs m.game
-    }
+        , game = handleTick deltaMs newGame
+      }
+    , Cmd.batch <| List.map mkReq fetchThese
+    )

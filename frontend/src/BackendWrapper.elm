@@ -6,12 +6,14 @@ module BackendWrapper exposing
     , getNode
     , getOutgoing
     , keys
+    , makeExpandParams
+    , union
     , unwrapNodeId
     , xformSubgraph
     )
 
 import Dict exposing (Dict)
-import Generated.BackendApi exposing (EdgeInfo(..), NodeContent, NodeElm, NodeId(..), Subgraph)
+import Generated.BackendApi exposing (EdgeInfo(..), ExpandParams, NodeContent, NodeElm, NodeId(..), Subgraph, UnverifiedNodeId(..))
 import Set exposing (Set)
 
 
@@ -33,6 +35,11 @@ getOutgoing (Node n) =
     n.outgoingEdges |> Dict.keys |> List.map wrapNodeId
 
 
+makeExpandParams : NodeId -> ExpandParams
+makeExpandParams nid =
+    { expandAboutId = UnverifiedNodeId { toString = unwrapNodeId nid } }
+
+
 type Subgraph
     = Subgraph (Dict String Node)
 
@@ -40,6 +47,11 @@ type Subgraph
 keys : Subgraph -> List NodeId
 keys (Subgraph d) =
     Dict.keys d |> List.map wrapNodeId
+
+
+union : Subgraph -> Subgraph -> Subgraph
+union (Subgraph a) (Subgraph b) =
+    Subgraph <| Dict.union a b
 
 
 getNode : Subgraph -> NodeId -> Maybe Node

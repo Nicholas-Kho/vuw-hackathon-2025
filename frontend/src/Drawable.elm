@@ -1,5 +1,6 @@
 module Drawable exposing (..)
 
+import BackendWrapper exposing (getContent)
 import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
@@ -174,7 +175,7 @@ drawNavTree : Camera -> NavTree -> Canvas.Renderable
 drawNavTree cam t =
     let
         tree =
-            Tree.map Tuple.second <| getTree t
+            Tree.map (Tuple.second >> getContent) <| getTree t
 
         nodes =
             toPolarNodes tree
