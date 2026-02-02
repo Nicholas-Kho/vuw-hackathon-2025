@@ -1,6 +1,6 @@
 module GameState exposing (..)
 
-import BackendWrapper exposing (Subgraph, getNode, getOutgoing, xformSubgraph)
+import BackendWrapper exposing (Node, Subgraph, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeId)
 import List exposing (foldl)
@@ -14,19 +14,19 @@ type alias GameState =
     , endAt : NodeId
     , graph : Subgraph
     , nav : NavTree
-    , focus : NodeId
+    , focus : Node
     , cam : Camera
     }
 
 
-fromInitial : Camera -> InitialGameState -> GameState
-fromInitial cam igs =
+fromInitial : Node -> Camera -> InitialGameState -> GameState
+fromInitial initialFocus cam igs =
     { startAt = igs.startAt
     , endAt = igs.endAt
     , graph = xformSubgraph igs.subgraph
     , nav = Navigation.singleton igs.startAt
     , cam = cam
-    , focus = igs.startAt
+    , focus = initialFocus
     }
 
 

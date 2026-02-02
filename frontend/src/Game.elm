@@ -1,5 +1,6 @@
 module Game exposing (..)
 
+import BackendWrapper exposing (getContent, getNode, xformSubgraph)
 import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
@@ -94,12 +95,24 @@ view model =
 
         Good okm ->
             layout [] <|
-                Element.el [ Element.inFront (showSidePanel okm) ] <|
+                Element.el [ Element.inFront <| showSidePanel <| sidePanelContent okm ] <|
                     Element.html (showGame okm)
 
 
-showSidePanel : OkModel -> Element Msg
-showSidePanel okm =
+sidePanelContent : OkModel -> Element Msg
+sidePanelContent okm =
+    let
+        focus =
+            getContent okm.game.focus
+    in
+    Element.column [ Element.centerY ]
+        [ Element.text <| "Current focus: " ++ focus.title
+        , Element.paragraph [] [ Element.text focus.description ]
+        ]
+
+
+showSidePanel : Element Msg -> Element Msg
+showSidePanel stuff =
     let
         leftGapPart =
             1
@@ -130,7 +143,7 @@ showSidePanel okm =
         [ clearBox [ Element.width (fillPortion leftGapPart) ]
         , Element.column [ Element.width (fillPortion sidebarPart), Element.height Element.fill ]
             [ clearBox [ Element.height (fillPortion verticalGapPart) ]
-            , Element.column
+            , Element.el
                 [ Element.width Element.fill
                 , Element.height (fillPortion sidebarHtPart)
                 , Element.Border.color (Element.rgb255 110 110 110)
@@ -139,7 +152,7 @@ showSidePanel okm =
                 , Element.Background.color (Element.rgb255 248 248 248)
                 , Element.htmlAttribute <| Html.Attributes.style "pointer-events" "auto"
                 ]
-                [ Element.none ]
+                stuff
             , clearBox [ Element.height (fillPortion verticalGapPart) ]
             ]
         , clearBox [ Element.width (fillPortion rightGapPart) ]
@@ -235,13 +248,27 @@ handleStartResponse res =
             ( UnrecoverableFail <| showErr httpe, Cmd.none )
 
         Result.Ok igs ->
-            ( Good
-                { size = ( 500, 500 )
-                , input = PlayerInput.init
-                , game = GameState.fromInitial (mkCamera ( 500, 500 )) igs
-                }
-            , Task.perform getVpSize getViewport
-            )
+            let
+                initialCamera =
+                    mkCamera ( 500, 500 )
+
+                initialFocus =
+                    getNode (xformSubgraph igs.subgraph) igs.startAt
+            in
+            case initialFocus of
+                Nothing ->
+                    ( UnrecoverableFail "Backend did not send content of initial node. This is a bug."
+                    , Cmd.none
+                    )
+
+                Just focus ->
+                    ( Good
+                        { size = ( 500, 500 )
+                        , input = PlayerInput.init
+                        , game = GameState.fromInitial focus initialCamera igs
+                        }
+                    , Task.perform getVpSize getViewport
+                    )
 
 
 tickGame : Float -> OkModel -> OkModel
