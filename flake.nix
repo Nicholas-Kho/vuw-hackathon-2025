@@ -20,6 +20,10 @@
             system-fileio = pkgs.haskell.lib.dontCheck super.system-fileio;
           };
         };
+        elm-canvas-js = pkgs.fetchurl {
+          url = "https://unpkg.com/elm-canvas@2.2/elm-canvas.js";
+          hash = "sha256-Z6U4OLhFGwKcADJTJ7M23uh70Z99TfRCAcnSAGtXVow=";
+        };
         muselinks-server = haskellPkgs.callCabal2nix "muselinks" ./. { };
         muselinks-api-codegen = haskellPkgs.callCabal2nix "api-codegen" ./. { };
         muselinks-frontend = pkgs.mkElmDerivation {
@@ -31,11 +35,13 @@
             mkdir -p src/Generated
             # TODO: Later, we won't want to hardcode this.
             ${muselinks-api-codegen}/bin/api-codegen src/ -l 8080
-            elm make Main.elm --output=index.html
+            elm make Main.elm --output=elm.js --optimize
           '';
           installPhase = ''
-            mkdir -p $out/
-            cp index.html $out/
+            mkdir -p $out/static
+            cp elm.js $out/static
+            cp ${elm-canvas-js} $out/static/elm-canvas.js
+            cp $src/index-template.html $out/static/index.html
           '';
         };
       in {
@@ -44,9 +50,6 @@
           paths = [ muselinks-server muselinks-frontend ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
-            mkdir -p $out/static
-            ln -s ${muselinks-frontend}/index.html $out/static/index.html
-            ln -s ${muselinks-frontend}/assets $out/static/assets
             rm -f $out/bin/muselinks
             makeWrapper ${muselinks-server}/bin/muselinks $out/bin/muselinks --set STATIC_PATH $out/static
           '';
