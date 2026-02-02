@@ -46,7 +46,7 @@ data ExpandParams = ExpandParams
     }
     deriving (Generic)
 
-newtype UnverifiedNodeId = UnverifiedNodeId {toInt :: Int}
+newtype UnverifiedNodeId = UnverifiedNodeId {toString :: String}
     deriving (Generic)
 
 deriveBoth defaultOptions ''Subgraph
