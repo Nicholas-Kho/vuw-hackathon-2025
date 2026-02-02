@@ -1,10 +1,10 @@
 module GameState exposing (..)
 
-import BackendWrapper exposing (Node, Subgraph, getNode, getOutgoing, xformSubgraph)
+import BackendWrapper exposing (Subgraph, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
-import Generated.BackendApi exposing (InitialGameState, NodeId)
+import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NavTree, getTree, insertNeighborsAt)
+import Navigation exposing (NavTree, getTree)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
@@ -14,17 +14,17 @@ type alias GameState =
     , endAt : NodeId
     , graph : Subgraph
     , nav : NavTree
-    , focus : Node
+    , focus : NodeContent
     , cam : Camera
     }
 
 
-fromInitial : Node -> Camera -> InitialGameState -> GameState
+fromInitial : NodeContent -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus cam igs =
     { startAt = igs.startAt
     , endAt = igs.endAt
     , graph = xformSubgraph igs.subgraph
-    , nav = Navigation.singleton igs.startAt
+    , nav = Navigation.singleton ( igs.startAt, initialFocus )
     , cam = cam
     , focus = initialFocus
     }
@@ -69,11 +69,11 @@ handleClick pos gs =
         Nothing ->
             gs
 
-        Just nid ->
-            { gs | nav = insertNeighborsAt gs.nav nid (getNeighbors nid gs.graph) }
+        Just ( _, cont ) ->
+            { gs | focus = cont }
 
 
-getClickedNode : List (WithPos NodeId) -> Vec2 -> Maybe NodeId
+getClickedNode : List (WithPos ( NodeId, NodeContent )) -> Vec2 -> Maybe ( NodeId, NodeContent )
 getClickedNode ns clickWorld =
     let
         clickCounts n =

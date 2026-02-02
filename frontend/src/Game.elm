@@ -8,7 +8,7 @@ import Camera exposing (mkCamera)
 import Canvas
 import Canvas.Settings
 import Color
-import Drawable exposing (drawMNodeTree, renderGrid)
+import Drawable exposing (renderGrid)
 import Element exposing (Element, fillPortion, layout)
 import Element.Background
 import Element.Border
@@ -17,8 +17,6 @@ import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
 import Html.Attributes exposing (style)
 import Http exposing (Error(..))
-import Navigation
-import Platform.Sub exposing (none)
 import PlayerInput
 import RemoteData exposing (RemoteData(..))
 import Task
@@ -103,7 +101,7 @@ sidePanelContent : OkModel -> Element Msg
 sidePanelContent okm =
     let
         focus =
-            getContent okm.game.focus
+            okm.game.focus
     in
     Element.column [ Element.centerY ]
         [ Element.text <| "Current focus: " ++ focus.title
@@ -179,7 +177,7 @@ showGame okm =
             [ Canvas.Settings.fill Color.lightGrey ]
             [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
         , renderGrid cam 100
-        , drawMNodeTree cam (Navigation.toNodeTree okm.game.graph okm.game.nav)
+        , Drawable.drawNavTree cam okm.game.nav
         ]
 
 
@@ -265,7 +263,7 @@ handleStartResponse res =
                     ( Good
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
-                        , game = GameState.fromInitial focus initialCamera igs
+                        , game = GameState.fromInitial (getContent focus) initialCamera igs
                         }
                     , Task.perform getVpSize getViewport
                     )

@@ -3,19 +3,18 @@ module Navigation exposing
     , getTree
     , insertNeighborsAt
     , singleton
-    , toNodeTree
     )
 
-import BackendWrapper exposing (Node, Subgraph, getNode, unwrapNodeId)
+import BackendWrapper exposing (Node, unwrapNodeId)
 import Dict exposing (Dict)
-import Generated.BackendApi exposing (NodeId)
+import Generated.BackendApi exposing (NodeContent, NodeId)
 import Set exposing (Set)
 import Tree exposing (Tree(..))
 
 
 type NavTree
     = NavTree
-        { tree : Tree NodeId
+        { tree : Tree ( NodeId, NodeContent )
 
         -- Careful: These strings are unwrapped NodeIds.
         , members : Set String
@@ -23,16 +22,16 @@ type NavTree
         }
 
 
-getTree : NavTree -> Tree NodeId
+getTree : NavTree -> Tree ( NodeId, NodeContent )
 getTree (NavTree nt) =
     nt.tree
 
 
-singleton : NodeId -> NavTree
-singleton nid =
+singleton : ( NodeId, NodeContent ) -> NavTree
+singleton n =
     NavTree
-        { tree = Node nid []
-        , members = Set.singleton <| unwrapNodeId nid
+        { tree = Node n []
+        , members = Set.singleton <| unwrapNodeId <| Tuple.first n
         , loopsTo = Dict.empty
         }
 
@@ -57,27 +56,22 @@ addLoop from to (NavTree nt) =
     NavTree { nt | loopsTo = newLoops }
 
 
-addMember : NodeId -> NavTree -> NavTree
+addMember : ( NodeId, NodeContent ) -> NavTree -> NavTree
 addMember x (NavTree nt) =
-    NavTree { nt | members = Set.insert (unwrapNodeId x) nt.members }
+    NavTree { nt | members = Set.insert (unwrapNodeId <| Tuple.first x) nt.members }
 
 
-toNodeTree : Subgraph -> NavTree -> Tree (Maybe Node)
-toNodeTree sg (NavTree nt) =
-    Tree.map (getNode sg) nt.tree
-
-
-insertNeighborsAt : NavTree -> NodeId -> List NodeId -> NavTree
+insertNeighborsAt : NavTree -> NodeId -> List ( NodeId, NodeContent ) -> NavTree
 insertNeighborsAt nt x ns =
     let
         ( alreadyHere, arent ) =
-            List.partition (hasNode nt) ns
+            List.partition (hasNode nt << Tuple.first) ns
 
         addedMembers =
             List.foldl addMember nt arent
 
         (NavTree newNt) =
-            List.foldl (addLoop x) addedMembers alreadyHere
+            List.foldl (addLoop x << Tuple.first) addedMembers alreadyHere
 
         addedNeighs =
             insertHelper newNt.tree x arent
@@ -85,9 +79,9 @@ insertNeighborsAt nt x ns =
     NavTree { newNt | tree = addedNeighs }
 
 
-insertHelper : Tree NodeId -> NodeId -> List NodeId -> Tree NodeId
+insertHelper : Tree ( NodeId, NodeContent ) -> NodeId -> List ( NodeId, NodeContent ) -> Tree ( NodeId, NodeContent )
 insertHelper (Node c cn) x ns =
-    if unwrapNodeId c == unwrapNodeId x then
+    if unwrapNodeId (Tuple.first c) == unwrapNodeId x then
         Node c (cn ++ List.map Tree.singleton ns)
 
     else
