@@ -57,7 +57,8 @@ init =
 
 scrollAttr : (Msg -> parentMsg) -> Attribute parentMsg
 scrollAttr liftMsg =
-    Html.Events.on "wheel" (Decode.map liftMsg mouseScrollDecoder)
+    Html.Events.preventDefaultOn "wheel"
+        (Decode.map (\m -> ( liftMsg m, True )) mouseScrollDecoder)
 
 
 grabbyCursor : Model -> Attribute msg

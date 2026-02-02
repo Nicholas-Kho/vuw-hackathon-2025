@@ -8,7 +8,7 @@ import Canvas
 import Canvas.Settings
 import Color
 import Drawable exposing (drawMNodeTree, renderGrid)
-import Element exposing (Element, column, el, fillPortion, inFront, layout, row)
+import Element exposing (Element, fillPortion, layout)
 import Element.Background
 import Element.Border
 import GameState exposing (..)
@@ -104,7 +104,7 @@ view model =
 
 
 showSidePanel : OkModel -> Element Msg
-showSidePanel _ =
+showSidePanel okm =
     let
         leftGapPart =
             1
@@ -121,24 +121,30 @@ showSidePanel _ =
         verticalGapPart =
             1
 
+        passThru =
+            Element.htmlAttribute <| Html.Attributes.style "pointer-events" "none"
+
         clearBox attrs =
             Element.el attrs Element.none
     in
     Element.row
         [ Element.width Element.fill
         , Element.height Element.fill
+        , passThru
         ]
         [ clearBox [ Element.width (fillPortion leftGapPart) ]
         , Element.column [ Element.width (fillPortion sidebarPart), Element.height Element.fill ]
             [ clearBox [ Element.height (fillPortion verticalGapPart) ]
-            , clearBox
+            , Element.column
                 [ Element.width Element.fill
                 , Element.height (fillPortion sidebarHtPart)
-                , Element.Border.color (Element.rgb255 100 100 100)
+                , Element.Border.color (Element.rgb255 110 110 110)
                 , Element.Border.rounded 12
                 , Element.Border.width 4
                 , Element.Background.color (Element.rgb255 248 248 248)
+                , Element.htmlAttribute <| Html.Attributes.style "pointer-events" "auto"
                 ]
+                [ Element.none ]
             , clearBox [ Element.height (fillPortion verticalGapPart) ]
             ]
         , clearBox [ Element.width (fillPortion rightGapPart) ]
@@ -157,8 +163,8 @@ showGame okm =
     Canvas.toHtml ( w, h )
         [ style "display" "block"
         , style "box-sizing" "border-box"
-        , PlayerInput.scrollAttr Input
         , PlayerInput.grabbyCursor okm.input
+        , PlayerInput.scrollAttr Input
         ]
         [ Canvas.shapes
             [ Canvas.Settings.fill Color.lightGrey ]
