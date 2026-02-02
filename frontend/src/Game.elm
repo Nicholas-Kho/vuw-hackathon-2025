@@ -8,17 +8,19 @@ import Canvas
 import Canvas.Settings
 import Color
 import Drawable exposing (drawMNodeTree, renderGrid)
+import Element exposing (Element, column, el, fillPortion, inFront, layout, row)
+import Element.Background
+import Element.Border
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, getStart)
 import Html exposing (Html, text)
 import Html.Attributes exposing (style)
 import Http exposing (Error(..))
 import Navigation
+import Platform.Sub exposing (none)
 import PlayerInput
 import RemoteData exposing (RemoteData(..))
-import String
 import Task
-import Tree exposing (toPolarNodes)
 
 
 main : Program () Model Msg
@@ -96,9 +98,51 @@ view model =
             text <| "There was an error I can't recover from: " ++ why
 
         Good okm ->
-            Html.div []
-                [ showGame okm
+            layout [] <|
+                Element.el [ Element.inFront (showSidePanel okm) ] <|
+                    Element.html (showGame okm)
+
+
+showSidePanel : OkModel -> Element Msg
+showSidePanel _ =
+    let
+        leftGapPart =
+            1
+
+        sidebarPart =
+            7
+
+        rightGapPart =
+            24
+
+        sidebarHtPart =
+            30
+
+        verticalGapPart =
+            1
+
+        clearBox attrs =
+            Element.el attrs Element.none
+    in
+    Element.row
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        ]
+        [ clearBox [ Element.width (fillPortion leftGapPart) ]
+        , Element.column [ Element.width (fillPortion sidebarPart), Element.height Element.fill ]
+            [ clearBox [ Element.height (fillPortion verticalGapPart) ]
+            , clearBox
+                [ Element.width Element.fill
+                , Element.height (fillPortion sidebarHtPart)
+                , Element.Border.color (Element.rgb255 100 100 100)
+                , Element.Border.rounded 12
+                , Element.Border.width 4
+                , Element.Background.color (Element.rgb255 248 248 248)
                 ]
+            , clearBox [ Element.height (fillPortion verticalGapPart) ]
+            ]
+        , clearBox [ Element.width (fillPortion rightGapPart) ]
+        ]
 
 
 showGame : OkModel -> Html Msg
