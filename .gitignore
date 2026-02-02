@@ -1,26 +1,10 @@
-.idea
 .env
-node_modules/
-.dev-bin/
-# Python related stuff
-.pyc
-__pycache__/
-venv/
-.venv
-# haskell/stack related files
-.stack-work/
-_stack-work/
 dist-newstyle/
 .hie/
-# SQLite database files
-*.sqlite
-*.sqlite3
-*.db
-*.sqlite-journal
-*.sqlite-shm
-*.sqlite-wal
-*.sqlite3-journal
-*.sqlite3-shm
-*.sqlite3-wal
-# Except the seed DB
-!seed.sqlite3
+# Generated from the build process; shouldn't be committed.
+static/
+frontend/elm-stuff
+# API bindings made by servant-elm
+frontend/src/Generated
+# Made by elm-live, shouldn't be committed
+frontend/elm.js

@@ -1,7 +1,0 @@
-cradle:
-  cabal:
-    # Include your library and both executables
-    components:
-      - "backend:lib"
-      - "backend:exe:backend"
-      - "backend:exe:smoke-test"
