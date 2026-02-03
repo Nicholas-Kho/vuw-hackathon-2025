@@ -1,6 +1,7 @@
 module Navigation exposing
     ( NTNode(..)
     , NavTree
+    , addInFlight
     , getTree
     , getTreeWithLoadingNodes
     , insertNeighborsAt
@@ -36,6 +37,33 @@ type NavTree
 getTree : NavTree -> Tree ( NodeId, Node )
 getTree (NavTree nt) =
     nt.tree
+
+
+addInFlight : NodeId -> List NodeId -> NavTree -> NavTree
+addInFlight parentId childIds (NavTree nt) =
+    let
+        newCids =
+            List.filter
+                (\cid ->
+                    not <|
+                        List.member cid <|
+                            Maybe.withDefault [] <|
+                                Dict.get (unwrapNodeId parentId) nt.inFlight
+                )
+                childIds
+
+        alter cids idListM =
+            case Maybe.withDefault [] idListM |> List.append cids of
+                [] ->
+                    Nothing
+
+                x ->
+                    Just x
+
+        newInFlight =
+            Dict.update (unwrapNodeId parentId) (alter newCids) nt.inFlight
+    in
+    NavTree { nt | inFlight = newInFlight }
 
 
 getTreeWithLoadingNodes : NavTree -> Tree ( NodeId, NTNode )
@@ -88,14 +116,39 @@ addMember x (NavTree nt) =
     NavTree { nt | members = Set.insert (unwrapNodeId x) nt.members }
 
 
+removeFromInFlight : NodeId -> List NodeId -> NavTree -> NavTree
+removeFromInFlight parentId addedIds (NavTree nt) =
+    let
+        nothingIfEmpty s =
+            if List.isEmpty s then
+                Nothing
+
+            else
+                Just s
+
+        rawIds =
+            List.map unwrapNodeId addedIds
+
+        alter idList =
+            List.filter (\i -> not <| List.member (unwrapNodeId i) rawIds) idList |> nothingIfEmpty
+
+        newInFlight =
+            Dict.update (unwrapNodeId parentId) (Maybe.andThen alter) nt.inFlight
+    in
+    NavTree { nt | inFlight = newInFlight }
+
+
 insertNeighborsAt : NavTree -> NodeId -> List ( NodeId, Node ) -> NavTree
 insertNeighborsAt nt x ns =
     let
+        updateInFlight =
+            removeFromInFlight x (List.map Tuple.first ns) nt
+
         ( alreadyHere, arent ) =
             List.partition (hasNode nt << Tuple.first) ns
 
         addedMembers =
-            List.foldl (addMember << Tuple.first) nt arent
+            List.foldl (addMember << Tuple.first) updateInFlight arent
 
         (NavTree newNt) =
             List.foldl (addLoop x << Tuple.first) addedMembers alreadyHere

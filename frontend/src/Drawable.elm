@@ -175,7 +175,7 @@ drawNTNode : Camera -> Vec2 -> NTNode -> Canvas.Renderable
 drawNTNode cam pos ntn =
     case ntn of
         Fetching ->
-            Canvas.shapes [ Canvas.Settings.fill Color.red ] [ drawCircle cam pos 20 ]
+            Canvas.shapes [ Canvas.Settings.fill Color.darkCharcoal ] [ drawCircle cam pos 20 ]
 
         Loaded node ->
             drawNode cam pos (getContent node)

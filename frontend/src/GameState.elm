@@ -4,7 +4,7 @@ import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NTNode(..), NavTree, getTree, insertNeighborsAt)
+import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertNeighborsAt)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
@@ -62,7 +62,7 @@ handleClick : Vec2 -> GameState -> ( GameState, List NodeId )
 handleClick pos gs =
     let
         nodePositionsWorld =
-            layoutTree <| getTree gs.nav
+            layoutTree <| getTreeWithLoadingNodes gs.nav
 
         clickPosWorld =
             Camera.camPosToWorldPos gs.cam pos
@@ -74,12 +74,18 @@ handleClick pos gs =
         Nothing ->
             simple gs
 
-        Just ( nid, n ) ->
+        Just ( _, Fetching ) ->
+            simple gs
+
+        Just ( nid, Loaded n ) ->
             let
                 ( updatedTree, stillNeedToFetch ) =
                     addNeighbors gs.nodeCache nid (getOutgoing n) gs.nav
+
+                updatedUpdatedTree =
+                    addInFlight nid stillNeedToFetch updatedTree
             in
-            ( { gs | focus = getContent n, nav = updatedTree }, stillNeedToFetch )
+            ( { gs | focus = getContent n, nav = updatedUpdatedTree }, stillNeedToFetch )
 
 
 getClickedNode : List (WithPos a) -> Vec2 -> Maybe a
