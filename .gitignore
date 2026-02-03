@@ -1,6 +1,7 @@
 .env
 dist-newstyle/
 .hie/
+*.eventlog
 # Generated from the build process; shouldn't be committed.
 static/
 frontend/elm-stuff
