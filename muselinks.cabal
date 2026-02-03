@@ -101,7 +101,6 @@ library
         , Cache.Interface
         , Cache.NodeId
         , Cache.TVarGraphStore
-        , Cache.Store
         , Domain.Model
         , Domain.Logic
         , Domain.Server
