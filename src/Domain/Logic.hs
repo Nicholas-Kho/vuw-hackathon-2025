@@ -53,11 +53,16 @@ randomFromStore liftAppM = do
 expandNode :: NodeId -> AppM (S.Set NodeId)
 expandNode nid = do
     store <- asks graph
-    eid <- liftIO . atomically $ getExternal store nid
-    discoveries <- runTFetch $ getNeighs eid
-    processDiscoveries discoveries
-    node' <- liftIO . atomically $ getNode store nid
-    pure . M.keysSet . outgoingEdges $ node'
+    node <- liftIO . atomically $ getNode store nid
+    if S.null . M.keysSet . outgoingEdges $ node
+        then do
+            eid <- liftIO . atomically $ getExternal store nid
+            discoveries <- runTFetch $ getNeighs eid
+            processDiscoveries discoveries
+            node' <- liftIO . atomically $ getNode store nid
+            pure . M.keysSet . outgoingEdges $ node'
+        else do
+            pure . M.keysSet . outgoingEdges $ node
 
 data DrunkardsWalkState = DrunkardsWalkState
     { visited :: S.Set NodeId
@@ -137,7 +142,6 @@ processDiscovery d = do
             Just c -> liftIO . atomically $ addNode g tref c >> pure ()
         FoundLink t1 t2 why -> do
             liftIO . atomically $ addEdge g t1 t2 (EdgeInfo $ edgeReasonToTxt why)
-            liftIO . atomically $ addEdge g t2 t1 (EdgeInfo $ edgeReasonToTxt why)
 
 processDiscoveries :: [Discovery] -> AppM ()
 processDiscoveries ds = do
