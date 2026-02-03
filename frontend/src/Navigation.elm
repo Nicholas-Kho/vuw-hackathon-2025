@@ -1,15 +1,22 @@
 module Navigation exposing
-    ( NavTree
+    ( NTNode(..)
+    , NavTree
     , getTree
+    , getTreeWithLoadingNodes
     , insertNeighborsAt
     , singleton
     )
 
-import BackendWrapper exposing (Node, unwrapNodeId)
+import BackendWrapper exposing (Node, areIdsEqual, unwrapNodeId, wrapNodeId)
 import Dict exposing (Dict)
 import Generated.BackendApi exposing (NodeId)
 import Set exposing (Set)
 import Tree exposing (Tree(..))
+
+
+type NTNode
+    = Fetching
+    | Loaded Node
 
 
 type NavTree
@@ -17,7 +24,11 @@ type NavTree
         { tree : Tree ( NodeId, Node )
 
         -- Careful: These strings are unwrapped NodeIds.
+        -- Members are only fetched nodes.
         , members : Set String
+
+        -- Map from node IDs to IDs of in-flight neighbors.
+        , inFlight : Dict String (List NodeId)
         , loopsTo : Dict String (Set String)
         }
 
@@ -27,12 +38,28 @@ getTree (NavTree nt) =
     nt.tree
 
 
+getTreeWithLoadingNodes : NavTree -> Tree ( NodeId, NTNode )
+getTreeWithLoadingNodes (NavTree nt) =
+    let
+        ntMapped =
+            Tree.map (Tuple.mapSecond Loaded) nt.tree
+
+        pairFlip a b =
+            ( b, a )
+
+        addFetching toIdRaw fetchingIds tree =
+            insertHelper tree (wrapNodeId toIdRaw) <| List.map (pairFlip Fetching) fetchingIds
+    in
+    Dict.foldl addFetching ntMapped nt.inFlight
+
+
 singleton : ( NodeId, Node ) -> NavTree
 singleton n =
     NavTree
         { tree = Node n []
         , members = Set.singleton <| unwrapNodeId <| Tuple.first n
         , loopsTo = Dict.empty
+        , inFlight = Dict.empty
         }
 
 
@@ -79,9 +106,9 @@ insertNeighborsAt nt x ns =
     NavTree { newNt | tree = addedNeighs }
 
 
-insertHelper : Tree ( NodeId, Node ) -> NodeId -> List ( NodeId, Node ) -> Tree ( NodeId, Node )
+insertHelper : Tree ( NodeId, a ) -> NodeId -> List ( NodeId, a ) -> Tree ( NodeId, a )
 insertHelper (Node c cn) x ns =
-    if unwrapNodeId (Tuple.first c) == unwrapNodeId x then
+    if areIdsEqual (Tuple.first c) x then
         Node c (cn ++ List.map Tree.singleton ns)
 
     else

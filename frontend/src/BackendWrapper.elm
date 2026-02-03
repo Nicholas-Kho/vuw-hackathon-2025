@@ -2,6 +2,7 @@ module BackendWrapper exposing
     ( Node
     , Subgraph
     , addNode
+    , areIdsEqual
     , getContent
     , getNode
     , getOutgoing
@@ -9,6 +10,7 @@ module BackendWrapper exposing
     , makeExpandParams
     , union
     , unwrapNodeId
+    , wrapNodeId
     , xformSubgraph
     )
 
@@ -72,6 +74,11 @@ unwrapNodeId (NodeId nid) =
 wrapNodeId : String -> NodeId
 wrapNodeId s =
     NodeId { content = s }
+
+
+areIdsEqual : NodeId -> NodeId -> Bool
+areIdsEqual (NodeId a) (NodeId b) =
+    a.content == b.content
 
 
 unwrapEdgeInfo : EdgeInfo -> String

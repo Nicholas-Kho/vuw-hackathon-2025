@@ -6,7 +6,7 @@ import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
 import Color exposing (rgba)
 import Generated.BackendApi exposing (NodeContent)
-import Navigation exposing (NavTree, getTree)
+import Navigation exposing (NTNode(..), NavTree, getTreeWithLoadingNodes)
 import Tree exposing (Tree, mkCartesian, toPolarEdges, toPolarNodes)
 
 
@@ -171,15 +171,25 @@ drawNode cam pos _ =
     Canvas.shapes [ Canvas.Settings.fill Color.red ] [ drawCircle cam pos 20 ]
 
 
+drawNTNode : Camera -> Vec2 -> NTNode -> Canvas.Renderable
+drawNTNode cam pos ntn =
+    case ntn of
+        Fetching ->
+            Canvas.shapes [ Canvas.Settings.fill Color.red ] [ drawCircle cam pos 20 ]
+
+        Loaded node ->
+            drawNode cam pos (getContent node)
+
+
 drawNavTree : Camera -> NavTree -> Canvas.Renderable
 drawNavTree cam t =
     let
         tree =
-            Tree.map (Tuple.second >> getContent) <| getTree t
+            getTreeWithLoadingNodes t
 
         nodes =
             toPolarNodes tree
-                |> List.map (\p -> drawNode cam (mkCartesian p |> .pos) p.content)
+                |> List.map (\p -> drawNTNode cam (mkCartesian p |> .pos) (Tuple.second p.content))
 
         edges =
             Canvas.shapes [] [ treeEdges cam tree ]
