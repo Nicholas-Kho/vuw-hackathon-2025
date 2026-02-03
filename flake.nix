@@ -60,6 +60,7 @@
             haskellPkgs.haskell-language-server
             haskellPkgs.fourmolu
             haskellPkgs.stan
+            haskellPkgs.threadscope
             cabal-install
             ghciwatch
             elmPkgs.elm
