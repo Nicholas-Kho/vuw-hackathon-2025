@@ -4,11 +4,12 @@ module Navigation exposing
     , addInFlight
     , getTree
     , getTreeWithLoadingNodes
+    , insertFetchResults
     , insertNeighborsAt
     , singleton
     )
 
-import BackendWrapper exposing (Node, areIdsEqual, unwrapNodeId, wrapNodeId)
+import BackendWrapper exposing (Node, Subgraph, areIdsEqual, getNode, unwrapNodeId, wrapNodeId)
 import Dict exposing (Dict)
 import Generated.BackendApi exposing (NodeId)
 import Set exposing (Set)
@@ -37,6 +38,21 @@ type NavTree
 getTree : NavTree -> Tree ( NodeId, Node )
 getTree (NavTree nt) =
     nt.tree
+
+
+getInFlight : NavTree -> Dict String (List NodeId)
+getInFlight (NavTree nt) =
+    nt.inFlight
+
+
+insertFetchResults : Subgraph -> NavTree -> NavTree
+insertFetchResults sg nt =
+    let
+        lookupAndAdd pid cids navTree =
+            List.filterMap (\cid -> getNode sg cid |> Maybe.map (Tuple.pair cid)) cids
+                |> insertNeighborsAt navTree (wrapNodeId pid)
+    in
+    Dict.foldl lookupAndAdd nt (getInFlight nt)
 
 
 addInFlight : NodeId -> List NodeId -> NavTree -> NavTree
