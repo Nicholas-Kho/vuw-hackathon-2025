@@ -4,7 +4,7 @@ import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt)
+import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt, recomputeMemo)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
@@ -61,14 +61,11 @@ handleInput uinp gs =
 handleClick : Vec2 -> GameState -> ( GameState, List NodeId )
 handleClick pos gs =
     let
-        nodePositionsWorld =
-            layoutTree <| getTreeWithLoadingNodes gs.nav
-
         clickPosWorld =
             Camera.camPosToWorldPos gs.cam pos
 
         clickedNode =
-            getClickedNode nodePositionsWorld clickPosWorld
+            getClickedNode (Navigation.getLayout gs.nav) clickPosWorld
     in
     case clickedNode of
         Nothing ->
@@ -83,10 +80,9 @@ handleClick pos gs =
                     addNeighbors gs.nodeCache nid (getOutgoing n) gs.nav
 
                 updatedUpdatedTree =
-                    addInFlight nid stillNeedToFetch updatedTree
+                    addInFlight nid stillNeedToFetch updatedTree |> recomputeMemo
 
                 newCam =
-                    -- PERF: Cache this! We compute it here, then in the view function to render the tree!
                     getTreeWithLoadingNodes updatedUpdatedTree
                         |> layoutTree
                         |> List.filter (\p -> Tuple.first p.content == nid)
@@ -156,7 +152,7 @@ expandCache sg gs =
             xformSubgraph sg
 
         newNav =
-            insertFetchResults newSg gs.nav
+            insertFetchResults newSg gs.nav |> recomputeMemo
     in
     { gs
         | nodeCache = BackendWrapper.union newSg gs.nodeCache

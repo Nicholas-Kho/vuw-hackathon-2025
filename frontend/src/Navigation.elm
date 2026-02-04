@@ -2,10 +2,12 @@ module Navigation exposing
     ( NTNode(..)
     , NavTree
     , addInFlight
+    , getLayout
     , getTree
     , getTreeWithLoadingNodes
     , insertFetchResults
     , insertNeighborsAt
+    , recomputeMemo
     , singleton
     )
 
@@ -13,7 +15,7 @@ import BackendWrapper exposing (Node, Subgraph, areIdsEqual, getNode, unwrapNode
 import Dict exposing (Dict)
 import Generated.BackendApi exposing (NodeId)
 import Set exposing (Set)
-import Tree exposing (Tree(..))
+import Tree exposing (Tree(..), WithPos)
 
 
 type NTNode
@@ -32,6 +34,12 @@ type NavTree
         -- Map from node IDs to IDs of in-flight neighbors.
         , inFlight : Dict String (List NodeId)
         , loopsTo : Dict String (Set String)
+
+        -- These are used for rendering and click detection. It can be computed on the fly,
+        -- but these function calls are not cheap so we memoize them. Otherwise, they
+        -- get recomputed each frame, which can cause slow-down and jittering with large trees.
+        , memoFullTree : Tree ( NodeId, NTNode )
+        , memoFullTreeLayout : List (WithPos ( NodeId, NTNode ))
         }
 
 
@@ -43,6 +51,11 @@ getTree (NavTree nt) =
 getInFlight : NavTree -> Dict String (List NodeId)
 getInFlight (NavTree nt) =
     nt.inFlight
+
+
+getLayout : NavTree -> List (WithPos ( NodeId, NTNode ))
+getLayout (NavTree nt) =
+    nt.memoFullTreeLayout
 
 
 insertFetchResults : Subgraph -> NavTree -> NavTree
@@ -84,6 +97,11 @@ addInFlight parentId childIds (NavTree nt) =
 
 getTreeWithLoadingNodes : NavTree -> Tree ( NodeId, NTNode )
 getTreeWithLoadingNodes (NavTree nt) =
+    nt.memoFullTree
+
+
+recomputeMemo : NavTree -> NavTree
+recomputeMemo (NavTree nt) =
     let
         ntMapped =
             Tree.map (Tuple.mapSecond Loaded) nt.tree
@@ -93,17 +111,33 @@ getTreeWithLoadingNodes (NavTree nt) =
 
         addFetching toIdRaw fetchingIds tree =
             insertHelper tree (wrapNodeId toIdRaw) <| List.map (pairFlip Fetching) fetchingIds
+
+        newFullTree =
+            Dict.foldl addFetching ntMapped nt.inFlight
+
+        newLayout =
+            Tree.layoutTree newFullTree
     in
-    Dict.foldl addFetching ntMapped nt.inFlight
+    NavTree
+        { nt
+            | memoFullTree = newFullTree
+            , memoFullTreeLayout = newLayout
+        }
 
 
 singleton : ( NodeId, Node ) -> NavTree
 singleton n =
+    let
+        memoTree =
+            Node (Tuple.mapSecond Loaded n) []
+    in
     NavTree
         { tree = Node n []
         , members = Set.singleton <| unwrapNodeId <| Tuple.first n
         , loopsTo = Dict.empty
         , inFlight = Dict.empty
+        , memoFullTree = memoTree
+        , memoFullTreeLayout = Tree.layoutTree memoTree
         }
 
 

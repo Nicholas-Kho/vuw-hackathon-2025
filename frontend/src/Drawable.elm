@@ -6,7 +6,7 @@ import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
 import Color exposing (rgba)
 import Navigation exposing (NTNode(..), NavTree, getTreeWithLoadingNodes)
-import Tree exposing (Tree, mkCartesian, toPolarEdges, toPolarNodes)
+import Tree exposing (Tree, mkCartesian, toPolarEdges)
 
 
 drawCircle : Camera -> Vec2 -> Float -> Canvas.Shape
@@ -195,8 +195,8 @@ drawNavTree cam t =
             getTreeWithLoadingNodes t
 
         nodes =
-            toPolarNodes tree
-                |> List.map (\p -> drawNTNode cam (mkCartesian p |> .pos) (Tuple.second p.content))
+            Navigation.getLayout t
+                |> List.map (\p -> drawNTNode cam p.pos (Tuple.second p.content))
 
         edges =
             Canvas.shapes [] [ treeEdges cam tree ]
