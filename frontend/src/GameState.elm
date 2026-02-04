@@ -4,7 +4,7 @@ import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NTNode(..), NavTree, addInFlight, getTree, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt)
+import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 

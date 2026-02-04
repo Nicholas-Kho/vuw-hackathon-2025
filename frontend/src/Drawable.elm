@@ -1,11 +1,10 @@
 module Drawable exposing (..)
 
-import BackendWrapper exposing (getContent)
+import BackendWrapper exposing (Node, getOutgoing)
 import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
 import Color exposing (rgba)
-import Generated.BackendApi exposing (NodeContent)
 import Navigation exposing (NTNode(..), NavTree, getTreeWithLoadingNodes)
 import Tree exposing (Tree, mkCartesian, toPolarEdges, toPolarNodes)
 
@@ -166,9 +165,17 @@ treeEdges cam t =
         |> drawLines
 
 
-drawNode : Camera -> Vec2 -> NodeContent -> Canvas.Renderable
-drawNode cam pos _ =
-    Canvas.shapes [ Canvas.Settings.fill Color.red ] [ drawCircle cam pos 20 ]
+drawNode : Camera -> Vec2 -> Node -> Canvas.Renderable
+drawNode cam pos n =
+    let
+        fillColor =
+            if List.isEmpty (getOutgoing n) then
+                Color.lightBlue
+
+            else
+                Color.blue
+    in
+    Canvas.shapes [ Canvas.Settings.fill fillColor ] [ drawCircle cam pos 20 ]
 
 
 drawNTNode : Camera -> Vec2 -> NTNode -> Canvas.Renderable
@@ -178,7 +185,7 @@ drawNTNode cam pos ntn =
             Canvas.shapes [ Canvas.Settings.fill Color.darkCharcoal ] [ drawCircle cam pos 20 ]
 
         Loaded node ->
-            drawNode cam pos (getContent node)
+            drawNode cam pos node
 
 
 drawNavTree : Camera -> NavTree -> Canvas.Renderable
