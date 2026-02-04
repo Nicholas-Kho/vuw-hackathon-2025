@@ -4,8 +4,11 @@ module Domain.Server (runApp) where
 
 import Api.Backend
 import App
+import Cache.Interface (getNode)
+import Control.Concurrent.STM (atomically)
 import Control.Monad.Except (ExceptT (..))
 import Control.Monad.Random.Strict
+import Control.Monad.Reader (asks)
 import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
@@ -59,9 +62,12 @@ serveExpand ExpandParams{expandAboutId = unid} =
             lift (verifyNodeId k) >>= \case
                 Nothing -> pure Nothing
                 Just nid -> do
+                    store <- lift $ asks graph
+                    thisNode <- liftIO . atomically $ getNode store nid
                     outIds <- lift $ expandNode nid
                     results <- lift $ lookupNodes (S.toList outIds)
-                    pure . Just . Subgraph $ (fmap (\(x, c) -> (x, elmify c)) results)
+                    let results' = (nid, thisNode) : results
+                    pure . Just . Subgraph $ (fmap (\(x, c) -> (x, elmify c)) results')
 
 serveStart :: RAppM InitialGameState
 serveStart = do
