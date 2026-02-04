@@ -4,7 +4,7 @@ import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
 import List exposing (foldl)
-import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt)
+import Navigation exposing (NTNode(..), NavTree, addInFlight, getTree, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
@@ -84,8 +84,24 @@ handleClick pos gs =
 
                 updatedUpdatedTree =
                     addInFlight nid stillNeedToFetch updatedTree
+
+                newCam =
+                    -- PERF: Cache this! We compute it here, then in the view function to render the tree!
+                    getTreeWithLoadingNodes updatedUpdatedTree
+                        |> layoutTree
+                        |> List.filter (\p -> Tuple.first p.content == nid)
+                        |> List.map .pos
+                        |> List.head
+                        |> Maybe.map (\p -> zoomInOn p gs.cam)
+                        |> Maybe.withDefault gs.cam
             in
-            ( { gs | focus = getContent n, nav = updatedUpdatedTree }, stillNeedToFetch )
+            ( { gs
+                | focus = getContent n
+                , nav = updatedUpdatedTree
+                , cam = newCam
+              }
+            , stillNeedToFetch
+            )
 
 
 getClickedNode : List (WithPos a) -> Vec2 -> Maybe a
