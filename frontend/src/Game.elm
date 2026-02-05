@@ -218,13 +218,8 @@ update msg model =
         Good okm ->
             case msg of
                 Resize w h ->
-                    ( Good
-                        { okm
-                            | size = ( w, h )
-                            , game = resizeCamera ( toFloat w, toFloat h ) okm.game
-                        }
-                    , Cmd.none
-                    )
+                    updateGameState (SizeChanged <| Tuple.mapBoth toFloat toFloat ( w, h )) okm
+                        |> Tuple.mapFirst (\nm -> Good { nm | size = ( w, h ) })
 
                 Input i ->
                     let
@@ -234,13 +229,27 @@ update msg model =
                     ( Good { okm | input = newInputModel }, Cmd.map Input inputCmds )
 
                 Tick delta ->
-                    tickGame delta okm |> Tuple.mapFirst Good
+                    tickGame delta okm
 
                 StartResponse _ ->
                     ( model, Cmd.none )
 
                 ExpandResponse resp ->
                     handleExpandResponse okm resp
+
+
+updateGameState : GameState.Msg -> OkModel -> ( OkModel, Cmd Msg )
+updateGameState msg okm =
+    case GameState.update msg okm.game of
+        GameOver ->
+            ( okm, Cmd.none )
+
+        KeepGoing ( newGame, fetches ) ->
+            ( { okm | game = newGame }
+            , fetches
+                |> List.map (\f -> postExpand (makeExpandParams f) ExpandResponse)
+                |> Cmd.batch
+            )
 
 
 handleExpandResponse : OkModel -> Result Error (Maybe Subgraph) -> ( Model, Cmd Msg )
@@ -253,7 +262,8 @@ handleExpandResponse okm res =
             ( UnrecoverableFail "Backend could not find requested node ID. This is a bug.", Cmd.none )
 
         Ok (Just sg) ->
-            ( Good { okm | game = expandCache sg okm.game }, Cmd.none )
+            updateGameState (GotNodes <| xformSubgraph sg) okm
+                |> Tuple.mapFirst Good
 
 
 handleStartResponse : Result Http.Error InitialGameState -> ( Model, Cmd Msg )
@@ -291,21 +301,19 @@ handleStartResponse res =
                     )
 
 
-tickGame : Float -> OkModel -> ( OkModel, Cmd Msg )
+tickGame : Float -> OkModel -> ( Model, Cmd Msg )
 tickGame deltaMs m =
     let
         ( userInputs, resetInp ) =
             PlayerInput.consume m.input
 
-        ( newGame, fetchThese ) =
-            handleInputs userInputs m.game
+        ( newModel, cmds ) =
+            updateGameState (GotInputs userInputs) m
 
-        mkReq nid =
-            postExpand (makeExpandParams nid) ExpandResponse
+        ( newerModel, moreCmds ) =
+            updateGameState (GameState.Tick deltaMs) newModel
+
+        newestModel =
+            Good { newerModel | input = resetInp }
     in
-    ( { m
-        | input = resetInp
-        , game = handleTick deltaMs newGame
-      }
-    , Cmd.batch <| List.map mkReq fetchThese
-    )
+    ( newestModel, Cmd.batch [ cmds, moreCmds ] )

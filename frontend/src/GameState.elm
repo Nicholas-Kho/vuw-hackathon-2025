@@ -1,9 +1,14 @@
-module GameState exposing (..)
+module GameState exposing
+    ( GameState
+    , Msg(..)
+    , UpdatedGame(..)
+    , fromInitial
+    , update
+    )
 
 import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
-import List exposing (foldl)
 import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt, recomputeMemo)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
@@ -19,6 +24,22 @@ type alias GameState =
     }
 
 
+type Msg
+    = GotNodes Subgraph
+    | GotInputs (List UserInput)
+    | Tick Float
+    | SizeChanged ( Float, Float )
+
+
+type alias FetchList =
+    List NodeId
+
+
+type UpdatedGame
+    = KeepGoing ( GameState, FetchList )
+    | GameOver
+
+
 fromInitial : Node -> Node -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus goalNode cam igs =
     { startAt = igs.startAt
@@ -30,12 +51,28 @@ fromInitial initialFocus goalNode cam igs =
     }
 
 
-simple : GameState -> ( GameState, List NodeId )
+simple : GameState -> UpdatedGame
 simple gs =
-    ( gs, [] )
+    KeepGoing ( gs, [] )
 
 
-handleInput : UserInput -> GameState -> ( GameState, List NodeId )
+update : Msg -> GameState -> UpdatedGame
+update msg model =
+    case msg of
+        GotNodes sg ->
+            expandCache sg model |> simple
+
+        Tick delta ->
+            handleTick delta model |> simple
+
+        SizeChanged s ->
+            resizeCamera s model |> simple
+
+        GotInputs inps ->
+            handleInputs inps model
+
+
+handleInput : UserInput -> GameState -> UpdatedGame
 handleInput uinp gs =
     case uinp of
         Pan dx dy ->
@@ -58,7 +95,7 @@ handleInput uinp gs =
             handleClick pos gs
 
 
-handleClick : Vec2 -> GameState -> ( GameState, List NodeId )
+handleClick : Vec2 -> GameState -> UpdatedGame
 handleClick pos gs =
     let
         clickPosWorld =
@@ -91,13 +128,14 @@ handleClick pos gs =
                         |> Maybe.map (\p -> zoomInOn p gs.cam)
                         |> Maybe.withDefault gs.cam
             in
-            ( { gs
-                | focus = getContent n
-                , nav = updatedUpdatedTree
-                , cam = newCam
-              }
-            , stillNeedToFetch
-            )
+            KeepGoing
+                ( { gs
+                    | focus = getContent n
+                    , nav = updatedUpdatedTree
+                    , cam = newCam
+                  }
+                , stillNeedToFetch
+                )
 
 
 getClickedNode : List (WithPos a) -> Vec2 -> Maybe a
@@ -145,17 +183,14 @@ addNeighbors cache parent cids nt =
     ( newTree, misses )
 
 
-expandCache : Generated.BackendApi.Subgraph -> GameState -> GameState
+expandCache : Subgraph -> GameState -> GameState
 expandCache sg gs =
     let
-        newSg =
-            xformSubgraph sg
-
         newNav =
-            insertFetchResults newSg gs.nav |> recomputeMemo
+            insertFetchResults sg gs.nav |> recomputeMemo
     in
     { gs
-        | nodeCache = BackendWrapper.union newSg gs.nodeCache
+        | nodeCache = BackendWrapper.union sg gs.nodeCache
         , nav = newNav
     }
 
@@ -175,18 +210,24 @@ handleTick deltaMs gs =
     { gs | cam = tickCam deltaMs gs.cam }
 
 
-handleInputs : List UserInput -> GameState -> ( GameState, List NodeId )
+handleInputs : List UserInput -> GameState -> UpdatedGame
 handleInputs uips g =
-    foldl
-        (\u ( x, is ) ->
-            let
-                ( newGame, newInputs ) =
-                    handleInput u x
-            in
-            ( newGame, is ++ newInputs )
-        )
-        (simple g)
-        uips
+    List.foldl handleInputsHelp (simple g) uips
+
+
+handleInputsHelp : UserInput -> UpdatedGame -> UpdatedGame
+handleInputsHelp input acc =
+    case acc of
+        GameOver ->
+            GameOver
+
+        KeepGoing ( gs, cmd ) ->
+            case handleInput input gs of
+                GameOver ->
+                    GameOver
+
+                KeepGoing ( newGs, newCmd ) ->
+                    KeepGoing ( newGs, cmd ++ newCmd )
 
 
 resizeCamera : ( Float, Float ) -> GameState -> GameState
