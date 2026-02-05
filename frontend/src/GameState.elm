@@ -11,7 +11,7 @@ import Tree exposing (WithPos, layoutTree)
 
 type alias GameState =
     { startAt : NodeId
-    , endAt : NodeId
+    , endAt : ( NodeId, Node )
     , nodeCache : Subgraph
     , nav : NavTree
     , focus : NodeContent
@@ -19,10 +19,10 @@ type alias GameState =
     }
 
 
-fromInitial : Node -> Camera -> InitialGameState -> GameState
-fromInitial initialFocus cam igs =
+fromInitial : Node -> Node -> Camera -> InitialGameState -> GameState
+fromInitial initialFocus goalNode cam igs =
     { startAt = igs.startAt
-    , endAt = igs.endAt
+    , endAt = ( igs.endAt, goalNode )
     , nodeCache = xformSubgraph igs.subgraph
     , nav = Navigation.singleton ( igs.startAt, initialFocus )
     , cam = cam

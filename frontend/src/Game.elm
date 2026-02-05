@@ -269,18 +269,23 @@ handleStartResponse res =
 
                 initialFocus =
                     getNode (xformSubgraph igs.subgraph) igs.startAt
+                        |> Result.fromMaybe "Backend did not send content of initial node. This is a bug."
+
+                goalObject =
+                    getNode (xformSubgraph igs.subgraph) igs.endAt
+                        |> Result.fromMaybe "Backend did not send content of the end node. This is a bug."
             in
-            case initialFocus of
-                Nothing ->
-                    ( UnrecoverableFail "Backend did not send content of initial node. This is a bug."
+            case Result.map2 Tuple.pair initialFocus goalObject of
+                Result.Err s ->
+                    ( UnrecoverableFail s
                     , Cmd.none
                     )
 
-                Just focus ->
+                Result.Ok ( startNode, endNode ) ->
                     ( Good
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
-                        , game = GameState.fromInitial focus initialCamera igs
+                        , game = GameState.fromInitial startNode endNode initialCamera igs
                         }
                     , Task.perform getVpSize getViewport
                     )
