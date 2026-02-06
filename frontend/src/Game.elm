@@ -273,7 +273,7 @@ handleStartResponse res =
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
                         , game = GameState.fromInitial startNode endNode initialCamera igs
-                        , gui = Roaming
+                        , gui = SidePanel
                         }
                     , Task.perform getVpSize getViewport
                     )
