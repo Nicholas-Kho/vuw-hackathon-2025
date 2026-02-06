@@ -10,6 +10,7 @@ import Canvas.Settings
 import Color
 import Drawable exposing (renderGrid)
 import Element
+import GameEndScreen exposing (endScreen)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
 import Html exposing (Html, text)
@@ -17,7 +18,7 @@ import Html.Attributes exposing (style)
 import Http exposing (Error(..))
 import PlayerInput
 import RemoteData exposing (RemoteData(..))
-import SidePanel exposing (showSidePanel, sidePanelContent)
+import SidePanel exposing (sidePanel)
 import Task
 
 
@@ -95,8 +96,7 @@ view model =
             Element.layout [] <|
                 Element.el
                     [ Element.inFront <|
-                        showSidePanel <|
-                            sidePanelContent okm.game.focus
+                        sidePanel okm.game.focus
                     ]
                 <|
                     Element.html (showGame okm)

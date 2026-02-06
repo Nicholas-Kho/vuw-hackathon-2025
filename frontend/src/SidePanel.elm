@@ -1,7 +1,4 @@
-module SidePanel exposing
-    ( showSidePanel
-    , sidePanelContent
-    )
+module SidePanel exposing (sidePanel)
 
 import Element
     exposing
@@ -80,3 +77,8 @@ showSidePanel stuff =
             ]
         , clearBox [ width (fillPortion rightGapPart) ]
         ]
+
+
+sidePanel : NodeContent -> Element msg
+sidePanel =
+    showSidePanel << sidePanelContent
