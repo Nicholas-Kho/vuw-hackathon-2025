@@ -3,6 +3,7 @@ module GameState exposing
     , Msg(..)
     , UpdatedGame(..)
     , fromInitial
+    , setRoaming
     , update
     )
 
@@ -16,12 +17,22 @@ import Tree exposing (WithPos, layoutTree)
 
 type alias GameState =
     { startAt : NodeId
-    , endAt : ( NodeId, Node )
+    , endAt : GameMode
     , nodeCache : Subgraph
     , nav : NavTree
     , focus : NodeContent
     , cam : Camera
     }
+
+
+type GameMode
+    = Roaming
+    | Find ( NodeId, Node )
+
+
+setRoaming : GameState -> GameState
+setRoaming gs =
+    { gs | endAt = Roaming }
 
 
 type Msg
@@ -43,7 +54,7 @@ type UpdatedGame
 fromInitial : Node -> Node -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus goalNode cam igs =
     { startAt = igs.startAt
-    , endAt = ( igs.endAt, goalNode )
+    , endAt = Find ( igs.endAt, goalNode )
     , nodeCache = xformSubgraph igs.subgraph
     , nav = Navigation.singleton ( igs.startAt, initialFocus )
     , cam = cam
@@ -95,6 +106,16 @@ handleInput uinp gs =
             handleClick pos gs
 
 
+isWinningNid : NodeId -> GameState -> Bool
+isWinningNid nid gs =
+    case gs.endAt of
+        Find ( target, _ ) ->
+            nid == target
+
+        Roaming ->
+            False
+
+
 handleClick : Vec2 -> GameState -> UpdatedGame
 handleClick pos gs =
     let
@@ -112,7 +133,7 @@ handleClick pos gs =
             simple gs
 
         Just ( nid, Loaded n ) ->
-            if nid == Tuple.first gs.endAt then
+            if isWinningNid nid gs then
                 GameOver
 
             else

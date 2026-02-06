@@ -219,7 +219,12 @@ updateGameState : GameState.Msg -> OkModel -> ( OkModel, Cmd Msg )
 updateGameState msg okm =
     case GameState.update msg okm.game of
         GameOver ->
-            ( { okm | gui = GameEnd }, Cmd.none )
+            ( { okm
+                | gui = GameEnd
+                , game = setRoaming okm.game
+              }
+            , Cmd.none
+            )
 
         KeepGoing ( newGame, fetches ) ->
             ( { okm | game = newGame }
