@@ -7,9 +7,10 @@ import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Camera exposing (mkCamera)
 import Canvas
 import Canvas.Settings
+import Canvas.Settings.Advanced exposing (GlobalCompositeOperationMode(..))
 import Color
 import Drawable exposing (renderGrid)
-import Element
+import Element exposing (Element)
 import GameEndScreen exposing (endScreen)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
@@ -56,10 +57,16 @@ type Model
     | Good OkModel
 
 
+type WhichScreen
+    = SidePanel
+    | GameEnd
+
+
 type alias OkModel =
     { size : CanvasSize
     , input : PlayerInput.Model
     , game : GameState
+    , gui : WhichScreen
     }
 
 
@@ -83,6 +90,16 @@ getVpSize vp =
     Resize (floor vp.viewport.width) (floor vp.viewport.height)
 
 
+guiElement : OkModel -> Element msg
+guiElement okm =
+    case okm.gui of
+        SidePanel ->
+            sidePanel okm.game.focus
+
+        GameEnd ->
+            endScreen
+
+
 view : Model -> Html Msg
 view model =
     case model of
@@ -96,7 +113,7 @@ view model =
             Element.layout [] <|
                 Element.el
                     [ Element.inFront <|
-                        sidePanel okm.game.focus
+                        guiElement okm
                     ]
                 <|
                     Element.html (showGame okm)
@@ -186,7 +203,7 @@ updateGameState : GameState.Msg -> OkModel -> ( OkModel, Cmd Msg )
 updateGameState msg okm =
     case GameState.update msg okm.game of
         GameOver ->
-            ( okm, Cmd.none )
+            ( { okm | gui = GameEnd }, Cmd.none )
 
         KeepGoing ( newGame, fetches ) ->
             ( { okm | game = newGame }
@@ -240,6 +257,7 @@ handleStartResponse res =
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
                         , game = GameState.fromInitial startNode endNode initialCamera igs
+                        , gui = SidePanel
                         }
                     , Task.perform getVpSize getViewport
                     )
