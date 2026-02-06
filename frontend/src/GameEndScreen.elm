@@ -1,4 +1,4 @@
-module GameEndScreen exposing (endScreen)
+module GameEndScreen exposing (Msg(..), endScreen)
 
 import Element
     exposing
@@ -23,12 +23,17 @@ import Element.Font as Font
 import Element.Input as Input
 
 
+type Msg
+    = NewGame
+    | Roaming
+
+
 showMidPanel : Element msg -> Element msg
 showMidPanel content =
     el [ height fill, width fill, padding 20 ] content
 
 
-screenContent : Element msg
+screenContent : Element Msg
 screenContent =
     column
         [ Background.color (rgb255 248 248 248)
@@ -50,11 +55,11 @@ screenContent =
             text "You won!"
         , row [ centerX, centerY, spacing 20, padding 20 ]
             [ prettyButton []
-                { onPress = Nothing
+                { onPress = Just Roaming
                 , label = "Keep roaming"
                 }
             , prettyButton []
-                { onPress = Nothing
+                { onPress = Just NewGame
                 , label = "New game"
                 }
             ]
@@ -83,6 +88,6 @@ prettyButton extraAttrs props =
         }
 
 
-endScreen : Element msg
+endScreen : Element Msg
 endScreen =
     showMidPanel <| screenContent

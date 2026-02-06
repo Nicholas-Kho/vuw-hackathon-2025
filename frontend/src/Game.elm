@@ -11,6 +11,7 @@ import Canvas.Settings.Advanced exposing (GlobalCompositeOperationMode(..))
 import Color
 import Drawable exposing (renderGrid)
 import Element exposing (Element)
+import FinishRoamButton exposing (finishRoamButton)
 import GameEndScreen exposing (endScreen)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
@@ -60,6 +61,7 @@ type Model
 type WhichScreen
     = SidePanel
     | GameEnd
+    | Roaming
 
 
 type alias OkModel =
@@ -75,6 +77,8 @@ type Msg
     | ExpandResponse (Result Http.Error (Maybe Subgraph))
     | Resize Int Int
     | Input PlayerInput.Msg
+    | EndScreen GameEndScreen.Msg
+    | FinishRoaming
     | Tick Float
 
 
@@ -90,14 +94,17 @@ getVpSize vp =
     Resize (floor vp.viewport.width) (floor vp.viewport.height)
 
 
-guiElement : OkModel -> Element msg
+guiElement : OkModel -> Element Msg
 guiElement okm =
     case okm.gui of
         SidePanel ->
             sidePanel okm.game.focus
 
         GameEnd ->
-            endScreen
+            Element.map EndScreen endScreen
+
+        Roaming ->
+            Element.map (\_ -> FinishRoaming) finishRoamButton
 
 
 view : Model -> Html Msg
@@ -198,6 +205,15 @@ update msg model =
                 ExpandResponse resp ->
                     handleExpandResponse okm resp
 
+                EndScreen GameEndScreen.Roaming ->
+                    ( Good { okm | gui = Roaming }, Cmd.none )
+
+                EndScreen GameEndScreen.NewGame ->
+                    ( model, Cmd.none )
+
+                FinishRoaming ->
+                    ( Good { okm | gui = GameEnd }, Cmd.none )
+
 
 updateGameState : GameState.Msg -> OkModel -> ( OkModel, Cmd Msg )
 updateGameState msg okm =
@@ -257,7 +273,7 @@ handleStartResponse res =
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
                         , game = GameState.fromInitial startNode endNode initialCamera igs
-                        , gui = SidePanel
+                        , gui = Roaming
                         }
                     , Task.perform getVpSize getViewport
                     )
