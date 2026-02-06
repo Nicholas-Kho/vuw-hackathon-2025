@@ -9,9 +9,7 @@ import Canvas
 import Canvas.Settings
 import Color
 import Drawable exposing (renderGrid)
-import Element exposing (Element, fillPortion, layout)
-import Element.Background
-import Element.Border
+import Element
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
 import Html exposing (Html, text)
@@ -19,6 +17,7 @@ import Html.Attributes exposing (style)
 import Http exposing (Error(..))
 import PlayerInput
 import RemoteData exposing (RemoteData(..))
+import SidePanel exposing (showSidePanel, sidePanelContent)
 import Task
 
 
@@ -93,69 +92,14 @@ view model =
             text <| "There was an error I can't recover from: " ++ why
 
         Good okm ->
-            layout [] <|
-                Element.el [ Element.inFront <| showSidePanel <| sidePanelContent okm ] <|
+            Element.layout [] <|
+                Element.el
+                    [ Element.inFront <|
+                        showSidePanel <|
+                            sidePanelContent okm.game.focus
+                    ]
+                <|
                     Element.html (showGame okm)
-
-
-sidePanelContent : OkModel -> Element Msg
-sidePanelContent okm =
-    let
-        focus =
-            okm.game.focus
-    in
-    Element.column [ Element.centerY ]
-        [ Element.text <| "Current focus: " ++ focus.title
-        , Element.paragraph [] [ Element.text focus.description ]
-        ]
-
-
-showSidePanel : Element Msg -> Element Msg
-showSidePanel stuff =
-    let
-        leftGapPart =
-            1
-
-        sidebarPart =
-            7
-
-        rightGapPart =
-            24
-
-        sidebarHtPart =
-            30
-
-        verticalGapPart =
-            1
-
-        passThru =
-            Element.htmlAttribute <| Html.Attributes.style "pointer-events" "none"
-
-        clearBox attrs =
-            Element.el attrs Element.none
-    in
-    Element.row
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        , passThru
-        ]
-        [ clearBox [ Element.width (fillPortion leftGapPart) ]
-        , Element.column [ Element.width (fillPortion sidebarPart), Element.height Element.fill ]
-            [ clearBox [ Element.height (fillPortion verticalGapPart) ]
-            , Element.el
-                [ Element.width Element.fill
-                , Element.height (fillPortion sidebarHtPart)
-                , Element.Border.color (Element.rgb255 110 110 110)
-                , Element.Border.rounded 12
-                , Element.Border.width 4
-                , Element.Background.color (Element.rgb255 248 248 248)
-                , Element.htmlAttribute <| Html.Attributes.style "pointer-events" "auto"
-                ]
-                stuff
-            , clearBox [ Element.height (fillPortion verticalGapPart) ]
-            ]
-        , clearBox [ Element.width (fillPortion rightGapPart) ]
-        ]
 
 
 showGame : OkModel -> Html Msg

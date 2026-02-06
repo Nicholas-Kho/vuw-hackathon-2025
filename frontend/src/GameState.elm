@@ -112,30 +112,34 @@ handleClick pos gs =
             simple gs
 
         Just ( nid, Loaded n ) ->
-            let
-                ( updatedTree, stillNeedToFetch ) =
-                    addNeighbors gs.nodeCache nid (getOutgoing n) gs.nav
+            if nid == Tuple.first gs.endAt then
+                GameOver
 
-                updatedUpdatedTree =
-                    addInFlight nid stillNeedToFetch updatedTree |> recomputeMemo
+            else
+                let
+                    ( updatedTree, stillNeedToFetch ) =
+                        addNeighbors gs.nodeCache nid (getOutgoing n) gs.nav
 
-                newCam =
-                    getTreeWithLoadingNodes updatedUpdatedTree
-                        |> layoutTree
-                        |> List.filter (\p -> Tuple.first p.content == nid)
-                        |> List.map .pos
-                        |> List.head
-                        |> Maybe.map (\p -> zoomInOn p gs.cam)
-                        |> Maybe.withDefault gs.cam
-            in
-            KeepGoing
-                ( { gs
-                    | focus = getContent n
-                    , nav = updatedUpdatedTree
-                    , cam = newCam
-                  }
-                , stillNeedToFetch
-                )
+                    updatedUpdatedTree =
+                        addInFlight nid stillNeedToFetch updatedTree |> recomputeMemo
+
+                    newCam =
+                        getTreeWithLoadingNodes updatedUpdatedTree
+                            |> layoutTree
+                            |> List.filter (\p -> Tuple.first p.content == nid)
+                            |> List.map .pos
+                            |> List.head
+                            |> Maybe.map (\p -> zoomInOn p gs.cam)
+                            |> Maybe.withDefault gs.cam
+                in
+                KeepGoing
+                    ( { gs
+                        | focus = getContent n
+                        , nav = updatedUpdatedTree
+                        , cam = newCam
+                      }
+                    , stillNeedToFetch
+                    )
 
 
 getClickedNode : List (WithPos a) -> Vec2 -> Maybe a
