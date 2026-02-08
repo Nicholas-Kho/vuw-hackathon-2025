@@ -1,5 +1,6 @@
 module GameState exposing
-    ( GameState
+    ( GameMode(..)
+    , GameState
     , Msg(..)
     , UpdatedGame(..)
     , fromInitial

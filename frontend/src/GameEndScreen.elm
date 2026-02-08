@@ -25,7 +25,7 @@ import Element.Input as Input
 
 type Msg
     = NewGame
-    | Roaming
+    | StartRoaming
 
 
 showMidPanel : Element msg -> Element msg
@@ -55,7 +55,7 @@ screenContent =
             text "You won!"
         , row [ centerX, centerY, spacing 20, padding 20 ]
             [ prettyButton []
-                { onPress = Just Roaming
+                { onPress = Just StartRoaming
                 , label = "Keep roaming"
                 }
             , prettyButton []

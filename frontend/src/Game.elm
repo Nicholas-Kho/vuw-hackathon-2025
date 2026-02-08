@@ -58,17 +58,11 @@ type Model
     | Good OkModel
 
 
-type WhichScreen
-    = SidePanel
-    | GameEnd
-    | Roaming
-
-
 type alias OkModel =
     { size : CanvasSize
     , input : PlayerInput.Model
     , game : GameState
-    , gui : WhichScreen
+    , hasWon : Bool
     }
 
 
@@ -94,19 +88,6 @@ getVpSize vp =
     Resize (floor vp.viewport.width) (floor vp.viewport.height)
 
 
-guiElement : OkModel -> Element Msg
-guiElement okm =
-    case okm.gui of
-        SidePanel ->
-            sidePanel okm.game.focus
-
-        GameEnd ->
-            Element.map EndScreen endScreen
-
-        Roaming ->
-            Element.map (\_ -> FinishRoaming) finishRoamButton
-
-
 view : Model -> Html Msg
 view model =
     case model of
@@ -120,10 +101,24 @@ view model =
             Element.layout [] <|
                 Element.el
                     [ Element.inFront <|
-                        guiElement okm
+                        getGui okm
                     ]
                 <|
                     Element.html (showGame okm)
+
+
+getGui : OkModel -> Element Msg
+getGui okm =
+    if okm.hasWon then
+        Element.map EndScreen endScreen
+
+    else
+        case okm.game.endAt of
+            Find ( nid, node ) ->
+                sidePanel okm.game.focus
+
+            Roaming ->
+                Element.map (\_ -> FinishRoaming) finishRoamButton
 
 
 showGame : OkModel -> Html Msg
@@ -205,24 +200,27 @@ update msg model =
                 ExpandResponse resp ->
                     handleExpandResponse okm resp
 
-                EndScreen GameEndScreen.Roaming ->
-                    ( Good { okm | gui = Roaming }, Cmd.none )
+                FinishRoaming ->
+                    ( Good { okm | hasWon = True }, Cmd.none )
+
+                EndScreen GameEndScreen.StartRoaming ->
+                    ( Good
+                        { okm
+                            | hasWon = False
+                            , game = setRoaming okm.game
+                        }
+                    , Cmd.none
+                    )
 
                 EndScreen GameEndScreen.NewGame ->
                     ( model, Cmd.none )
-
-                FinishRoaming ->
-                    ( Good { okm | gui = GameEnd }, Cmd.none )
 
 
 updateGameState : GameState.Msg -> OkModel -> ( OkModel, Cmd Msg )
 updateGameState msg okm =
     case GameState.update msg okm.game of
         GameOver ->
-            ( { okm
-                | gui = GameEnd
-                , game = setRoaming okm.game
-              }
+            ( { okm | hasWon = True }
             , Cmd.none
             )
 
@@ -278,7 +276,7 @@ handleStartResponse res =
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
                         , game = GameState.fromInitial startNode endNode initialCamera igs
-                        , gui = SidePanel
+                        , hasWon = False
                         }
                     , Task.perform getVpSize getViewport
                     )
