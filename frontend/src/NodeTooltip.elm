@@ -119,4 +119,4 @@ showTooltips (Tooltips ts) =
     ts
         |> Dict.toList
         |> List.map (\( nid, tt ) -> ( nid, showTooltip nid tt ))
-        |> Keyed.node "div" [ style "position" "relative" ]
+        |> Keyed.node "div" [ style "position" "relative", class "tooltip-layer" ]

@@ -100,10 +100,9 @@ view model =
             text <| "There was an error I can't recover from: " ++ why
 
         Good okm ->
-            div [ style "position" "relative" ]
-                [ showGame okm
-                , showTooltips okm.tooltips
-                , Element.layout [] (getGui okm)
+            div []
+                [ showTooltips okm.tooltips
+                , Element.layout [ Element.inFront (getGui okm) ] (showGame okm)
                 ]
 
 
@@ -121,7 +120,7 @@ getGui okm =
                 Element.map (\_ -> FinishRoaming) finishRoamButton
 
 
-showGame : OkModel -> Html Msg
+showGame : OkModel -> Element Msg
 showGame okm =
     let
         ( w, h ) =
@@ -130,19 +129,20 @@ showGame okm =
         cam =
             okm.game.cam
     in
-    Canvas.toHtml ( w, h )
-        (PlayerInput.inputListenAttrs Input
-            ++ [ style "display" "block"
-               , style "box-sizing" "border-box"
-               , PlayerInput.grabbyCursor okm.input
-               ]
-        )
-        [ Canvas.shapes
-            [ Canvas.Settings.fill Color.lightGrey ]
-            [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
-        , renderGrid cam 100
-        , Drawable.drawNavTree cam okm.game.nav
-        ]
+    Element.html <|
+        Canvas.toHtml ( w, h )
+            (PlayerInput.inputListenAttrs Input
+                ++ [ style "display" "block"
+                   , style "box-sizing" "border-box"
+                   , PlayerInput.grabbyCursor okm.input
+                   ]
+            )
+            [ Canvas.shapes
+                [ Canvas.Settings.fill Color.lightGrey ]
+                [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
+            , renderGrid cam 100
+            , Drawable.drawNavTree cam okm.game.nav
+            ]
 
 
 showErr : Error -> String
