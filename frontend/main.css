@@ -6,11 +6,15 @@
   --y: 0px;
   transform: translate(var(--x), var(--y)) scale(0.97);
   background: red;
-  opacity: 1;
-}
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 120ms ease,
+    opacity 120ms ease;
+  }
 
 .node-tooltip.active {
   opacity: 1;
-  transform: translate(var(--x), var(--y)) scale(1);
+  transform: translate(var(--x), var(--y)) translateY(-10px) scale(1);
 }
 body, pre { padding: 0; margin: 0; overflow: hidden }
