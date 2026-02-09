@@ -14,11 +14,11 @@
     opacity 120ms ease;
   background: red;
   opacity: 0;
-  transform: translateY(0) scale(0.97)
+  transform: translate(-50%, -100%) translateY(0) scale(0.97)
 }
 
 .node-tooltip.active .node-tooltip-inner {
   opacity: 1;
-  transform: translateY(-10px) scale(1);
+  transform: translate(-50%, -100%) translateY(-10px) scale(1);
 }
 body, pre { padding: 0; margin: 0; overflow: hidden }
