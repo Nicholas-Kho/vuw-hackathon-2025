@@ -1,0 +1,16 @@
+.node-tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  --x: 0px;
+  --y: 0px;
+  transform: translate(var(--x), var(--y)) scale(0.97);
+  background: red;
+  opacity: 1;
+}
+
+.node-tooltip.active {
+  opacity: 1;
+  transform: translate(var(--x), var(--y)) scale(1);
+}
+body, pre { padding: 0; margin: 0; overflow: hidden }
