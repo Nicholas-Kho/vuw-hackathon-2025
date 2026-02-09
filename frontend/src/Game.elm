@@ -15,9 +15,10 @@ import FinishRoamButton exposing (finishRoamButton)
 import GameEndScreen exposing (endScreen)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
-import Html exposing (Html, text)
+import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Http exposing (Error(..))
+import NodeTooltip exposing (Tooltips, diffTooltips, getTooltips, noTooltips, showTooltips)
 import PlayerInput
 import RemoteData exposing (RemoteData(..))
 import SidePanel exposing (sidePanel)
@@ -63,6 +64,7 @@ type alias OkModel =
     , input : PlayerInput.Model
     , game : GameState
     , hasWon : Bool
+    , tooltips : Tooltips
     }
 
 
@@ -98,13 +100,11 @@ view model =
             text <| "There was an error I can't recover from: " ++ why
 
         Good okm ->
-            Element.layout [] <|
-                Element.el
-                    [ Element.inFront <|
-                        getGui okm
-                    ]
-                <|
-                    Element.html (showGame okm)
+            div [ style "position" "relative" ]
+                [ showGame okm
+                , showTooltips okm.tooltips
+                , Element.layout [] (getGui okm)
+                ]
 
 
 getGui : OkModel -> Element Msg
@@ -277,6 +277,7 @@ handleStartResponse res =
                         , input = PlayerInput.init
                         , game = GameState.fromInitial startNode endNode initialCamera igs
                         , hasWon = False
+                        , tooltips = noTooltips
                         }
                     , Task.perform getVpSize getViewport
                     )
@@ -294,7 +295,11 @@ tickGame deltaMs m =
         ( newerModel, moreCmds ) =
             updateGameState (GameState.Tick deltaMs) newModel
 
+        newTooltips =
+            getTooltips newerModel.game.cam newerModel.game.nav newerModel.input.cursorPos
+                |> diffTooltips newerModel.tooltips
+
         newestModel =
-            Good { newerModel | input = resetInp }
+            Good { newerModel | input = resetInp, tooltips = newTooltips }
     in
     ( newestModel, Cmd.batch [ cmds, moreCmds ] )
