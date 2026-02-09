@@ -3,7 +3,7 @@ module SidePanel exposing (sidePanel)
 import Element
     exposing
         ( Element
-        , centerY
+        , centerX
         , column
         , el
         , fill
@@ -11,24 +11,78 @@ import Element
         , height
         , htmlAttribute
         , none
+        , padding
         , paragraph
         , rgb255
         , row
+        , spacing
         , text
         , width
         )
 import Element.Background as Background
 import Element.Border as Border
+import Element.Font as Font
 import Generated.BackendApi exposing (NodeContent)
 import Html.Attributes
 
 
-sidePanelContent : NodeContent -> Element msg
-sidePanelContent con =
-    column [ centerY ]
-        [ text <| "Current focus: " ++ con.title
+sidePanelContent : NodeContent -> NodeContent -> Element msg
+sidePanelContent current end =
+    column
+        [ centerX
+        , width fill
+        , spacing 20
+        ]
+        [ showNodeInfo "Current focus" current
+        , showNodeInfo "Target" end
+        ]
+
+
+showNodeInfo : String -> NodeContent -> Element msg
+showNodeInfo t con =
+    column
+        [ width fill
+        , Border.color (rgb255 110 110 110)
+        , Border.rounded 12
+        , Border.width 4
+        , Background.color (rgb255 248 248 248)
+        ]
+        [ title t
+        , subtitle con.title
         , paragraph [] [ text con.description ]
         ]
+
+
+title : String -> Element msg
+title str =
+    el
+        [ width fill
+        , padding 10
+        , centerX
+        , Font.center
+        , Font.size 32
+        , Background.color <| rgb255 141 189 240
+        , Border.roundEach
+            { topLeft = 12
+            , topRight = 12
+            , bottomLeft = 0
+            , bottomRight = 0
+            }
+        ]
+        (text str)
+
+
+subtitle : String -> Element msg
+subtitle str =
+    el
+        [ width fill
+        , padding 10
+        , centerX
+        , Font.center
+        , Font.size 22
+        , Background.color <| rgb255 167 199 231
+        ]
+        (text str)
 
 
 showSidePanel : Element msg -> Element msg
@@ -66,10 +120,6 @@ showSidePanel stuff =
             , el
                 [ width fill
                 , height (fillPortion sidebarHtPart)
-                , Border.color (rgb255 110 110 110)
-                , Border.rounded 12
-                , Border.width 4
-                , Background.color (rgb255 248 248 248)
                 , htmlAttribute <| Html.Attributes.style "pointer-events" "auto"
                 ]
                 stuff
@@ -79,6 +129,6 @@ showSidePanel stuff =
         ]
 
 
-sidePanel : NodeContent -> Element msg
-sidePanel =
-    showSidePanel << sidePanelContent
+sidePanel : NodeContent -> NodeContent -> Element msg
+sidePanel start end =
+    showSidePanel <| sidePanelContent start end

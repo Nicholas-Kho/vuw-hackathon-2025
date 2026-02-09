@@ -1,6 +1,6 @@
 module Game exposing (..)
 
-import BackendWrapper exposing (getNode, makeExpandParams, xformSubgraph)
+import BackendWrapper exposing (getContent, getNode, makeExpandParams, xformSubgraph)
 import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
@@ -114,8 +114,8 @@ getGui okm =
 
     else
         case okm.game.endAt of
-            Find ( nid, node ) ->
-                sidePanel okm.game.focus
+            Find ( _, node ) ->
+                sidePanel okm.game.focus (getContent node)
 
             Roaming ->
                 Element.map (\_ -> FinishRoaming) finishRoamButton
