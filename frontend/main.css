@@ -5,16 +5,20 @@
   --x: 0px;
   --y: 0px;
   transform: translate(var(--x), var(--y)) scale(0.97);
-  background: red;
-  opacity: 0;
   pointer-events: none;
+}
+
+.node-tooltip-inner {
   transition:
     transform 120ms ease,
     opacity 120ms ease;
-  }
+  background: red;
+  opacity: 0;
+  transform: translateY(0) scale(0.97)
+}
 
-.node-tooltip.active {
+.node-tooltip.active .node-tooltip-inner {
   opacity: 1;
-  transform: translate(var(--x), var(--y)) translateY(-10px) scale(1);
+  transform: translateY(-10px) scale(1);
 }
 body, pre { padding: 0; margin: 0; overflow: hidden }

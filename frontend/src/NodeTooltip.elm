@@ -13,7 +13,7 @@ import Dict exposing (Dict)
 import Element exposing (px)
 import Generated.BackendApi exposing (NodeId)
 import Html exposing (Attribute, Html, div, text)
-import Html.Attributes exposing (attribute, classList, style)
+import Html.Attributes exposing (attribute, class, classList, style)
 import Html.Keyed as Keyed
 import Navigation exposing (NTNode(..), NavTree, getLayout)
 import Tree exposing (WithPos)
@@ -108,7 +108,10 @@ tooltipAttrs tt =
 
 showTooltip : String -> Tooltip -> Html msg
 showTooltip nid tt =
-    div (tooltipAttrs tt) [ text nid ]
+    div (tooltipAttrs tt)
+        [ div [ class "node-tooltip-inner" ]
+            [ text nid ]
+        ]
 
 
 showTooltips : Tooltips -> Html msg
