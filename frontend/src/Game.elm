@@ -213,7 +213,9 @@ update msg model =
                     )
 
                 EndScreen GameEndScreen.NewGame ->
-                    ( model, Cmd.none )
+                    -- PERF: Might want to keep the cache around
+                    -- between games.
+                    init
 
 
 updateGameState : GameState.Msg -> OkModel -> ( OkModel, Cmd Msg )
