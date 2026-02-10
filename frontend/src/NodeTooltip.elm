@@ -56,17 +56,27 @@ getLoadedHelper wp =
 getTooltips : Camera -> NavTree -> Vec2 -> Tooltips
 getTooltips cam nt cursorPosScreen =
     let
-        selectRangeSquare =
-            600
+        appearRangeSquare =
+            50 * 50
 
-        inRange t =
-            vDistSqare cursorPosScreen t.screenPos <= selectRangeSquare
+        inRangeAppear t =
+            vDistSqare cursorPosScreen t.screenPos <= appearRangeSquare
+
+        disableOutOfRange t =
+            { t | active = inRangeAppear t }
+
+        loadRangeSquare =
+            200 * 200
+
+        inRangeLoad t =
+            vDistSqare cursorPosScreen t.screenPos <= loadRangeSquare
     in
     getLayout nt
         |> List.filterMap getLoadedHelper
         |> List.map (Tuple.mapSecond (\t -> { t | screenPos = worldPosToCamPos cam t.screenPos }))
-        |> List.filter (Tuple.second >> inRange)
+        |> List.filter (Tuple.second >> inRangeLoad)
         |> List.map (Tuple.mapFirst unwrapNodeId)
+        |> List.map (Tuple.mapSecond disableOutOfRange)
         |> Dict.fromList
         |> Tooltips
 
