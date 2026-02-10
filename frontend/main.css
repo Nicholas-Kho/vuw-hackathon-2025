@@ -9,21 +9,38 @@
 }
 
 .node-tooltip-inner {
+  padding: 6px 12px; 
+  border-radius: 6px;
+  max-width: 220px;
+  box-sizing: border-box;
+
+  background-color: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #3b82f6;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.15);
+  font-size: 0.9rem;
+  line-height: 1.3;
+  font-family: "Segoe UI", "Roboto", sans-serif;
+
+  transform: translate(-50%, -100%) translateY(0) scale(0.97);
+  opacity: 0;
   transition:
     transform 120ms ease,
     opacity 120ms ease;
-  background: red;
-  opacity: 0;
-  transform: translate(-50%, -100%) translateY(0) scale(0.97)
-}
 
-.tooltip-layer {
-  z-index: 10;
+  pointer-events: none;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .node-tooltip.active .node-tooltip-inner {
   opacity: 1;
-  transform: translate(-50%, -100%) translateY(-10px) scale(1);
+  transform: translate(-50%, -100%) translateY(-6px) scale(1);
+}
+
+.tooltip-layer {
+  z-index: 10;
 }
 
 body, pre { padding: 0; margin: 0; overflow: hidden }

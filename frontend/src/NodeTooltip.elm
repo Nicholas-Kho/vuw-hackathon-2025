@@ -7,7 +7,7 @@ module NodeTooltip exposing
     , showTooltips
     )
 
-import BackendWrapper exposing (Node, unwrapNodeId)
+import BackendWrapper exposing (Node, getContent, unwrapNodeId)
 import Camera exposing (Camera, Vec2, vDistSqare, worldPosToCamPos)
 import Dict exposing (Dict)
 import Element exposing (px)
@@ -117,10 +117,10 @@ tooltipAttrs tt =
 
 
 showTooltip : String -> Tooltip -> Html msg
-showTooltip nid tt =
+showTooltip _ tt =
     div (tooltipAttrs tt)
         [ div [ class "node-tooltip-inner" ]
-            [ text nid ]
+            [ text <| .title <| getContent tt.node ]
         ]
 
 
