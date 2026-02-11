@@ -3,6 +3,7 @@ module Navigation exposing
     , NavTree
     , addInFlight
     , getLayout
+    , getLoopsFrom
     , getTree
     , getTreeWithLoadingNodes
     , insertFetchResults
@@ -33,7 +34,7 @@ type NavTree
 
         -- Map from node IDs to IDs of in-flight neighbors.
         , inFlight : Dict String (List NodeId)
-        , loopsTo : Dict String (Set String)
+        , loopsFrom : Dict String (Set String)
 
         -- These are used for rendering and click detection. It can be computed on the fly,
         -- but these function calls are not cheap so we memoize them. Otherwise, they
@@ -56,6 +57,14 @@ getInFlight (NavTree nt) =
 getLayout : NavTree -> List (WithPos ( NodeId, NTNode ))
 getLayout (NavTree nt) =
     nt.memoFullTreeLayout
+
+
+getLoopsFrom : NavTree -> NodeId -> List NodeId
+getLoopsFrom (NavTree nt) nid =
+    Dict.get (unwrapNodeId nid) nt.loopsFrom
+        |> Maybe.withDefault Set.empty
+        |> Set.toList
+        |> List.map wrapNodeId
 
 
 insertFetchResults : Subgraph -> NavTree -> NavTree
@@ -134,7 +143,7 @@ singleton n =
     NavTree
         { tree = Node n []
         , members = Set.singleton <| unwrapNodeId <| Tuple.first n
-        , loopsTo = Dict.empty
+        , loopsFrom = Dict.empty
         , inFlight = Dict.empty
         , memoFullTree = memoTree
         , memoFullTreeLayout = Tree.layoutTree memoTree
@@ -150,15 +159,15 @@ addLoop : NodeId -> NodeId -> NavTree -> NavTree
 addLoop from to (NavTree nt) =
     let
         oldSet =
-            Dict.get (unwrapNodeId to) nt.loopsTo |> Maybe.withDefault Set.empty
+            Dict.get (unwrapNodeId from) nt.loopsFrom |> Maybe.withDefault Set.empty
 
         newSet =
-            Set.insert (unwrapNodeId from) oldSet
+            Set.insert (unwrapNodeId to) oldSet
 
         newLoops =
-            Dict.insert (unwrapNodeId to) newSet nt.loopsTo
+            Dict.insert (unwrapNodeId from) newSet nt.loopsFrom
     in
-    NavTree { nt | loopsTo = newLoops }
+    NavTree { nt | loopsFrom = newLoops }
 
 
 addMember : NodeId -> NavTree -> NavTree
