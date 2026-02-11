@@ -192,7 +192,7 @@ update msg model =
                     handleExpandResponse okm resp
 
                 FinishRoaming ->
-                    ( Good { okm | screenOverlay = WinScreen }, Cmd.none )
+                    init
 
                 EndScreen GameEndScreen.StartRoaming ->
                     ( Good
