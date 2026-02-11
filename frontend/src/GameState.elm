@@ -6,11 +6,19 @@ module GameState exposing
     , fromInitial
     , setRoaming
     , update
+    , view
     )
 
 import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
+import Canvas
+import Canvas.Settings
+import Color
+import Drawable exposing (renderGrid)
+import Element exposing (Element)
 import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
+import Html exposing (Attribute)
+import Html.Attributes exposing (style)
 import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt, recomputeMemo)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
@@ -266,3 +274,24 @@ resizeCamera s gs =
             { oldCam | canvasSize = s }
     in
     { gs | cam = newCam }
+
+
+view : ( Int, Int ) -> List (Attribute msg) -> GameState -> Element msg
+view size extraAttrs gs =
+    let
+        ( w, h ) =
+            size
+    in
+    Element.html <|
+        Canvas.toHtml size
+            (extraAttrs
+                ++ [ style "display" "block"
+                   , style "box-sizing" "border-box"
+                   ]
+            )
+            [ Canvas.shapes
+                [ Canvas.Settings.fill Color.lightGrey ]
+                [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
+            , renderGrid gs.cam 100
+            , Drawable.drawNavTree gs.cam gs.nav
+            ]

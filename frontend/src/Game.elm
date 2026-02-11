@@ -5,22 +5,15 @@ import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Camera exposing (mkCamera)
-import Canvas
-import Canvas.Settings
-import Canvas.Settings.Advanced exposing (GlobalCompositeOperationMode(..))
-import Color
-import Drawable exposing (renderGrid)
 import Element exposing (Element)
 import FinishRoamButton exposing (finishRoamButton)
 import GameEndScreen exposing (endScreen)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (style)
 import Http exposing (Error(..))
 import NodeTooltip exposing (Tooltips, diffTooltips, getTooltips, noTooltips, showTooltips)
 import PlayerInput
-import RemoteData exposing (RemoteData(..))
 import SidePanel exposing (sidePanel)
 import Task
 
@@ -122,27 +115,11 @@ getGui okm =
 
 showGame : OkModel -> Element Msg
 showGame okm =
-    let
-        ( w, h ) =
-            okm.size
-
-        cam =
-            okm.game.cam
-    in
-    Element.html <|
-        Canvas.toHtml ( w, h )
-            (PlayerInput.inputListenAttrs Input
-                ++ [ style "display" "block"
-                   , style "box-sizing" "border-box"
-                   , PlayerInput.grabbyCursor okm.input
-                   ]
-            )
-            [ Canvas.shapes
-                [ Canvas.Settings.fill Color.lightGrey ]
-                [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
-            , renderGrid cam 100
-            , Drawable.drawNavTree cam okm.game.nav
-            ]
+    GameState.view okm.size
+        (PlayerInput.grabbyCursor okm.input
+            :: PlayerInput.inputListenAttrs Input
+        )
+        okm.game
 
 
 showErr : Error -> String
