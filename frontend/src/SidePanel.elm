@@ -26,15 +26,31 @@ import Generated.BackendApi exposing (NodeContent)
 import Html.Attributes
 
 
-sidePanelContent : NodeContent -> NodeContent -> Element msg
-sidePanelContent current end =
+sidePanelContent : NodeContent -> NodeContent -> Int -> Element msg
+sidePanelContent current end movesLeft =
     column
         [ centerX
         , width fill
         , spacing 20
+        , htmlAttribute <| Html.Attributes.style "pointer-events" "auto"
         ]
         [ showNodeInfo "Current focus" current
         , showNodeInfo "Target" end
+        , showMoves movesLeft
+        ]
+
+
+showMoves : Int -> Element msg
+showMoves x =
+    column
+        [ width fill
+        , Border.color (rgb255 110 110 110)
+        , Border.rounded 12
+        , Border.width 4
+        , Background.color (rgb255 248 248 248)
+        ]
+        [ title "Moves left:"
+        , subtitle <| String.fromInt x
         ]
 
 
@@ -120,7 +136,7 @@ showSidePanel stuff =
             , el
                 [ width fill
                 , height (fillPortion sidebarHtPart)
-                , htmlAttribute <| Html.Attributes.style "pointer-events" "auto"
+                , htmlAttribute <| Html.Attributes.style "pointer-events" "none"
                 ]
                 stuff
             , clearBox [ height (fillPortion verticalGapPart) ]
@@ -129,6 +145,6 @@ showSidePanel stuff =
         ]
 
 
-sidePanel : NodeContent -> NodeContent -> Element msg
-sidePanel start end =
-    showSidePanel <| sidePanelContent start end
+sidePanel : NodeContent -> NodeContent -> Int -> Element msg
+sidePanel start end moves =
+    showSidePanel <| sidePanelContent start end moves

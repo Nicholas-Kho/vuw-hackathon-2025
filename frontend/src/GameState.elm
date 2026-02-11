@@ -19,14 +19,14 @@ import Element exposing (Element)
 import Generated.BackendApi exposing (InitialGameState, NodeId)
 import Html exposing (Attribute)
 import Html.Attributes exposing (style)
-import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt, recomputeMemo)
+import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt, isFrontier, recomputeMemo)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
 
 type alias GameState =
     { startAt : NodeId
-    , endAt : GameMode
+    , gameMode : GameMode
     , nodeCache : Subgraph
     , nav : NavTree
     , focus : ( NodeId, Node )
@@ -36,12 +36,19 @@ type alias GameState =
 
 type GameMode
     = Roaming
-    | Find ( NodeId, Node )
+    | Find FindRules
+
+
+type alias FindRules =
+    { targetId : NodeId
+    , targetNode : Node
+    , movesLeft : Int
+    }
 
 
 setRoaming : GameState -> GameState
 setRoaming gs =
-    { gs | endAt = Roaming }
+    { gs | gameMode = Roaming }
 
 
 type Msg
@@ -63,7 +70,12 @@ type UpdatedGame
 fromInitial : ( NodeId, Node ) -> Node -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus goalNode cam igs =
     { startAt = igs.startAt
-    , endAt = Find ( igs.endAt, goalNode )
+    , gameMode =
+        Find
+            { targetId = igs.endAt
+            , targetNode = goalNode
+            , movesLeft = 10
+            }
     , nodeCache = xformSubgraph igs.subgraph
     , nav = Navigation.singleton ( igs.startAt, Tuple.second initialFocus )
     , cam = cam
@@ -117,12 +129,32 @@ handleInput uinp gs =
 
 isWinningNid : NodeId -> GameState -> Bool
 isWinningNid nid gs =
-    case gs.endAt of
-        Find ( target, _ ) ->
-            nid == target
+    case gs.gameMode of
+        Find rules ->
+            nid == rules.targetId
 
         Roaming ->
             False
+
+
+decrementMoves : GameState -> GameState
+decrementMoves gs =
+    case gs.gameMode of
+        Roaming ->
+            gs
+
+        Find rules ->
+            { gs | gameMode = Find { rules | movesLeft = rules.movesLeft - 1 } }
+
+
+hasLost : GameState -> Bool
+hasLost gs =
+    case gs.gameMode of
+        Roaming ->
+            False
+
+        Find rules ->
+            rules.movesLeft <= 1
 
 
 handleClick : Vec2 -> GameState -> UpdatedGame
@@ -145,10 +177,20 @@ handleClick pos gs =
             if isWinningNid nid gs then
                 GameOver
 
+            else if hasLost gs then
+                GameOver
+
             else
                 let
                     ( updatedTree, stillNeedToFetch ) =
                         addNeighbors gs.nodeCache nid (getOutgoing n) gs.nav
+
+                    decrementIfNeeded =
+                        if isFrontier gs.nav ( nid, n ) then
+                            decrementMoves
+
+                        else
+                            \x -> x
 
                     updatedUpdatedTree =
                         addInFlight nid stillNeedToFetch updatedTree |> recomputeMemo
@@ -169,6 +211,7 @@ handleClick pos gs =
                         , nav = updatedUpdatedTree
                         , cam = newCam
                       }
+                        |> decrementIfNeeded
                     , stillNeedToFetch
                     )
 

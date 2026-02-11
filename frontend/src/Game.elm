@@ -109,9 +109,9 @@ getGui okm =
         Element.map EndScreen endScreen
 
     else
-        case okm.game.endAt of
-            Find ( _, node ) ->
-                sidePanel (getContent focusNode) (getContent node)
+        case okm.game.gameMode of
+            Find rules ->
+                sidePanel (getContent focusNode) (getContent rules.targetNode) rules.movesLeft
 
             Roaming ->
                 Element.map (\_ -> FinishRoaming) finishRoamButton
