@@ -7,7 +7,7 @@ import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Camera exposing (mkCamera)
 import Element exposing (Element)
 import FinishRoamButton exposing (finishRoamButton)
-import GameEndScreen exposing (endScreen)
+import GameEndScreen exposing (endScreenLose, endScreenWin)
 import GameState exposing (..)
 import Generated.BackendApi exposing (InitialGameState, Subgraph, getStart, postExpand)
 import Html exposing (Html, div, text)
@@ -56,9 +56,15 @@ type alias OkModel =
     { size : CanvasSize
     , input : PlayerInput.Model
     , game : GameState
-    , hasWon : Bool
+    , screenOverlay : ScreenOverlay
     , tooltips : Tooltips
     }
+
+
+type ScreenOverlay
+    = InGame
+    | WinScreen
+    | LoseScreen
 
 
 type Msg
@@ -105,16 +111,20 @@ getGui okm =
         ( _, focusNode ) =
             okm.game.focus
     in
-    if okm.hasWon then
-        Element.map EndScreen endScreen
+    case okm.screenOverlay of
+        WinScreen ->
+            Element.map EndScreen endScreenWin
 
-    else
-        case okm.game.gameMode of
-            Find rules ->
-                sidePanel (getContent focusNode) (getContent rules.targetNode) rules.movesLeft
+        LoseScreen ->
+            Element.map EndScreen endScreenLose
 
-            Roaming ->
-                Element.map (\_ -> FinishRoaming) finishRoamButton
+        InGame ->
+            case okm.game.gameMode of
+                Find rules ->
+                    sidePanel (getContent focusNode) (getContent rules.targetNode) rules.movesLeft
+
+                Roaming ->
+                    Element.map (\_ -> FinishRoaming) finishRoamButton
 
 
 showGame : OkModel -> Element Msg
@@ -182,12 +192,12 @@ update msg model =
                     handleExpandResponse okm resp
 
                 FinishRoaming ->
-                    ( Good { okm | hasWon = True }, Cmd.none )
+                    ( Good { okm | screenOverlay = WinScreen }, Cmd.none )
 
                 EndScreen GameEndScreen.StartRoaming ->
                     ( Good
                         { okm
-                            | hasWon = False
+                            | screenOverlay = InGame
                             , game = setRoaming okm.game
                         }
                     , Cmd.none
@@ -202,8 +212,13 @@ update msg model =
 updateGameState : GameState.Msg -> OkModel -> ( OkModel, Cmd Msg )
 updateGameState msg okm =
     case GameState.update msg okm.game of
-        GameOver ->
-            ( { okm | hasWon = True }
+        GameOverWin ->
+            ( { okm | screenOverlay = WinScreen }
+            , Cmd.none
+            )
+
+        GameOverLose ->
+            ( { okm | screenOverlay = LoseScreen }
             , Cmd.none
             )
 
@@ -259,7 +274,7 @@ handleStartResponse res =
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
                         , game = GameState.fromInitial ( igs.startAt, startNode ) endNode initialCamera igs
-                        , hasWon = False
+                        , screenOverlay = InGame
                         , tooltips = noTooltips
                         }
                     , Task.perform getVpSize getViewport

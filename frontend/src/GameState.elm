@@ -64,7 +64,8 @@ type alias FetchList =
 
 type UpdatedGame
     = KeepGoing ( GameState, FetchList )
-    | GameOver
+    | GameOverWin
+    | GameOverLose
 
 
 fromInitial : ( NodeId, Node ) -> Node -> Camera -> InitialGameState -> GameState
@@ -175,10 +176,10 @@ handleClick pos gs =
 
         Just ( nid, Loaded n ) ->
             if isWinningNid nid gs then
-                GameOver
+                GameOverWin
 
             else if hasLost gs then
-                GameOver
+                GameOverLose
 
             else
                 let
@@ -296,16 +297,16 @@ handleInputs uips g =
 handleInputsHelp : UserInput -> UpdatedGame -> UpdatedGame
 handleInputsHelp input acc =
     case acc of
-        GameOver ->
-            GameOver
-
         KeepGoing ( gs, cmd ) ->
             case handleInput input gs of
-                GameOver ->
-                    GameOver
-
                 KeepGoing ( newGs, newCmd ) ->
                     KeepGoing ( newGs, cmd ++ newCmd )
+
+                x ->
+                    x
+
+        x ->
+            x
 
 
 resizeCamera : ( Float, Float ) -> GameState -> GameState
