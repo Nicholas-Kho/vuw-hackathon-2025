@@ -132,7 +132,7 @@ handleClick pos gs =
             Camera.camPosToWorldPos gs.cam pos
 
         clickedNode =
-            getClickedNode (Navigation.getLayout gs.nav) clickPosWorld
+            getClickedNode (Tree.flatten <| Navigation.getLayout gs.nav) clickPosWorld
     in
     case clickedNode of
         Nothing ->
@@ -156,6 +156,7 @@ handleClick pos gs =
                     newCam =
                         getTreeWithLoadingNodes updatedUpdatedTree
                             |> layoutTree
+                            |> Tree.flatten
                             |> List.filter (\p -> Tuple.first p.content == nid)
                             |> List.map .pos
                             |> List.head

@@ -8,11 +8,12 @@ module Navigation exposing
     , getTreeWithLoadingNodes
     , insertFetchResults
     , insertNeighborsAt
+    , isFrontier
     , recomputeMemo
     , singleton
     )
 
-import BackendWrapper exposing (Node, Subgraph, areIdsEqual, getNode, unwrapNodeId, wrapNodeId)
+import BackendWrapper exposing (Node, Subgraph, areIdsEqual, getNode, getOutgoing, unwrapNodeId, wrapNodeId)
 import Dict exposing (Dict)
 import Generated.BackendApi exposing (NodeId)
 import Set exposing (Set)
@@ -40,7 +41,7 @@ type NavTree
         -- but these function calls are not cheap so we memoize them. Otherwise, they
         -- get recomputed each frame, which can cause slow-down and jittering with large trees.
         , memoFullTree : Tree ( NodeId, NTNode )
-        , memoFullTreeLayout : List (WithPos ( NodeId, NTNode ))
+        , memoFullTreeLayout : Tree (WithPos ( NodeId, NTNode ))
         }
 
 
@@ -54,7 +55,7 @@ getInFlight (NavTree nt) =
     nt.inFlight
 
 
-getLayout : NavTree -> List (WithPos ( NodeId, NTNode ))
+getLayout : NavTree -> Tree (WithPos ( NodeId, NTNode ))
 getLayout (NavTree nt) =
     nt.memoFullTreeLayout
 
@@ -65,6 +66,25 @@ getLoopsFrom (NavTree nt) nid =
         |> Maybe.withDefault Set.empty
         |> Set.toList
         |> List.map wrapNodeId
+
+
+isFrontier : NavTree -> ( NodeId, Node ) -> Bool
+isFrontier (NavTree nt) ( nid, node ) =
+    let
+        nidRaw =
+            unwrapNodeId nid
+
+        noInFlightNeighs nr =
+            Dict.get nr nt.inFlight
+                |> Maybe.map List.isEmpty
+                |> Maybe.withDefault True
+
+        hasOutOfTreeNeigh n =
+            n
+                |> getOutgoing
+                |> List.any (\nidprime -> not <| Set.member (unwrapNodeId nidprime) nt.members)
+    in
+    Set.member nidRaw nt.members && noInFlightNeighs nidRaw && hasOutOfTreeNeigh node
 
 
 insertFetchResults : Subgraph -> NavTree -> NavTree

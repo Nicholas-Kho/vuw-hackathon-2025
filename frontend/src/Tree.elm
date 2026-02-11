@@ -2,8 +2,10 @@ module Tree exposing
     ( PolarNode
     , Tree(..)
     , WithPos
+    , flatten
     , layoutTree
     , map
+    , mapLeaves
     , maxLayerWidth
     , mkCartesian
     , mkEdges
@@ -25,6 +27,16 @@ type Tree a
 map : (a -> b) -> Tree a -> Tree b
 map fn (Node x children) =
     Node (fn x) (List.map (map fn) children)
+
+
+mapLeaves : (a -> a) -> Tree a -> Tree a
+mapLeaves fn (Node x children) =
+    case children of
+        [] ->
+            Node (fn x) []
+
+        cs ->
+            Node x (List.map (mapLeaves fn) cs)
 
 
 flatten : Tree a -> List a
@@ -168,13 +180,12 @@ spreadToPlr spr =
     }
 
 
-toPolarNodes : Tree a -> List (PolarNode a)
+toPolarNodes : Tree a -> Tree (PolarNode a)
 toPolarNodes t =
     t
         |> spreadChildren
         |> map spreadToPlr
         |> depthWith (\d p -> { p | depth = d })
-        |> flatten
 
 
 type alias Edge a =
@@ -225,11 +236,11 @@ type alias WithPos a =
     }
 
 
-layoutTree : Tree a -> List (WithPos a)
+layoutTree : Tree a -> Tree (WithPos a)
 layoutTree tree =
     tree
         |> toPolarNodes
-        |> List.map mkCartesian
+        |> map mkCartesian
 
 
 singleton : a -> Tree a

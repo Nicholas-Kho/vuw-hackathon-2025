@@ -72,6 +72,7 @@ getTooltips cam nt cursorPosScreen =
             vDistSqare cursorPosScreen t.screenPos <= loadRangeSquare
     in
     getLayout nt
+        |> Tree.flatten
         |> List.filterMap getLoadedHelper
         |> List.map (Tuple.mapSecond (\t -> { t | screenPos = worldPosToCamPos cam t.screenPos }))
         |> List.filter (Tuple.second >> inRangeLoad)

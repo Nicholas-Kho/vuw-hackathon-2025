@@ -1,11 +1,11 @@
 module Drawable exposing (..)
 
-import BackendWrapper exposing (Node, getOutgoing)
 import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
 import Color exposing (rgba)
-import Navigation exposing (NTNode(..), NavTree, getTreeWithLoadingNodes)
+import Generated.BackendApi exposing (NodeId)
+import Navigation exposing (NTNode(..), NavTree, getLayout, getTreeWithLoadingNodes, isFrontier)
 import Tree exposing (Tree, mkCartesian, toPolarEdges)
 
 
@@ -165,27 +165,53 @@ treeEdges cam t =
         |> drawLines
 
 
-drawNode : Camera -> Vec2 -> Node -> Canvas.Renderable
-drawNode cam pos n =
+drawNode : Camera -> NodeRenderInfo -> Canvas.Renderable
+drawNode cam ri =
     let
         fillColor =
-            if List.isEmpty (getOutgoing n) then
-                Color.lightBlue
+            if ri.node == Fetching then
+                Color.darkCharcoal
+
+            else if ri.isFrontier then
+                Color.blue
 
             else
-                Color.blue
+                Color.lightBlue
     in
-    Canvas.shapes [ Canvas.Settings.fill fillColor ] [ drawCircle cam pos 20 ]
+    Canvas.shapes [ Canvas.Settings.fill fillColor ] [ drawCircle cam ri.worldPos 20 ]
 
 
-drawNTNode : Camera -> Vec2 -> NTNode -> Canvas.Renderable
-drawNTNode cam pos ntn =
-    case ntn of
-        Fetching ->
-            Canvas.shapes [ Canvas.Settings.fill Color.darkCharcoal ] [ drawCircle cam pos 20 ]
+type alias NodeRenderInfo =
+    { id : NodeId
+    , node : NTNode
+    , worldPos : Vec2
+    , isFrontier : Bool
+    }
 
-        Loaded node ->
-            drawNode cam pos node
+
+toRenderInfo : NavTree -> List NodeRenderInfo
+toRenderInfo nt =
+    let
+        posToRenderInfo p =
+            { id = Tuple.first p.content
+            , node = Tuple.second p.content
+            , worldPos = p.pos
+            , isFrontier = False
+            }
+
+        checkFrontier ri =
+            case ri.node of
+                Fetching ->
+                    False
+
+                Loaded n ->
+                    isFrontier nt ( ri.id, n )
+    in
+    nt
+        |> getLayout
+        |> Tree.map posToRenderInfo
+        |> Tree.mapLeaves (\ri -> { ri | isFrontier = checkFrontier ri })
+        |> Tree.flatten
 
 
 drawNavTree : Camera -> NavTree -> Canvas.Renderable
@@ -195,8 +221,9 @@ drawNavTree cam t =
             getTreeWithLoadingNodes t
 
         nodes =
-            Navigation.getLayout t
-                |> List.map (\p -> drawNTNode cam p.pos (Tuple.second p.content))
+            t
+                |> toRenderInfo
+                |> List.map (drawNode cam)
 
         edges =
             Canvas.shapes [] [ treeEdges cam tree ]
