@@ -42,6 +42,7 @@
             cp elm.js $out/static
             cp ${elm-canvas-js} $out/static/elm-canvas.js
             cp $src/index-template.html $out/static/index.html
+            cp $src/main.css $out/static/main.css
           '';
         };
       in {
