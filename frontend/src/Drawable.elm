@@ -3,7 +3,8 @@ module Drawable exposing (..)
 import Camera exposing (Camera, Vec2, worldPosToCamPos)
 import Canvas exposing (circle)
 import Canvas.Settings exposing (stroke)
-import Color exposing (rgba)
+import Canvas.Settings.Line
+import Color exposing (Color, rgba)
 import Generated.BackendApi exposing (NodeId)
 import Navigation exposing (NTNode(..), NavTree, getLayout, getTreeWithLoadingNodes, isFrontier)
 import Tree exposing (Tree, mkCartesian, toPolarEdges)
@@ -12,6 +13,16 @@ import Tree exposing (Tree, mkCartesian, toPolarEdges)
 drawCircle : Camera -> Vec2 -> Float -> Canvas.Shape
 drawCircle cam c r =
     circle (worldPosToCamPos cam c) (cam.zoom * r)
+
+
+dottedCircumference : Camera -> Color -> Vec2 -> Float -> Canvas.Renderable
+dottedCircumference cam color c r =
+    Canvas.shapes
+        [ Canvas.Settings.Line.lineWidth <| 4 * cam.zoom
+        , Canvas.Settings.Line.lineDash [ 5 * cam.zoom ]
+        , Canvas.Settings.stroke color
+        ]
+        [ drawCircle cam c r ]
 
 
 snapDown : Float -> Float -> Float
@@ -177,8 +188,18 @@ drawNode cam ri =
 
             else
                 Color.lightBlue
+
+        focusOutlineColor =
+            Color.darkBlue
     in
-    Canvas.shapes [ Canvas.Settings.fill fillColor ] [ drawCircle cam ri.worldPos 20 ]
+    if ri.isFocus then
+        Canvas.group []
+            [ Canvas.shapes [ Canvas.Settings.fill fillColor ] [ drawCircle cam ri.worldPos 20 ]
+            , dottedCircumference cam focusOutlineColor ri.worldPos 30
+            ]
+
+    else
+        Canvas.shapes [ Canvas.Settings.fill fillColor ] [ drawCircle cam ri.worldPos 20 ]
 
 
 type alias NodeRenderInfo =
@@ -186,17 +207,19 @@ type alias NodeRenderInfo =
     , node : NTNode
     , worldPos : Vec2
     , isFrontier : Bool
+    , isFocus : Bool
     }
 
 
-toRenderInfo : NavTree -> List NodeRenderInfo
-toRenderInfo nt =
+toRenderInfo : NodeId -> NavTree -> List NodeRenderInfo
+toRenderInfo focusId nt =
     let
         posToRenderInfo p =
             { id = Tuple.first p.content
             , node = Tuple.second p.content
             , worldPos = p.pos
             , isFrontier = False
+            , isFocus = focusId == Tuple.first p.content
             }
 
         checkFrontier ri =
@@ -214,15 +237,15 @@ toRenderInfo nt =
         |> Tree.flatten
 
 
-drawNavTree : Camera -> NavTree -> Canvas.Renderable
-drawNavTree cam t =
+drawNavTree : NodeId -> Camera -> NavTree -> Canvas.Renderable
+drawNavTree focusId cam t =
     let
         tree =
             getTreeWithLoadingNodes t
 
         nodes =
             t
-                |> toRenderInfo
+                |> toRenderInfo focusId
                 |> List.map (drawNode cam)
 
         edges =

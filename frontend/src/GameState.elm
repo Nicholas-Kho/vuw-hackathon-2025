@@ -9,14 +9,14 @@ module GameState exposing
     , view
     )
 
-import BackendWrapper exposing (Node, Subgraph, getContent, getNode, getOutgoing, xformSubgraph)
+import BackendWrapper exposing (Node, Subgraph, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Canvas
 import Canvas.Settings
 import Color
 import Drawable exposing (renderGrid)
 import Element exposing (Element)
-import Generated.BackendApi exposing (InitialGameState, NodeContent, NodeId)
+import Generated.BackendApi exposing (InitialGameState, NodeId)
 import Html exposing (Attribute)
 import Html.Attributes exposing (style)
 import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt, recomputeMemo)
@@ -29,7 +29,7 @@ type alias GameState =
     , endAt : GameMode
     , nodeCache : Subgraph
     , nav : NavTree
-    , focus : NodeContent
+    , focus : ( NodeId, Node )
     , cam : Camera
     }
 
@@ -60,14 +60,14 @@ type UpdatedGame
     | GameOver
 
 
-fromInitial : Node -> Node -> Camera -> InitialGameState -> GameState
+fromInitial : ( NodeId, Node ) -> Node -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus goalNode cam igs =
     { startAt = igs.startAt
     , endAt = Find ( igs.endAt, goalNode )
     , nodeCache = xformSubgraph igs.subgraph
-    , nav = Navigation.singleton ( igs.startAt, initialFocus )
+    , nav = Navigation.singleton ( igs.startAt, Tuple.second initialFocus )
     , cam = cam
-    , focus = getContent initialFocus
+    , focus = initialFocus
     }
 
 
@@ -165,7 +165,7 @@ handleClick pos gs =
                 in
                 KeepGoing
                     ( { gs
-                        | focus = getContent n
+                        | focus = ( nid, n )
                         , nav = updatedUpdatedTree
                         , cam = newCam
                       }
@@ -294,5 +294,5 @@ view size extraAttrs gs =
                 [ Canvas.Settings.fill Color.lightGrey ]
                 [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
             , renderGrid gs.cam 100
-            , Drawable.drawNavTree gs.cam gs.nav
+            , Drawable.drawNavTree (Tuple.first gs.focus) gs.cam gs.nav
             ]

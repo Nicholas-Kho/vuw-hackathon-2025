@@ -101,13 +101,17 @@ view model =
 
 getGui : OkModel -> Element Msg
 getGui okm =
+    let
+        ( _, focusNode ) =
+            okm.game.focus
+    in
     if okm.hasWon then
         Element.map EndScreen endScreen
 
     else
         case okm.game.endAt of
             Find ( _, node ) ->
-                sidePanel okm.game.focus (getContent node)
+                sidePanel (getContent focusNode) (getContent node)
 
             Roaming ->
                 Element.map (\_ -> FinishRoaming) finishRoamButton
@@ -254,7 +258,7 @@ handleStartResponse res =
                     ( Good
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
-                        , game = GameState.fromInitial startNode endNode initialCamera igs
+                        , game = GameState.fromInitial ( igs.startAt, startNode ) endNode initialCamera igs
                         , hasWon = False
                         , tooltips = noTooltips
                         }
