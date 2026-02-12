@@ -9,3 +9,6 @@ frontend/elm-stuff
 frontend/src/Generated
 # Made by elm-live, shouldn't be committed
 frontend/elm.js
+# This is an AI model, which is a pretty large file.
+# We won't commit it, and it can be fetched with nix.
+ai-models/
