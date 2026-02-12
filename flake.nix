@@ -24,6 +24,11 @@
           url = "https://unpkg.com/elm-canvas@2.2/elm-canvas.js";
           hash = "sha256-Z6U4OLhFGwKcADJTJ7M23uh70Z99TfRCAcnSAGtXVow=";
         };
+        qwen-model = pkgs.fetchurl {
+          url =
+            "https://huggingface.co/JackeyLai/Qwen2.5-3B-Instruct-Q4_K_M-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf?download=true";
+          hash = "sha256-ID52mbYCm2dXFUEpWBb7M5B86BvL9OMeNgKivuZZBfM=";
+        };
         muselinks-server = haskellPkgs.callCabal2nix "muselinks" ./. { };
         muselinks-api-codegen = haskellPkgs.callCabal2nix "api-codegen" ./. { };
         muselinks-frontend = pkgs.mkElmDerivation {
@@ -69,6 +74,7 @@
             elmPkgs.elm-format
             elmPkgs.elm-language-server
             elmPkgs.elm-live
+            llama-cpp-vulkan
           ];
         };
       });
