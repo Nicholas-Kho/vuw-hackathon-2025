@@ -94,7 +94,11 @@ library
     import: warnings, base-deps, tepapa-client-deps, dohie, default-exts
     hs-source-dirs: src
     exposed-modules:
-        Api.TePapa
+        AiSummary.CompletionTypes
+        , AiSummary.FormatRequest
+        , AiSummary.Health
+        , AiSummary.LlamaApi
+        , Api.TePapa
         , Api.Backend
         , App
         , Bootstrap
