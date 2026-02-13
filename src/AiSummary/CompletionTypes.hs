@@ -39,7 +39,7 @@ instance ToJSON CompletionParams where
     toEncoding params =
         pairs
             ( "model" .= params.model
-                <> "maxTokens" .= params.maxTokens
+                <> "max_tokens" .= params.maxTokens
                 <> "temperature" .= params.temperature
                 <> "messages"
                     .= [ Message System params.systemPrompt
@@ -47,4 +47,11 @@ instance ToJSON CompletionParams where
                        ]
             )
 
-type CompletionResponse = ()
+newtype CompletionResponse
+    = CompletionResponse {toText :: Text}
+
+instance FromJSON CompletionResponse where
+    parseJSON =
+        withObject
+            "A llama /completion response"
+            (\o -> o .: "content" >>= (pure . CompletionResponse))
