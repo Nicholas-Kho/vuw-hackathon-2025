@@ -114,6 +114,7 @@ library
         , FetchStore.TePapaFetchStore
         , MonadFulfil
         , MonadWait
+        , TePapa.Association
         , TePapa.Client
         , TePapa.Convert
         , TePapa.CommonObject
