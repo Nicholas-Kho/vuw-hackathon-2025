@@ -18,9 +18,10 @@ module TePapa.Traverse (
 import qualified Data.Text as T
 import FetchM (FetchM, fetch, fork, runFetch)
 import Servant.Client (ClientError)
+import TePapa.Association (Association (..))
 import TePapa.Client (ApiM (..), getAgent, getAgentRelated, getCategory, getConceptRelated, getObject, getObjectRelated, getPlace, getPlaceRelated, getTopic, getTopicRelated)
 import TePapa.CommonObject
-import TePapa.Decode (Association (..), CommonFields (..), RelatedThings)
+import TePapa.Decode (CommonFields (..), RelatedThings)
 import TePapa.ExternalId
 
 data CategoryInfo = CategoryInfo

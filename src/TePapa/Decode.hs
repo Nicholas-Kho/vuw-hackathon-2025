@@ -6,7 +6,6 @@
 
 module TePapa.Decode (
     AgentResponse (..),
-    Association (..),
     Person (..),
     Artefact (..),
     Category (..),
@@ -22,19 +21,12 @@ module TePapa.Decode (
 where
 
 import Data.Aeson
-import Data.Aeson.KeyMap
 import Data.Aeson.Types
 import Data.Text
-import Data.Traversable
-import Data.Vector
+import qualified Data.Vector
 import GHC.Generics
+import TePapa.Association (Association, parseCommonOutgoingEdges)
 import TePapa.ExternalId
-
-data Association = Association
-    { name :: Text
-    , pointsTo :: [(TePapaReference, Text)]
-    }
-    deriving (Show, Generic)
 
 data CommonFields = CommonFields
     { eid :: ExternalId
@@ -55,19 +47,6 @@ instance FromJSON CommonFields where
                     <*> o .: "type"
                     <*> (pure $ parseCommonOutgoingEdges o)
             )
-
-parseCommonOutgoingEdges :: Object -> [Association]
-parseCommonOutgoingEdges = elems . mapMaybeWithKey (\k v -> parseMaybe (associationParserHelper k) v)
-
-associationParserHelper :: Key -> Value -> Parser Association
-associationParserHelper k =
-    withArray
-        "association"
-        ( \a ->
-            Association
-                <$> (pure . Data.Text.show $ k)
-                <*> (Data.Traversable.traverse parseReferenceyObject (Data.Vector.toList a))
-        )
 
 -- Agents
 data Person = Person
