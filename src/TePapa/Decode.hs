@@ -69,28 +69,6 @@ associationParserHelper k =
                 <*> (Data.Traversable.traverse parseReferenceyObject (Data.Vector.toList a))
         )
 
-parseReferenceyObject :: Value -> Parser (TePapaReference, Text)
-parseReferenceyObject =
-    withObject
-        "Referencey object"
-        ( \o -> do
-            typ <- o .: "type" >>= classLabelToResource
-            eid <- o .: "id"
-            linkTitle <- o .: "title"
-            pure $ (TePapaReference typ eid, linkTitle)
-        )
-
-classLabelToResource :: Text -> Parser MuseumResource
-classLabelToResource = \case
-    "Object" -> pure ObjectR
-    "Specimen" -> pure ObjectR
-    "Person" -> pure AgentR
-    "Organisation" -> pure AgentR
-    "Place" -> pure PlaceR
-    "Category" -> pure ConceptR
-    "Topic" -> pure TopicR
-    other -> fail $ "I can't map " <> (Prelude.show other) <> " to a museum resource type."
-
 -- Agents
 data Person = Person
     { com :: CommonFields
