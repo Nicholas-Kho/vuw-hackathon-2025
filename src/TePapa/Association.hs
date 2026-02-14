@@ -12,7 +12,7 @@ import GHC.Generics
 import TePapa.ExternalId (TePapaReference, parseReferenceyObject)
 
 data Association = Association
-    { name :: Text
+    { associatedHow :: Text
     , pointsTo :: [(TePapaReference, Text)]
     }
     deriving (Show, Generic)

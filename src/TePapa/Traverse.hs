@@ -85,7 +85,7 @@ directNeighsFromAssoc comingFrom assoc = do
     let links =
             map
                 ( \(toId, _) ->
-                    FoundLink comingFrom toId (Direct assoc.name)
+                    FoundLink comingFrom toId (Direct assoc.associatedHow)
                 )
                 assoc.pointsTo
     newNodes <- forMFork assoc.pointsTo (\(toId, _) -> responseToDiscovery toId <$> fetch (GetId toId))
@@ -103,7 +103,7 @@ getNeighborsViaCats fromId =
         Left cerr -> pure [ErrorFetching fromId cerr]
         Right thing -> do
             let assocsPointingToCats = map (\a -> a{pointsTo = filter (\(r, _) -> r.namespace == ConceptR) a.pointsTo}) (getCommon thing).outgoing
-            let relatedCats = concatMap (\a -> map (\(r, t) -> (a.name, CategoryInfo{catTitle = t, catId = unId r.eid})) a.pointsTo) assocsPointingToCats
+            let relatedCats = concatMap (\a -> map (\(r, t) -> (a.associatedHow, CategoryInfo{catTitle = t, catId = unId r.eid})) a.pointsTo) assocsPointingToCats
             concat <$> (forMFork relatedCats $ \(relatedHow, catInfo) -> neighsViaRelatedCat fromId relatedHow catInfo)
 
 neighsViaRelatedCat :: TePapaReference -> T.Text -> CategoryInfo -> TFetch [Discovery]
@@ -120,7 +120,7 @@ neighsViaRelatedCat comingFrom comingFromWhy catInfo = do
                             ( \_ ->
                                 FoundLink comingFrom (getId t) (ShareCategory catInfo comingFromWhy)
                             )
-                            . filter (\a -> a.name == comingFromWhy && catRef `elem` (fst <$> a.pointsTo))
+                            . filter (\a -> a.associatedHow == comingFromWhy && catRef `elem` (fst <$> a.pointsTo))
                             $ (getCommon t).outgoing
                     )
                 $ things
