@@ -8,43 +8,26 @@ module AiSummary.CompletionTypes (
 ) where
 
 import Data.Aeson
-import Data.Aeson.Encoding (text)
 import Data.Text
 import GHC.Generics
 
 data CompletionParams = CompletionParams
-    { model :: Text
-    , systemPrompt :: Text
-    , userPrompt :: Text
+    { prompt :: Text
     , maxTokens :: Int
+    , repeatPenalty :: Float
     , temperature :: Float
+    , topP :: Float
     }
     deriving (Generic)
-
-data Role = System | User deriving (Generic)
-
-instance ToJSON Role where
-    toEncoding r =
-        case r of
-            System -> text "system"
-            User -> text "user"
-
-data Message = Message
-    { role :: Role
-    , content :: Text
-    }
-    deriving (Generic, ToJSON)
 
 instance ToJSON CompletionParams where
     toEncoding params =
         pairs
-            ( "model" .= params.model
-                <> "max_tokens" .= params.maxTokens
+            ( "max_tokens" .= params.maxTokens
                 <> "temperature" .= params.temperature
-                <> "messages"
-                    .= [ Message System params.systemPrompt
-                       , Message User params.userPrompt
-                       ]
+                <> "repeat_penalty" .= params.repeatPenalty
+                <> "top_p" .= params.topP
+                <> "prompt" .= params.prompt
             )
 
 newtype CompletionResponse
