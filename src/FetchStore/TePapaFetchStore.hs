@@ -8,7 +8,8 @@ import qualified Control.Concurrent.STM.Map as M
 import FetchStore.Interface
 import Servant.Client (ClientError)
 import TePapa.CommonObject (TePapaThing)
-import TePapa.Decode (RelatedThings, TePapaReference)
+import TePapa.Decode (RelatedThings)
+import TePapa.ExternalId (TePapaReference)
 import TePapa.Traverse (FetchReq (..))
 
 data Store = Store

@@ -15,6 +15,7 @@ module TePapa.CommonObject (
 
 import qualified Data.Text as T
 import TePapa.Decode
+import TePapa.ExternalId
 
 data TePapaThing
     = APerson !Person

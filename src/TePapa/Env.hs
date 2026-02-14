@@ -12,7 +12,7 @@ import qualified Configuration.Dotenv as Dotenv
 import Control.Concurrent (QSem, newQSem)
 import Data.Text
 import System.Environment
-import TePapa.Decode (ExternalId (..), MuseumResource (..), TePapaReference (..))
+import TePapa.ExternalId (ExternalId (..), MuseumResource (..), TePapaReference (..))
 import Text.Read (readMaybe)
 
 expectKey :: Maybe String -> String

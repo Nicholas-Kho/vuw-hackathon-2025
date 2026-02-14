@@ -8,6 +8,7 @@ import Data.Text
 import GHC.Base
 import Servant.API
 import TePapa.Decode
+import TePapa.ExternalId
 
 newtype ApiKey = ApiKey {getKey :: Text} deriving (ToHttpApiData)
 

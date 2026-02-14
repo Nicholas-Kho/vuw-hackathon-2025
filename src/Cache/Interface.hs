@@ -10,7 +10,7 @@ import Cache.NodeId (NodeId)
 import Data.Kind
 import Data.Set
 import Domain.Model (EdgeInfo, Node, NodeContent (..))
-import TePapa.Decode (TePapaReference)
+import TePapa.ExternalId (TePapaReference)
 
 class (Monad (StoreM g)) => GraphStore g where
     type StoreM g :: Type -> Type

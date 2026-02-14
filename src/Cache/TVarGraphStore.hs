@@ -14,7 +14,7 @@ import qualified Data.Map.Strict as D
 import Data.Maybe (fromMaybe, mapMaybe)
 import qualified Data.Set as S
 import Domain.Model
-import TePapa.Decode (TePapaReference)
+import TePapa.ExternalId (TePapaReference)
 
 data Graph = Graph
     -- lookups for nodes and internalToExternal must be total,

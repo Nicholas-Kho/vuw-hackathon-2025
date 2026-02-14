@@ -20,7 +20,8 @@ import FetchM (FetchM, fetch, fork, runFetch)
 import Servant.Client (ClientError)
 import TePapa.Client (ApiM (..), getAgent, getAgentRelated, getCategory, getConceptRelated, getObject, getObjectRelated, getPlace, getPlaceRelated, getTopic, getTopicRelated)
 import TePapa.CommonObject
-import TePapa.Decode (Association (..), CommonFields (..), ExternalId (..), MuseumResource (..), RelatedThings, TePapaReference (..), showTePapaReferenceNice)
+import TePapa.Decode (Association (..), CommonFields (..), RelatedThings)
+import TePapa.ExternalId
 
 data CategoryInfo = CategoryInfo
     { catTitle :: T.Text

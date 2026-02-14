@@ -12,7 +12,7 @@ import System.Exit (die)
 import TePapa.Client (ApiM (..))
 import TePapa.CommonObject (prettyPrintThing)
 import TePapa.Convert (tePapaThingToNode)
-import TePapa.Decode (TePapaReference)
+import TePapa.ExternalId (TePapaReference)
 import TePapa.Traverse (Discovery (..), doQuery, getNodeById)
 
 fetchSeed :: T.Text -> ClientEnv -> TePapaReference -> IO NodeContent
