@@ -121,6 +121,7 @@ library
         , TePapa.Decode
         , TePapa.Env
         , TePapa.ExternalId
+        , TePapa.ExtraFields
         , TePapa.Traverse
     default-language: GHC2024
 
