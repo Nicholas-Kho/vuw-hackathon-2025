@@ -24,10 +24,10 @@
           url = "https://unpkg.com/elm-canvas@2.2/elm-canvas.js";
           hash = "sha256-Z6U4OLhFGwKcADJTJ7M23uh70Z99TfRCAcnSAGtXVow=";
         };
-        qwen-model = pkgs.fetchurl {
+        phi-model = pkgs.fetchurl {
           url =
-            "https://huggingface.co/JackeyLai/Qwen2.5-3B-Instruct-Q4_K_M-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf?download=true";
-          hash = "sha256-ID52mbYCm2dXFUEpWBb7M5B86BvL9OMeNgKivuZZBfM=";
+            "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf?download=true";
+          hash = "sha256-ioPH+5BJqbLpImb6etBJM7tTqh6FE2t7MPG4AA/y7e8=";
         };
         muselinks-server = haskellPkgs.callCabal2nix "muselinks" ./. { };
         muselinks-api-codegen = haskellPkgs.callCabal2nix "api-codegen" ./. { };
