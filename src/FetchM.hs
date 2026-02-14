@@ -1,4 +1,4 @@
-module FetchM (FetchM, fork, fetch, runFetch, runFetchConc) where
+module FetchM (FetchM, fork, forMFork, fetch, runFetch, runFetchConc) where
 
 import Control.Concurrent.Async
 import Control.Concurrent.QSem
@@ -24,6 +24,9 @@ fetch r = liftF (WithReq r id)
 
 fork :: [FetchM req a] -> FetchM req [a]
 fork comps = liftF (Fork comps id)
+
+forMFork :: [a] -> (a -> FetchM req b) -> FetchM req [b]
+forMFork xs f = fork (f <$> xs)
 
 runFetch :: (Monad m) => (forall t. req t -> m t) -> FetchM req a -> m a
 runFetch _ (Pure a) = return a

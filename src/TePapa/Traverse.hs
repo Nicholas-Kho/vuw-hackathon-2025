@@ -16,7 +16,7 @@ module TePapa.Traverse (
 ) where
 
 import qualified Data.Text as T
-import FetchM (FetchM, fetch, fork, runFetch)
+import FetchM (FetchM, fetch, forMFork, runFetch)
 import Servant.Client (ClientError)
 import TePapa.Association (Association (..))
 import TePapa.Client (ApiM (..), getAgent, getAgentRelated, getCategory, getConceptRelated, getObject, getObjectRelated, getPlace, getPlaceRelated, getTopic, getTopicRelated)
@@ -56,9 +56,6 @@ data FetchReq a where
     GetRelated :: TePapaReference -> FetchReq (Either ClientError RelatedThings)
 
 type TFetch a = FetchM FetchReq a
-
-forMFork :: [a] -> (a -> TFetch b) -> TFetch [b]
-forMFork xs f = fork (f <$> xs)
 
 getNodeById :: TePapaReference -> TFetch Discovery
 getNodeById tref = do
