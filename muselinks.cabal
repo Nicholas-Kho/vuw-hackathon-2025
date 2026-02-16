@@ -118,7 +118,6 @@ library
         , TePapa.Client
         , TePapa.Convert
         , TePapa.CommonObject
-        , TePapa.Decode
         , TePapa.Env
         , TePapa.ExternalId
         , TePapa.ExtraFields
