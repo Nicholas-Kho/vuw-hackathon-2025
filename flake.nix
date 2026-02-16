@@ -15,11 +15,7 @@
         };
         ghcVersion = "ghc9102";
         elmPkgs = pkgs.elmPackages;
-        haskellPkgs = pkgs.haskell.packages.${ghcVersion}.override {
-          overrides = self: super: {
-            system-fileio = pkgs.haskell.lib.dontCheck super.system-fileio;
-          };
-        };
+        haskellPkgs = pkgs.haskell.packages.${ghcVersion};
         elm-canvas-js = pkgs.fetchurl {
           url = "https://unpkg.com/elm-canvas@2.2/elm-canvas.js";
           hash = "sha256-Z6U4OLhFGwKcADJTJ7M23uh70Z99TfRCAcnSAGtXVow=";
