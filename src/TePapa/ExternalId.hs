@@ -5,7 +5,6 @@ module TePapa.ExternalId (
     ExternalId (..),
     MuseumResource (..),
     TePapaReference (..),
-    classLabelToResource,
     parseReferenceyObject,
     showTePapaReferenceNice,
 ) where
@@ -25,6 +24,17 @@ data MuseumResource
     deriving (Show, Eq, Ord, Generic)
 
 instance Hashable MuseumResource
+
+instance FromJSON MuseumResource where
+    parseJSON = withText "a museum resource class label" $ \case
+        "Object" -> pure ObjectR
+        "Specimen" -> pure ObjectR
+        "Person" -> pure AgentR
+        "Organisation" -> pure AgentR
+        "Place" -> pure PlaceR
+        "Category" -> pure ConceptR
+        "Topic" -> pure TopicR
+        other -> fail $ "I can't map " <> (Prelude.show other) <> " to a museum resource type."
 
 newtype ExternalId
     = ExternalId {unId :: Int}
@@ -53,23 +63,12 @@ showTePapaReferenceNice tref =
      in
         namespaceNice <> idStr
 
-classLabelToResource :: Text -> Parser MuseumResource
-classLabelToResource = \case
-    "Object" -> pure ObjectR
-    "Specimen" -> pure ObjectR
-    "Person" -> pure AgentR
-    "Organisation" -> pure AgentR
-    "Place" -> pure PlaceR
-    "Category" -> pure ConceptR
-    "Topic" -> pure TopicR
-    other -> fail $ "I can't map " <> (Prelude.show other) <> " to a museum resource type."
-
 parseReferenceyObject :: Value -> Parser (TePapaReference, Text)
 parseReferenceyObject =
     withObject
         "Referencey object"
         ( \o -> do
-            typ <- o .: "type" >>= classLabelToResource
+            typ <- o .: "type"
             eid <- o .: "id"
             linkTitle <- o .: "title"
             pure $ (TePapaReference typ eid, linkTitle)

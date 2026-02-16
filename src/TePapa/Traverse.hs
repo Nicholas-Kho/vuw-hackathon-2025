@@ -7,21 +7,18 @@ module TePapa.Traverse (
     FetchReq (..),
     TFetch,
     doQuery,
-    fetchFromAPI,
     getDirectNeighs,
     getNeighs,
-    getNeighborsViaCats,
     getNodeById,
     prettyPrintDiscovery,
 ) where
 
 import qualified Data.Text as T
-import FetchM (FetchM, fetch, forMFork, runFetch)
+import FetchM (FetchM, fetch, forMFork)
 import Servant.Client (ClientError)
 import TePapa.Association (Association (..))
-import TePapa.Client (ApiM (..), getAgent, getAgentRelated, getCategory, getConceptRelated, getObject, getObjectRelated, getPlace, getPlaceRelated, getTopic, getTopicRelated)
+import TePapa.Client (ApiM (..), getById, getRelated)
 import TePapa.CommonObject
-import TePapa.Decode (CommonFields (..), RelatedThings)
 import TePapa.ExternalId
 
 data CategoryInfo = CategoryInfo
@@ -53,7 +50,7 @@ prettyPrintDiscovery d =
 
 data FetchReq a where
     GetId :: TePapaReference -> FetchReq (Either ClientError TePapaThing)
-    GetRelated :: TePapaReference -> FetchReq (Either ClientError RelatedThings)
+    GetRelated :: TePapaReference -> FetchReq (Either ClientError [TePapaThing])
 
 type TFetch a = FetchM FetchReq a
 
@@ -63,13 +60,13 @@ getNodeById tref = do
     pure (responseToDiscovery tref res)
 
 getNeighs :: TePapaReference -> TFetch [Discovery]
-getNeighs ofId = (<>) <$> getDirectNeighs ofId <*> getNeighborsViaCats ofId
+getNeighs = getDirectNeighs
 
 getDirectNeighs ::
     TePapaReference ->
     TFetch [Discovery]
 getDirectNeighs ofId = do
-    outgoing <- fmap (outgoing . getCommon) <$> fetch (GetId ofId)
+    outgoing <- fmap associations <$> fetch (GetId ofId)
     case outgoing of
         Left cerr -> pure [ErrorFetching ofId cerr]
         Right assocs -> concat <$> forMFork assocs (directNeighsFromAssoc ofId)
@@ -94,50 +91,11 @@ responseToDiscovery explored result =
         Left cerr -> ErrorFetching explored cerr
         Right t -> FoundThing explored t
 
-getNeighborsViaCats :: TePapaReference -> TFetch [Discovery]
-getNeighborsViaCats fromId =
-    fetch (GetId fromId) >>= \case
-        Left cerr -> pure [ErrorFetching fromId cerr]
-        Right thing -> do
-            let assocsPointingToCats = map (\a -> a{pointsTo = filter (\(r, _) -> r.namespace == ConceptR) a.pointsTo}) (getCommon thing).outgoing
-            let relatedCats = concatMap (\a -> map (\(r, t) -> (a.associatedHow, CategoryInfo{catTitle = t, catId = unId r.eid})) a.pointsTo) assocsPointingToCats
-            concat <$> (forMFork relatedCats $ \(relatedHow, catInfo) -> neighsViaRelatedCat fromId relatedHow catInfo)
-
-neighsViaRelatedCat :: TePapaReference -> T.Text -> CategoryInfo -> TFetch [Discovery]
-neighsViaRelatedCat comingFrom comingFromWhy catInfo = do
-    let catRef = TePapaReference{namespace = ConceptR, eid = ExternalId catInfo.catId}
-    fetch (GetRelated catRef) >>= \case
-        Left cerr -> pure [ErrorFetching catRef cerr]
-        Right related -> do
-            let things = filter (\t -> getId t /= comingFrom) $ fromRelated related
-            pure
-                . concatMap
-                    ( \t ->
-                        map
-                            ( \_ ->
-                                FoundLink comingFrom (getId t) (ShareCategory catInfo comingFromWhy)
-                            )
-                            . filter (\a -> a.associatedHow == comingFromWhy && catRef `elem` (fst <$> a.pointsTo))
-                            $ (getCommon t).outgoing
-                    )
-                $ things
-
--- TODO: Fetching policy should also come in here
-fetchFromAPI :: (ApiM m) => TFetch a -> m a
-fetchFromAPI = runFetch doQuery
-
 doQuery :: (ApiM m) => FetchReq a -> m a
 doQuery (GetId tref) =
-    case tref.namespace of
-        ObjectR -> (fmap fromObjectResponse) <$> (runReq . getObject . unId $ tref.eid)
-        AgentR -> (fmap fromAgentResponse) <$> (runReq . getAgent . unId $ tref.eid)
-        PlaceR -> (fmap fromPlace) <$> (runReq . getPlace . unId $ tref.eid)
-        ConceptR -> (fmap fromCategory) <$> (runReq . getCategory . unId $ tref.eid)
-        TopicR -> (fmap fromTopic) <$> (runReq . getTopic . unId $ tref.eid)
+    runReq (getById tref)
 doQuery (GetRelated tref) =
-    case tref.namespace of
-        ObjectR -> runReq $ getObjectRelated (unId tref.eid) (Just 20)
-        AgentR -> runReq $ getAgentRelated (unId tref.eid) (Just 20)
-        PlaceR -> runReq $ getPlaceRelated (unId tref.eid) (Just 20)
-        ConceptR -> runReq $ getConceptRelated (unId tref.eid) (Just 20)
-        TopicR -> runReq $ getTopicRelated (unId tref.eid) (Just 20)
+    let
+        fetchLimit = Just 20
+     in
+        runReq (getRelated tref fetchLimit)

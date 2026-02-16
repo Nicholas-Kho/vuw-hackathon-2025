@@ -8,13 +8,12 @@ import qualified Control.Concurrent.STM.Map as M
 import FetchStore.Interface
 import Servant.Client (ClientError)
 import TePapa.CommonObject (TePapaThing)
-import TePapa.Decode (RelatedThings)
 import TePapa.ExternalId (TePapaReference)
 import TePapa.Traverse (FetchReq (..))
 
 data Store = Store
     { things :: M.Map TePapaReference (TMVar (Either ClientError TePapaThing))
-    , related :: M.Map TePapaReference (TMVar (Either ClientError RelatedThings))
+    , related :: M.Map TePapaReference (TMVar (Either ClientError [TePapaThing]))
     }
 
 instance FetchStore FetchReq Store where
@@ -24,7 +23,7 @@ instance FetchStore FetchReq Store where
             GetId tref -> claimFetchGetId store tref
             GetRelated tref -> claimFetchGetRelated store tref
 
-claimFetchGetRelated :: Store -> TePapaReference -> STM (FetchResult TMVar TMVar (Either ClientError RelatedThings))
+claimFetchGetRelated :: Store -> TePapaReference -> STM (FetchResult TMVar TMVar (Either ClientError [TePapaThing]))
 claimFetchGetRelated store tref = do
     (M.lookup tref store.related) >>= \case
         Nothing -> do

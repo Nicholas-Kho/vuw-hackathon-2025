@@ -1,92 +1,45 @@
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module TePapa.CommonObject (
     TePapaThing (..),
-    fromAgentResponse,
-    fromCategory,
-    fromObjectResponse,
-    fromPlace,
-    fromRelated,
-    fromTopic,
-    getCommon,
-    getId,
     prettyPrintThing,
+    parseThingWith,
 ) where
 
-import qualified Data.Text as T
-import TePapa.Decode
+import Data.Aeson
+import Data.Aeson.Types (Parser)
+import Data.Text
+import TePapa.Association (Association, parseCommonOutgoingEdges)
 import TePapa.ExternalId
+import TePapa.ExtraFields (Extras)
 
-data TePapaThing
-    = APerson !Person
-    | AnOrg !Organization
-    | AnArtefact !Artefact
-    | ASpecimen !Specimen
-    | APlace !Place
-    | ACategory !Category
-    | ATopic !Topic
+data TePapaThing = TePapaThing
+    { externalReference :: TePapaReference
+    , title :: Text
+    , associations :: [Association]
+    , extras :: Maybe Extras
+    }
+
+instance FromJSON TePapaThing where
+    parseJSON =
+        withObject
+            "a TePapa Thing"
+            ( \o -> do
+                eid <- o .: "id"
+                label <- o .: "type"
+                TePapaThing
+                    <$> (pure TePapaReference{namespace = label, eid = eid})
+                    <*> (o .: "title")
+                    <*> (pure $ parseCommonOutgoingEdges o)
+                    <*> (pure Nothing)
+            )
 
 prettyPrintThing :: TePapaThing -> String
-prettyPrintThing thing = T.unpack (getCommon thing).title
+prettyPrintThing thing = unpack thing.title
 
-getCommon :: TePapaThing -> CommonFields
-getCommon t = case t of
-    APerson p -> p.com
-    AnOrg o -> o.com
-    AnArtefact a -> a.com
-    ASpecimen s -> s.com
-    APlace p -> p.com
-    ACategory c -> c.com
-    ATopic tp -> tp.com
-
-fromObjectResponse :: ObjectResponse -> TePapaThing
-fromObjectResponse resp =
-    case resp of
-        Art a -> AnArtefact a
-        Spc s -> ASpecimen s
-
-fromAgentResponse :: AgentResponse -> TePapaThing
-fromAgentResponse resp =
-    case resp of
-        Prs p -> APerson p
-        Org g -> AnOrg g
-
-fromPlace :: Place -> TePapaThing
-fromPlace = APlace
-
-fromCategory :: Category -> TePapaThing
-fromCategory = ACategory
-
-fromTopic :: Topic -> TePapaThing
-fromTopic = ATopic
-
-fromRelated :: RelatedThings -> [TePapaThing]
-fromRelated
-    RelatedThings
-        { relatedSpecimens = rs
-        , relatedPlaces = rps
-        , relatedPeople = rpl
-        , relatedOrgs = ro
-        , relatedArtefacts = ra
-        } =
-        concat
-            [ AnArtefact <$> ra
-            , ASpecimen <$> rs
-            , APerson <$> rpl
-            , AnOrg <$> ro
-            , APlace <$> rps
-            ]
-
-getId :: TePapaThing -> TePapaReference
-getId thing =
-    let
-        thingEid = (getCommon thing).eid
-     in
-        case thing of
-            APerson _ -> TePapaReference{namespace = AgentR, eid = thingEid}
-            AnOrg _ -> TePapaReference{namespace = AgentR, eid = thingEid}
-            AnArtefact _ -> TePapaReference{namespace = ObjectR, eid = thingEid}
-            ASpecimen _ -> TePapaReference{namespace = ObjectR, eid = thingEid}
-            APlace _ -> TePapaReference{namespace = PlaceR, eid = thingEid}
-            ACategory _ -> TePapaReference{namespace = ConceptR, eid = thingEid}
-            ATopic _ -> TePapaReference{namespace = TopicR, eid = thingEid}
+parseThingWith :: (FromJSON a) => (a -> Extras) -> Value -> Parser TePapaThing
+parseThingWith constructor v = do
+    commonFields <- parseJSON @TePapaThing v
+    extras <- constructor <$> parseJSON v
+    pure (commonFields{extras = Just extras})
