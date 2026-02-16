@@ -36,6 +36,7 @@ newtype EdgeInfo = EdgeInfo {text :: T.Text}
 data Node = Node
     { content :: NodeContent
     , outgoingEdges :: M.Map NodeId (S.Set EdgeInfo)
+    , nodeId :: NodeId
     }
     deriving (Generic)
 
@@ -59,11 +60,12 @@ elmify
       where
         changeMap m = (\(nid, s) -> (nid, S.elems s)) <$> M.toList m
 
-mkNode :: NodeContent -> Node
-mkNode nc =
+mkNode :: NodeId -> NodeContent -> Node
+mkNode nid nc =
     Node
         { content = nc
         , outgoingEdges = M.empty
+        , nodeId = nid
         }
 
 prettyPrintNode :: NodeContent -> String

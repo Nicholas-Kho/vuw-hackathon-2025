@@ -95,6 +95,7 @@ instance GraphStore Graph where
             Node
                 { outgoingEdges = outEdges
                 , content = nodeContent
+                , nodeId = nid
                 }
 
     addEdge g from to info = do
