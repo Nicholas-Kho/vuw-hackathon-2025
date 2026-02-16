@@ -44,6 +44,7 @@ data Node = Node
 data NodeElm = NodeElm
     { content :: NodeContent
     , outgoingEdges :: [(NodeId, [EdgeInfo])]
+    , nodeId :: NodeId
     }
     deriving (Generic)
 
@@ -52,13 +53,15 @@ elmify
     Node
         { content = c
         , outgoingEdges = out
+        , nodeId = nid
         } =
         NodeElm
             { content = c
             , outgoingEdges = changeMap out
+            , nodeId = nid
             }
       where
-        changeMap m = (\(nid, s) -> (nid, S.elems s)) <$> M.toList m
+        changeMap m = (\(nid', s) -> (nid', S.elems s)) <$> M.toList m
 
 mkNode :: NodeId -> NodeContent -> Node
 mkNode nid nc =
