@@ -35,7 +35,6 @@ newtype EdgeInfo = EdgeInfo {text :: T.Text}
 
 data Node = Node
     { content :: NodeContent
-    , incomingEdges :: M.Map NodeId (S.Set EdgeInfo)
     , outgoingEdges :: M.Map NodeId (S.Set EdgeInfo)
     }
     deriving (Generic)
@@ -43,7 +42,6 @@ data Node = Node
 -- A more Elm-friendly representation of node which it can parse from JSON.
 data NodeElm = NodeElm
     { content :: NodeContent
-    , incomingEdges :: [(NodeId, [EdgeInfo])]
     , outgoingEdges :: [(NodeId, [EdgeInfo])]
     }
     deriving (Generic)
@@ -52,12 +50,10 @@ elmify :: Node -> NodeElm
 elmify
     Node
         { content = c
-        , incomingEdges = inc
         , outgoingEdges = out
         } =
         NodeElm
             { content = c
-            , incomingEdges = changeMap inc
             , outgoingEdges = changeMap out
             }
       where
@@ -67,7 +63,6 @@ mkNode :: NodeContent -> Node
 mkNode nc =
     Node
         { content = nc
-        , incomingEdges = M.empty
         , outgoingEdges = M.empty
         }
 

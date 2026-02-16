@@ -26,8 +26,6 @@ data Graph = Graph
       externalToInternal :: M.Map TePapaReference NodeId
     , -- Edges from KEY to VALUEs
       edgesFrom :: M.Map TePapaReference (S.Set (TePapaReference, EdgeInfo))
-    , -- Edges to KEY from VALUEs
-      edgesTo :: M.Map TePapaReference (S.Set (TePapaReference, EdgeInfo))
     , keys :: TVar (S.Set NodeId)
     , rootKey :: NodeId
     }
@@ -39,7 +37,6 @@ instance GraphStore Graph where
         inToEx <- M.empty
         exToIn <- M.empty
         edgesFrom <- M.empty
-        edgesTo <- M.empty
         let rootId = mkNodeId . hash $ conts
         M.insert rootId conts initialNodes
         M.insert rootId eid inToEx
@@ -51,7 +48,6 @@ instance GraphStore Graph where
                 , internalToExternal = inToEx
                 , externalToInternal = exToIn
                 , edgesFrom = edgesFrom
-                , edgesTo = edgesTo
                 , keys = keySet
                 , rootKey = rootId
                 }
@@ -95,23 +91,16 @@ instance GraphStore Graph where
         outList <- M.lookup externalId (edgesFrom g) >>= pure . S.elems . fromMaybe S.empty
         outNidList <- mapMaybe id <$> forM outList (\(eid, reason) -> M.lookup eid (externalToInternal g) >>= pure . fmap (,reason))
         let outEdges = foldl' (\outMap (toNid, info) -> D.insertWith (S.union) toNid (S.singleton info) outMap) D.empty outNidList
-        inList <- M.lookup externalId (edgesTo g) >>= pure . S.elems . fromMaybe S.empty
-        inNidList <- mapMaybe id <$> forM inList (\(eid, reason) -> M.lookup eid (externalToInternal g) >>= pure . fmap (,reason))
-        let inEdges = foldl' (\inMap (fromNid, info) -> D.insertWith (S.union) fromNid (S.singleton info) inMap) D.empty inNidList
         pure $
             Node
                 { outgoingEdges = outEdges
                 , content = nodeContent
-                , incomingEdges = inEdges
                 }
 
     addEdge g from to info = do
         oldFSet <- M.lookup from (edgesFrom g) >>= pure . fromMaybe S.empty
         let newFSet = S.insert (to, info) oldFSet
         M.insert from newFSet (edgesFrom g)
-        oldTSet <- M.lookup to (edgesTo g) >>= pure . fromMaybe S.empty
-        let newTSet = S.insert (from, info) oldTSet
-        M.insert to newTSet (edgesTo g)
 
     getExternal g nid = do
         M.lookup nid (internalToExternal g) >>= \case

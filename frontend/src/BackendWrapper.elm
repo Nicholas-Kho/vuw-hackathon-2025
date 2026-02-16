@@ -23,7 +23,6 @@ type Node
     = Node
         { content : NodeContent
         , outgoingEdges : Dict String (Set String)
-        , incomingEdges : Dict String (Set String)
         }
 
 
@@ -98,7 +97,6 @@ xformNode ne =
     Node
         { content = ne.content
         , outgoingEdges = unwrapAndDict ne.outgoingEdges
-        , incomingEdges = unwrapAndDict ne.incomingEdges
         }
 
 
