@@ -4,6 +4,7 @@ module BackendWrapper exposing
     , addNode
     , areIdsEqual
     , getContent
+    , getId
     , getNode
     , getOutgoing
     , keys
@@ -31,12 +32,18 @@ type Node
     = Node
         { content : NodeContent
         , outgoingEdges : Dict String EdgeInfo
+        , nodeId : NodeId
         }
 
 
 getContent : Node -> NodeContent
 getContent (Node n) =
     n.content
+
+
+getId : Node -> NodeId
+getId (Node n) =
+    n.nodeId
 
 
 getOutgoing : Node -> List NodeId
@@ -92,6 +99,7 @@ xformNode : NodeElm -> Node
 xformNode ne =
     Node
         { content = ne.content
+        , nodeId = ne.nodeId
         , outgoingEdges =
             ne.outgoingEdges
                 |> List.map (Tuple.mapFirst unwrapNodeId)
