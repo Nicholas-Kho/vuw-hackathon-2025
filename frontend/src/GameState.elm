@@ -25,8 +25,7 @@ import Tree exposing (WithPos, layoutTree)
 
 
 type alias GameState =
-    { startAt : NodeId
-    , gameMode : GameMode
+    { gameMode : GameMode
     , nodeCache : Subgraph
     , nav : NavTree
     , focus : ( NodeId, Node )
@@ -70,8 +69,7 @@ type UpdatedGame
 
 fromInitial : ( NodeId, Node ) -> Node -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus goalNode cam igs =
-    { startAt = igs.startAt
-    , gameMode =
+    { gameMode =
         Find
             { targetId = igs.endAt
             , targetNode = goalNode
