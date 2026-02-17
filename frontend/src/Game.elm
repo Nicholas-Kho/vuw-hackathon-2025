@@ -107,10 +107,6 @@ view model =
 
 getGui : OkModel -> Element Msg
 getGui okm =
-    let
-        ( _, focusNode ) =
-            okm.game.focus
-    in
     case okm.screenOverlay of
         WinScreen ->
             Element.map EndScreen endScreenWin
@@ -121,7 +117,7 @@ getGui okm =
         InGame ->
             case okm.game.gameMode of
                 Find rules ->
-                    sidePanel (getContent focusNode) (getContent rules.targetNode) rules.movesLeft
+                    sidePanel (getContent okm.game.focus) (getContent rules.targetNode) rules.movesLeft
 
                 Roaming ->
                     Element.map (\_ -> FinishRoaming) finishRoamButton
@@ -273,7 +269,7 @@ handleStartResponse res =
                     ( Good
                         { size = ( 500, 500 )
                         , input = PlayerInput.init
-                        , game = GameState.fromInitial ( igs.startAt, startNode ) endNode initialCamera igs
+                        , game = GameState.fromInitial startNode endNode initialCamera igs
                         , screenOverlay = InGame
                         , tooltips = noTooltips
                         }

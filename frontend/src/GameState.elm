@@ -9,7 +9,7 @@ module GameState exposing
     , view
     )
 
-import BackendWrapper exposing (Node, Subgraph, getNode, getOutgoing, xformSubgraph)
+import BackendWrapper exposing (Node, Subgraph, getId, getNode, getOutgoing, xformSubgraph)
 import Camera exposing (Camera, Vec2, focusOn, moveCam, stopAnimation, tickCam, vDistSqare, zoomAbout)
 import Canvas
 import Canvas.Settings
@@ -28,7 +28,7 @@ type alias GameState =
     { gameMode : GameMode
     , nodeCache : Subgraph
     , nav : NavTree
-    , focus : ( NodeId, Node )
+    , focus : Node
     , cam : Camera
     }
 
@@ -67,7 +67,7 @@ type UpdatedGame
     | GameOverLose
 
 
-fromInitial : ( NodeId, Node ) -> Node -> Camera -> InitialGameState -> GameState
+fromInitial : Node -> Node -> Camera -> InitialGameState -> GameState
 fromInitial initialFocus goalNode cam igs =
     { gameMode =
         Find
@@ -76,7 +76,7 @@ fromInitial initialFocus goalNode cam igs =
             , movesLeft = 10
             }
     , nodeCache = xformSubgraph igs.subgraph
-    , nav = Navigation.singleton ( igs.startAt, Tuple.second initialFocus )
+    , nav = Navigation.singleton ( igs.startAt, initialFocus )
     , cam = cam
     , focus = initialFocus
     }
@@ -206,7 +206,7 @@ handleClick pos gs =
                 in
                 KeepGoing
                     ( { gs
-                        | focus = ( nid, n )
+                        | focus = n
                         , nav = updatedUpdatedTree
                         , cam = newCam
                       }
@@ -336,5 +336,5 @@ view size extraAttrs gs =
                 [ Canvas.Settings.fill Color.lightGrey ]
                 [ Canvas.rect ( 0, 0 ) (toFloat w) (toFloat h) ]
             , renderGrid gs.cam 100
-            , Drawable.drawNavTree (Tuple.first gs.focus) gs.cam gs.nav
+            , Drawable.drawNavTree (getId gs.focus) gs.cam gs.nav
             ]
