@@ -15,14 +15,22 @@ module BackendWrapper exposing
     )
 
 import Dict exposing (Dict)
-import Generated.BackendApi exposing (EdgeInfo(..), ExpandParams, NodeContent, NodeElm, NodeId(..), Subgraph, UnverifiedNodeId(..))
-import Set exposing (Set)
+import Generated.BackendApi
+    exposing
+        ( EdgeInfo(..)
+        , ExpandParams
+        , NodeContent
+        , NodeElm
+        , NodeId(..)
+        , Subgraph
+        , UnverifiedNodeId(..)
+        )
 
 
 type Node
     = Node
         { content : NodeContent
-        , outgoingEdges : Dict String (Set String)
+        , outgoingEdges : Dict String EdgeInfo
         }
 
 
@@ -80,23 +88,14 @@ areIdsEqual (NodeId a) (NodeId b) =
     a.content == b.content
 
 
-unwrapEdgeInfo : EdgeInfo -> String
-unwrapEdgeInfo (EdgeInfo inf) =
-    inf.text
-
-
 xformNode : NodeElm -> Node
 xformNode ne =
-    let
-        edgeInfoToSet =
-            Set.fromList << List.map unwrapEdgeInfo
-
-        unwrapAndDict =
-            Dict.fromList << List.map (\( nid, x ) -> ( unwrapNodeId nid, edgeInfoToSet x ))
-    in
     Node
         { content = ne.content
-        , outgoingEdges = unwrapAndDict ne.outgoingEdges
+        , outgoingEdges =
+            ne.outgoingEdges
+                |> List.map (Tuple.mapFirst unwrapNodeId)
+                |> Dict.fromList
         }
 
 

@@ -11,7 +11,7 @@ import qualified Control.Concurrent.STM.Map as M
 import Control.Monad (forM)
 import Data.Hashable (hash)
 import qualified Data.Map.Strict as D
-import Data.Maybe (fromMaybe, mapMaybe)
+import Data.Maybe (catMaybes, fromMaybe)
 import qualified Data.Set as S
 import Domain.Model
 import TePapa.ExternalId (TePapaReference)
@@ -25,7 +25,7 @@ data Graph = Graph
     , -- lookups from this map may be partial.
       externalToInternal :: M.Map TePapaReference NodeId
     , -- Edges from KEY to VALUEs
-      edgesFrom :: M.Map TePapaReference (S.Set (TePapaReference, EdgeInfo))
+      edgesFrom :: M.Map TePapaReference (D.Map TePapaReference EdgeInfo)
     , keys :: TVar (S.Set NodeId)
     , rootKey :: NodeId
     }
@@ -74,36 +74,36 @@ instance GraphStore Graph where
         -- For prototyping, these invariants are assumed but not enforced.
         -- TODO: Detect and handle duplicate content and/or external IDs.
         let nid = mkNodeId . hash $ content
-        M.insert nid eid (internalToExternal g)
-        M.insert eid nid (externalToInternal g)
-        M.insert nid content (nodes g)
-        modifyTVar' (keys g) (S.insert nid)
+        M.insert nid eid g.internalToExternal
+        M.insert eid nid g.externalToInternal
+        M.insert nid content g.nodes
+        modifyTVar' g.keys (S.insert nid)
         pure nid
 
     getNode g nid = do
         nodeContent <-
-            M.lookup nid (nodes g) >>= \case
+            M.lookup nid (g.nodes) >>= \case
                 Just nc -> pure nc
                 Nothing -> error "Invarint violated: node ID not in store.nodes!"
         externalId <- getExternal g nid
-        -- find and build edges
-        -- We have to convert to a list here because sets don't have a mapM.
-        outList <- M.lookup externalId (edgesFrom g) >>= pure . S.elems . fromMaybe S.empty
-        outNidList <- mapMaybe id <$> forM outList (\(eid, reason) -> M.lookup eid (externalToInternal g) >>= pure . fmap (,reason))
-        let outEdges = foldl' (\outMap (toNid, info) -> D.insertWith (S.union) toNid (S.singleton info) outMap) D.empty outNidList
+        outMap <- fromMaybe D.empty <$> M.lookup externalId g.edgesFrom
+        presentEdges <- fmap catMaybes $ forM (D.assocs outMap) $ \(toEid, edgeReason) ->
+            fmap (,edgeReason) <$> M.lookup toEid g.externalToInternal
         pure $
             Node
-                { outgoingEdges = outEdges
+                { outgoingEdges = D.fromList presentEdges
                 , content = nodeContent
                 , nodeId = nid
                 }
 
-    addEdge g from to info = do
-        oldFSet <- M.lookup from (edgesFrom g) >>= pure . fromMaybe S.empty
-        let newFSet = S.insert (to, info) oldFSet
-        M.insert from newFSet (edgesFrom g)
+    addEdge g from to info =
+        M.lookup from (g.edgesFrom) >>= \case
+            Just outgoingMap ->
+                M.insert from (D.insertWith (<>) to info outgoingMap) g.edgesFrom
+            Nothing ->
+                M.insert from (D.singleton to info) g.edgesFrom
 
     getExternal g nid = do
-        M.lookup nid (internalToExternal g) >>= \case
+        M.lookup nid g.internalToExternal >>= \case
             Just nc -> pure nc
             Nothing -> error "Invarint violated: node ID not in store.internalToExternal!"

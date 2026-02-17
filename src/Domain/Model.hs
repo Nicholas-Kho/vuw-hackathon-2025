@@ -17,7 +17,6 @@ where
 import Cache.NodeId (NodeId)
 import Data.Hashable (Hashable)
 import qualified Data.Map.Strict as M
-import qualified Data.Set as S
 import Data.Text
 import qualified Data.Text as T
 import GHC.Generics
@@ -33,9 +32,12 @@ data NodeContent = NodeContent
 newtype EdgeInfo = EdgeInfo {text :: T.Text}
     deriving (Eq, Ord, Show)
 
+instance Semigroup EdgeInfo where
+    (EdgeInfo t1) <> (EdgeInfo t2) = EdgeInfo (t1 <> t2)
+
 data Node = Node
     { content :: NodeContent
-    , outgoingEdges :: M.Map NodeId (S.Set EdgeInfo)
+    , outgoingEdges :: M.Map NodeId EdgeInfo
     , nodeId :: NodeId
     }
     deriving (Generic)
@@ -43,7 +45,7 @@ data Node = Node
 -- A more Elm-friendly representation of node which it can parse from JSON.
 data NodeElm = NodeElm
     { content :: NodeContent
-    , outgoingEdges :: [(NodeId, [EdgeInfo])]
+    , outgoingEdges :: [(NodeId, EdgeInfo)]
     , nodeId :: NodeId
     }
     deriving (Generic)
@@ -57,11 +59,9 @@ elmify
         } =
         NodeElm
             { content = c
-            , outgoingEdges = changeMap out
+            , outgoingEdges = M.toList out
             , nodeId = nid
             }
-      where
-        changeMap m = (\(nid', s) -> (nid', S.elems s)) <$> M.toList m
 
 mkNode :: NodeId -> NodeContent -> Node
 mkNode nid nc =
