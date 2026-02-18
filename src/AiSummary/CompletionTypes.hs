@@ -37,4 +37,4 @@ instance FromJSON CompletionResponse where
     parseJSON =
         withObject
             "A llama /completion response"
-            (\o -> o .: "content" >>= (pure . CompletionResponse))
+            (\o -> CompletionResponse <$> o .: "content")
