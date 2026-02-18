@@ -53,9 +53,9 @@ makeClientEnvLlama :: IO ClientEnv
 makeClientEnvLlama = do
     -- we are using HTTP here beacuse the llama server is running locally
     -- and is not exposed to the internet.
+    port <- portToLlamaOn
     manager <- Http.newManager Http.defaultManagerSettings
-    -- TODO: make this port configurable!
-    pure $ mkClientEnv manager (llamaUrl 8081)
+    pure $ mkClientEnv manager (llamaUrl port)
 
 setupApp :: IO AppEnv
 setupApp = do

@@ -14,7 +14,7 @@ import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
 import Domain.Model (elmify)
-import Env (getPort, getStaticPath, getUseCors, loadDotEnv)
+import Env (getStaticPath, getUseCors, loadDotEnv, portToServeOn)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors (CorsResourcePolicy (..), cors, simpleCorsResourcePolicy)
 import Servant
@@ -44,7 +44,7 @@ devCors =
 runApp :: IO ()
 runApp = do
     loadDotEnv
-    port <- getPort
+    port <- portToServeOn
     appEnv <- setupApp
     staticPath <- getStaticPath
     useCors <- getUseCors

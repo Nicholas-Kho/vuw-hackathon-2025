@@ -1,11 +1,12 @@
 module Env (
     getApiKey,
-    getPort,
     getSeed,
     getSemaphore,
     getStaticPath,
     getUseCors,
     loadDotEnv,
+    portToLlamaOn,
+    portToServeOn,
 ) where
 
 import qualified Configuration.Dotenv as Dotenv
@@ -37,17 +38,23 @@ getSemaphore =
                 Nothing -> newQSem 8
                 Just k -> newQSem k
 
-getPort :: IO Int
-getPort = do
-    lookupEnv "PORT" >>= \case
-        Nothing -> pure 8080
+getPortDefault :: String -> Int -> IO Int
+getPortDefault varName defaultPort = do
+    lookupEnv varName >>= \case
+        Nothing -> pure defaultPort
         Just rawPort ->
             case readMaybe @Int rawPort of
-                Nothing -> pure 8080
+                Nothing -> pure defaultPort
                 Just k ->
                     if k <= 2048
                         then error "Please pick a port number above 2048."
                         else pure k
+
+portToServeOn :: IO Int
+portToServeOn = getPortDefault "PORT" 8080
+
+portToLlamaOn :: IO Int
+portToLlamaOn = getPortDefault "PORT_LLAMA" 8081
 
 defaultSeed :: TePapaReference
 defaultSeed = TePapaReference{namespace = ObjectR, eid = ExternalId{unId = 1227923}}

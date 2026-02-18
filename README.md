@@ -1,6 +1,6 @@
 # MuseLinks
 
-## Note
+## Requirements
 This project uses the Nix package manager to define the development environment and build system. You will need Nix installed to build or run MuseLinks. Installation instructions are available on the [Nix website](https://nixos.org/download/). You don't need NixOS, just the package manager!
 
 ## Quick start
@@ -51,9 +51,11 @@ API_KEY=<Your key here>
 ```
 You may wish to also set the following variables:
 
-- `MAX_CONCURRENT_HTTP=`: An integer that is at least `1`. Defaults to `8`. Determines the maximum number of in-flight HTTP requests to the Te Papa Collections API. Low values may noticeably increase the fetch time of new nodes. High values risk triggering ratelimits.
+- `MAX_CONCURRENT_HTTP=`: An integer that is at least `1`. Defaults to `8`. Determines the maximum number of concurrent HTTP requests when talking to the Te Papa Collections API. The upstream API rate-limits keys to approximately ten requests per second. Raising this value helps with quick bursts of requests, although the throughput will be capped by the aforementioned limit. The default value provides good throughput while remaining considerate of the API. Increase responsibly!
 
 - `PORT=`: An integer that is at least `2048`. Defaults to `8080`. Determines the port the backend server runs on.
+
+- `PORT_LLAMA=`: An integer that is at least `2048`. Defaults to `8081`. Determines the port the local llama server runs on. Make sure this doesn't conflict with `PORT`!
 
 - `SEED=`: A Te Papa Collections reference of the form `NAMESPACE/ID`, where `NAMESPACE` is one of: `object`, `agent`, `place` and `ID` is a positive integer. Defaults to `object/1227923`. Determines the first node in the graph. During startup, the server attempts to parse this reference, look up the object, and convert it to a node. If this fails, the server process exits. You can find different seed objects and their identifiers using the [Te Papa Collections API browser](https://data.tepapa.govt.nz/docs/apibrowser.html). The `Type` field of your chosen object corresponds to `NAMESPACE`, and the `Id` field corresponds to `ID`.
 
