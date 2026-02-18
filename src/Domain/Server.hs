@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Domain.Server (runApp) where
@@ -44,7 +45,7 @@ runApp :: IO ()
 runApp = do
     loadDotEnv
     port <- getPort
-    appEnv <- getInitialEnv
+    appEnv <- setupApp
     staticPath <- getStaticPath
     useCors <- getUseCors
     let corsMiddleware = if useCors then cors (const $ Just devCors) else id
