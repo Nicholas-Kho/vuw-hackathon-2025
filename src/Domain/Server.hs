@@ -14,10 +14,10 @@ import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
 import Domain.Model (elmify)
+import Env (getPort, getStaticPath, getUseCors, loadDotEnv)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors (CorsResourcePolicy (..), cors, simpleCorsResourcePolicy)
 import Servant
-import TePapa.Env (getPort, getStaticPath, getUseCors, loadDotEnv)
 import Text.Read (readMaybe)
 
 type RAppM = RandT StdGen AppM

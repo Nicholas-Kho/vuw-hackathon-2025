@@ -16,13 +16,13 @@ import Control.Concurrent (QSem)
 import Control.Concurrent.Async (concurrently)
 import Control.Monad.Random.Strict
 import Control.Monad.Reader
+import Env
 import FetchStore.TePapaFetchStore
 import GHC.Conc
 import qualified Network.HTTP.Client as Http
 import Network.HTTP.Client.TLS
 import Servant.Client
 import TePapa.Client
-import TePapa.Env
 
 data AppEnv = AppEnv
     { graph :: Graph

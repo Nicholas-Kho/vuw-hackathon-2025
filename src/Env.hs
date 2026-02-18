@@ -1,4 +1,4 @@
-module TePapa.Env (
+module Env (
     getApiKey,
     getPort,
     getSeed,
