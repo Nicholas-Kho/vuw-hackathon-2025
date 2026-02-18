@@ -19,7 +19,7 @@ import Element exposing (Element)
 import Generated.BackendApi exposing (InitialGameState, NodeId)
 import Html exposing (Attribute)
 import Html.Attributes exposing (style)
-import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, insertFetchResults, insertNeighborsAt, isFrontier, recomputeMemo)
+import Navigation exposing (NTNode(..), NavTree, addInFlight, getTreeWithLoadingNodes, hasId, insertFetchResults, insertNeighborsAt, isFrontier, recomputeMemo)
 import PlayerInput exposing (UserInput(..))
 import Tree exposing (WithPos, layoutTree)
 
@@ -76,7 +76,7 @@ fromInitial initialFocus goalNode cam igs =
             , movesLeft = 10
             }
     , nodeCache = xformSubgraph igs.subgraph
-    , nav = Navigation.singleton ( igs.startAt, initialFocus )
+    , nav = Navigation.singleton initialFocus
     , cam = cam
     , focus = initialFocus
     }
@@ -169,11 +169,11 @@ handleClick pos gs =
         Nothing ->
             simple gs
 
-        Just ( _, Fetching ) ->
+        Just Fetching ->
             simple gs
 
-        Just ( nid, Loaded n ) ->
-            if isWinningNid nid gs then
+        Just (Loaded n) ->
+            if isWinningNid (getId n) gs then
                 GameOverWin
 
             else if hasLost gs then
@@ -182,23 +182,23 @@ handleClick pos gs =
             else
                 let
                     ( updatedTree, stillNeedToFetch ) =
-                        addNeighbors gs.nodeCache nid (getOutgoing n) gs.nav
+                        addNeighbors gs.nodeCache (getId n) (getOutgoing n) gs.nav
 
                     decrementIfNeeded =
-                        if isFrontier gs.nav ( nid, n ) then
+                        if isFrontier gs.nav n then
                             decrementMoves
 
                         else
                             \x -> x
 
                     updatedUpdatedTree =
-                        addInFlight nid stillNeedToFetch updatedTree |> recomputeMemo
+                        addInFlight (getId n) stillNeedToFetch updatedTree |> recomputeMemo
 
                     newCam =
                         getTreeWithLoadingNodes updatedUpdatedTree
                             |> layoutTree
                             |> Tree.flatten
-                            |> List.filter (\p -> Tuple.first p.content == nid)
+                            |> List.filter (\p -> hasId (getId n) p.content)
                             |> List.map .pos
                             |> List.head
                             |> Maybe.map (\p -> zoomInOn p gs.cam)
@@ -224,16 +224,16 @@ getClickedNode ns clickWorld =
     List.filter clickCounts ns |> List.head |> Maybe.map .content
 
 
-partitionHits : Subgraph -> List NodeId -> ( List ( NodeId, Node ), List NodeId )
+partitionHits : Subgraph -> List NodeId -> ( List Node, List NodeId )
 partitionHits =
     partitionHitsHelper ( [], [] )
 
 
 partitionHitsHelper :
-    ( List ( NodeId, Node ), List NodeId )
+    ( List Node, List NodeId )
     -> Subgraph
     -> List NodeId
-    -> ( List ( NodeId, Node ), List NodeId )
+    -> ( List Node, List NodeId )
 partitionHitsHelper result cache lookupThese =
     case lookupThese of
         [] ->
@@ -245,7 +245,7 @@ partitionHitsHelper result cache lookupThese =
                     partitionHitsHelper (Tuple.mapSecond (\r -> nid :: r) result) cache rest
 
                 Just n ->
-                    partitionHitsHelper (Tuple.mapFirst (\r -> ( nid, n ) :: r) result) cache rest
+                    partitionHitsHelper (Tuple.mapFirst (\r -> n :: r) result) cache rest
 
 
 addNeighbors : Subgraph -> NodeId -> List NodeId -> NavTree -> ( NavTree, List NodeId )

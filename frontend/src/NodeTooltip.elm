@@ -7,7 +7,7 @@ module NodeTooltip exposing
     , showTooltips
     )
 
-import BackendWrapper exposing (Node, getContent, unwrapNodeId)
+import BackendWrapper exposing (Node, getContent, getId, unwrapNodeId)
 import Camera exposing (Camera, Vec2, vDistSqare, worldPosToCamPos)
 import Dict exposing (Dict)
 import Element exposing (px)
@@ -39,18 +39,14 @@ noTooltips =
     Tooltips Dict.empty
 
 
-getLoadedHelper : WithPos ( NodeId, NTNode ) -> Maybe ( NodeId, Tooltip )
+getLoadedHelper : WithPos NTNode -> Maybe ( NodeId, Tooltip )
 getLoadedHelper wp =
-    let
-        ( nid, ntn ) =
-            wp.content
-    in
-    case ntn of
+    case wp.content of
         Fetching ->
             Nothing
 
         Loaded n ->
-            Just ( nid, { screenPos = wp.pos, node = n, active = True } )
+            Just ( getId n, { screenPos = wp.pos, node = n, active = True } )
 
 
 getTooltips : Camera -> NavTree -> Vec2 -> Tooltips

@@ -6,6 +6,7 @@ module Navigation exposing
     , getLoopsFrom
     , getTree
     , getTreeWithLoadingNodes
+    , hasId
     , insertFetchResults
     , insertNeighborsAt
     , isFrontier
@@ -13,7 +14,7 @@ module Navigation exposing
     , singleton
     )
 
-import BackendWrapper exposing (Node, Subgraph, areIdsEqual, getNode, getOutgoing, unwrapNodeId, wrapNodeId)
+import BackendWrapper exposing (Node, Subgraph, areIdsEqual, getId, getNode, getOutgoing, unwrapNodeId, wrapNodeId)
 import Dict exposing (Dict)
 import Generated.BackendApi exposing (NodeId)
 import Set exposing (Set)
@@ -25,9 +26,19 @@ type NTNode
     | Loaded Node
 
 
+hasId : NodeId -> NTNode -> Bool
+hasId nid ntn =
+    case ntn of
+        Fetching ->
+            False
+
+        Loaded n ->
+            nid == getId n
+
+
 type NavTree
     = NavTree
-        { tree : Tree ( NodeId, Node )
+        { tree : Tree Node
 
         -- Careful: These strings are unwrapped NodeIds.
         -- Members are only fetched nodes.
@@ -40,12 +51,12 @@ type NavTree
         -- These are used for rendering and click detection. It can be computed on the fly,
         -- but these function calls are not cheap so we memoize them. Otherwise, they
         -- get recomputed each frame, which can cause slow-down and jittering with large trees.
-        , memoFullTree : Tree ( NodeId, NTNode )
-        , memoFullTreeLayout : Tree (WithPos ( NodeId, NTNode ))
+        , memoFullTree : Tree NTNode
+        , memoFullTreeLayout : Tree (WithPos NTNode)
         }
 
 
-getTree : NavTree -> Tree ( NodeId, Node )
+getTree : NavTree -> Tree Node
 getTree (NavTree nt) =
     nt.tree
 
@@ -55,7 +66,7 @@ getInFlight (NavTree nt) =
     nt.inFlight
 
 
-getLayout : NavTree -> Tree (WithPos ( NodeId, NTNode ))
+getLayout : NavTree -> Tree (WithPos NTNode)
 getLayout (NavTree nt) =
     nt.memoFullTreeLayout
 
@@ -68,11 +79,11 @@ getLoopsFrom (NavTree nt) nid =
         |> List.map wrapNodeId
 
 
-isFrontier : NavTree -> ( NodeId, Node ) -> Bool
-isFrontier (NavTree nt) ( nid, node ) =
+isFrontier : NavTree -> Node -> Bool
+isFrontier (NavTree nt) node =
     let
         nidRaw =
-            unwrapNodeId nid
+            unwrapNodeId <| getId node
 
         noInFlightNeighs nr =
             Dict.get nr nt.inFlight
@@ -91,7 +102,7 @@ insertFetchResults : Subgraph -> NavTree -> NavTree
 insertFetchResults sg nt =
     let
         lookupAndAdd pid cids navTree =
-            List.filterMap (\cid -> getNode sg cid |> Maybe.map (Tuple.pair cid)) cids
+            List.filterMap (getNode sg) cids
                 |> insertNeighborsAt navTree (wrapNodeId pid)
     in
     Dict.foldl lookupAndAdd nt (getInFlight nt)
@@ -124,25 +135,33 @@ addInFlight parentId childIds (NavTree nt) =
     NavTree { nt | inFlight = newInFlight }
 
 
-getTreeWithLoadingNodes : NavTree -> Tree ( NodeId, NTNode )
+getTreeWithLoadingNodes : NavTree -> Tree NTNode
 getTreeWithLoadingNodes (NavTree nt) =
     nt.memoFullTree
+
+
+makeFullTreeHelper : Dict String (List NodeId) -> Tree Node -> Tree NTNode
+makeFullTreeHelper outgoingNodes (Node currentNode children) =
+    let
+        convertNode =
+            Loaded currentNode
+
+        loadingChildren =
+            Dict.get (unwrapNodeId <| getId currentNode) outgoingNodes
+                |> Maybe.withDefault []
+                |> List.map (\_ -> Tree.singleton Fetching)
+
+        recurseChildren =
+            List.map (makeFullTreeHelper outgoingNodes) children
+    in
+    Node convertNode (recurseChildren ++ loadingChildren)
 
 
 recomputeMemo : NavTree -> NavTree
 recomputeMemo (NavTree nt) =
     let
-        ntMapped =
-            Tree.map (Tuple.mapSecond Loaded) nt.tree
-
-        pairFlip a b =
-            ( b, a )
-
-        addFetching toIdRaw fetchingIds tree =
-            insertHelper tree (wrapNodeId toIdRaw) <| List.map (pairFlip Fetching) fetchingIds
-
         newFullTree =
-            Dict.foldl addFetching ntMapped nt.inFlight
+            makeFullTreeHelper nt.inFlight nt.tree
 
         newLayout =
             Tree.layoutTree newFullTree
@@ -154,15 +173,15 @@ recomputeMemo (NavTree nt) =
         }
 
 
-singleton : ( NodeId, Node ) -> NavTree
+singleton : Node -> NavTree
 singleton n =
     let
         memoTree =
-            Node (Tuple.mapSecond Loaded n) []
+            Node (Loaded n) []
     in
     NavTree
         { tree = Node n []
-        , members = Set.singleton <| unwrapNodeId <| Tuple.first n
+        , members = Set.singleton <| unwrapNodeId <| getId n
         , loopsFrom = Dict.empty
         , inFlight = Dict.empty
         , memoFullTree = memoTree
@@ -217,20 +236,20 @@ removeFromInFlight parentId addedIds (NavTree nt) =
     NavTree { nt | inFlight = newInFlight }
 
 
-insertNeighborsAt : NavTree -> NodeId -> List ( NodeId, Node ) -> NavTree
+insertNeighborsAt : NavTree -> NodeId -> List Node -> NavTree
 insertNeighborsAt nt x ns =
     let
         updateInFlight =
-            removeFromInFlight x (List.map Tuple.first ns) nt
+            removeFromInFlight x (List.map getId ns) nt
 
         ( alreadyHere, arent ) =
-            List.partition (hasNode nt << Tuple.first) ns
+            List.partition (hasNode nt << getId) ns
 
         addedMembers =
-            List.foldl (addMember << Tuple.first) updateInFlight arent
+            List.foldl (addMember << getId) updateInFlight arent
 
         (NavTree newNt) =
-            List.foldl (addLoop x << Tuple.first) addedMembers alreadyHere
+            List.foldl (addLoop x << getId) addedMembers alreadyHere
 
         addedNeighs =
             insertHelper newNt.tree x arent
@@ -238,9 +257,9 @@ insertNeighborsAt nt x ns =
     NavTree { newNt | tree = addedNeighs }
 
 
-insertHelper : Tree ( NodeId, a ) -> NodeId -> List ( NodeId, a ) -> Tree ( NodeId, a )
+insertHelper : Tree Node -> NodeId -> List Node -> Tree Node
 insertHelper (Node c cn) x ns =
-    if areIdsEqual (Tuple.first c) x then
+    if areIdsEqual (getId c) x then
         Node c (cn ++ List.map Tree.singleton ns)
 
     else

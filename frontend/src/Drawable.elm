@@ -6,8 +6,8 @@ import Canvas.Settings exposing (stroke)
 import Canvas.Settings.Line
 import Color exposing (Color, rgba)
 import Generated.BackendApi exposing (NodeId)
-import Navigation exposing (NTNode(..), NavTree, getLayout, getTreeWithLoadingNodes, isFrontier)
-import Tree exposing (Tree, mkCartesian, toPolarEdges)
+import Navigation exposing (NTNode(..), NavTree, getLayout, getTreeWithLoadingNodes, hasId, isFrontier)
+import Tree exposing (Tree, WithPos, mkCartesian, toPolarEdges)
 
 
 drawCircle : Camera -> Vec2 -> Float -> Canvas.Shape
@@ -203,8 +203,7 @@ drawNode cam ri =
 
 
 type alias NodeRenderInfo =
-    { id : NodeId
-    , node : NTNode
+    { node : NTNode
     , worldPos : Vec2
     , isFrontier : Bool
     , isFocus : Bool
@@ -214,26 +213,27 @@ type alias NodeRenderInfo =
 toRenderInfo : NodeId -> NavTree -> List NodeRenderInfo
 toRenderInfo focusId nt =
     let
-        posToRenderInfo p =
-            { id = Tuple.first p.content
-            , node = Tuple.second p.content
-            , worldPos = p.pos
-            , isFrontier = False
-            , isFocus = focusId == Tuple.first p.content
-            }
-
-        checkFrontier ri =
-            case ri.node of
+        checkFrontier : NTNode -> Bool
+        checkFrontier ntn =
+            case ntn of
                 Fetching ->
                     False
 
                 Loaded n ->
-                    isFrontier nt ( ri.id, n )
+                    isFrontier nt n
+
+        posToRenderInfo : WithPos NTNode -> NodeRenderInfo
+        posToRenderInfo p =
+            { node = p.content
+            , worldPos = p.pos
+            , isFrontier = False
+            , isFocus = hasId focusId p.content
+            }
     in
     nt
         |> getLayout
         |> Tree.map posToRenderInfo
-        |> Tree.mapLeaves (\ri -> { ri | isFrontier = checkFrontier ri })
+        |> Tree.mapLeaves (\ri -> { ri | isFrontier = checkFrontier ri.node })
         |> Tree.flatten
 
 
