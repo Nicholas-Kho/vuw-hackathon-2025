@@ -4,6 +4,7 @@
 module AiSummary.FormatRequest (
     Prompt (..),
     mkDescribeParams,
+    promptOf,
 ) where
 
 import AiSummary.CompletionTypes (CompletionParams (..))
@@ -23,7 +24,7 @@ generalInstructions =
             , "Do not infer missing information."
             , "Do not add historical or cultural context."
             , "Do not explain anything."
-            , "Write in short, simple declarative sentences."
+            , "Write in simple declarative sentences."
             , "Output only the description text."
             ]
 
@@ -70,6 +71,8 @@ mkPrompt
                     <> title
                     <> "\n"
                     <> intercalate "\n" (fmap (\(k, v) -> k <> ": " <> v) $ M.assocs properties)
+                    <> "\n"
+                    <> intercalate "\n" (fmap (\(k, v) -> k <> ": " <> intercalate ", " v) $ M.assocs references)
          in
             Prompt
                 { systemText = generalInstructions <> mentionThese
@@ -102,5 +105,8 @@ mkDescribeParams thing =
         , temperature = 0.1
         , repeatPenalty = 1.1
         , maxTokens = 400
-        , prompt = showPrompt . mkPrompt . getInfo $ thing
+        , prompt = promptOf $ thing
         }
+
+promptOf :: TePapaThing -> Text
+promptOf = showPrompt . mkPrompt . getInfo
