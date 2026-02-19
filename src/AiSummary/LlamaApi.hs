@@ -1,12 +1,12 @@
-module AiSummary.LlamaApi (checkHealth, llamaUrl, prompt) where
+module AiSummary.LlamaApi (checkHealth, describeThis, llamaUrl) where
 
+import AiSummary.CompletionTypes (CompletionParams, CompletionResponse)
+import AiSummary.FormatRequest (mkDescribeParams)
 import AiSummary.Health
 import Data.Proxy
 import Servant.API
 import Servant.Client
-
-type CompletionParams = ()
-type CompletionResponse = ()
+import TePapa.CommonObject (TePapaThing)
 
 type LlamaApi =
     "health" :> Get '[JSON] HealthResponse
@@ -15,6 +15,9 @@ type LlamaApi =
 checkHealth :: ClientM HealthResponse
 prompt :: CompletionParams -> ClientM CompletionResponse
 checkHealth :<|> prompt = client (Proxy @LlamaApi)
+
+describeThis :: TePapaThing -> ClientM CompletionResponse
+describeThis = prompt . mkDescribeParams
 
 llamaUrl :: Int -> BaseUrl
 llamaUrl localPort =
