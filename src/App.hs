@@ -13,7 +13,6 @@ import Bootstrap (fetchSeed)
 import Cache.Interface
 import Cache.TVarGraphStore
 import Control.Concurrent (QSem)
-import Control.Concurrent.Async (concurrently)
 import Control.Monad.Random.Strict
 import Control.Monad.Reader
 import Env
@@ -66,10 +65,8 @@ setupApp = do
     envLlama <- makeClientEnvLlama
     sem <- getSemaphore
     seed <- getSeed
-    (rootNode, _llamaHandle) <-
-        concurrently
-            (fetchSeed key envCollections seed)
-            (startLlamaWaitForReady envLlama)
+    _llamaHandle <- startLlamaWaitForReady envLlama
+    rootNode <- fetchSeed key envCollections envLlama seed
     initialGraph <- atomically (initStore seed rootNode)
     pure $
         AppEnv

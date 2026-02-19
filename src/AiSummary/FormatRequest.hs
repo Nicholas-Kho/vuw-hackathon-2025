@@ -23,7 +23,7 @@ generalInstructions =
             , "Do not infer missing information."
             , "Do not add historical or cultural context."
             , "Do not explain anything."
-            , "Write 2–4 short, simple declarative sentences."
+            , "Write in short, simple declarative sentences."
             , "Output only the description text."
             ]
 
@@ -101,6 +101,6 @@ mkDescribeParams thing =
         { topP = 0.9
         , temperature = 0.1
         , repeatPenalty = 1.1
-        , maxTokens = 120
+        , maxTokens = 400
         , prompt = showPrompt . mkPrompt . getInfo $ thing
         }

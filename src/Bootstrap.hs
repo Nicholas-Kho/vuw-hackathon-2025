@@ -1,9 +1,12 @@
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Bootstrap (fetchSeed) where
 
+import AiSummary.CompletionTypes (CompletionResponse (toText))
+import AiSummary.LlamaApi (describeThis)
 import Api.TePapa (ApiKey (ApiKey))
-import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT, ask, runReaderT)
+import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT, asks, runReaderT)
 import qualified Data.Text as T
 import Domain.Model
 import FetchM (runFetch)
@@ -15,8 +18,12 @@ import TePapa.Convert (tePapaThingToNode)
 import TePapa.ExternalId (TePapaReference)
 import TePapa.Traverse (Discovery (..), doQuery, getNodeById)
 
-fetchSeed :: T.Text -> ClientEnv -> TePapaReference -> IO NodeContent
-fetchSeed key env seed = runBootstrapM (key, env) (fetchSeedHelp seed)
+fetchSeed :: T.Text -> ClientEnv -> ClientEnv -> TePapaReference -> IO NodeContent
+fetchSeed key cenv lenv seed =
+    let
+        benv = BootstrapEnv key cenv lenv
+     in
+        runBootstrapM benv (fetchSeedHelp seed)
 
 fetchSeedHelp :: TePapaReference -> BootstrapM NodeContent
 fetchSeedHelp seed = do
@@ -32,16 +39,30 @@ fetchSeedHelp seed = do
         FoundLink _ _ _ -> liftIO . die $ "Couldn't bootstrap: found a link instead of an object."
     case tePapaThingToNode tthing of
         Nothing -> liftIO . die $ "Couln't bootstrap: Can't convert " <> (prettyPrintThing tthing) <> " to NodeContent."
-        Just ncon -> pure (ncon)
+        Just ncon -> do
+            env <- asks cenvLlama
+            desc <-
+                liftIO $
+                    (describeThis tthing) `runClientM` env >>= \case
+                        Left _ -> return "Couldn't generate description :("
+                        Right r -> return (toText r)
+            pure (ncon{description = desc})
+
+data BootstrapEnv = BootstrapEnv
+    { key :: T.Text
+    , cenvCollections :: ClientEnv
+    , cenvLlama :: ClientEnv
+    }
 
 newtype BootstrapM a = BootstrapM
-    {unBootstrapM :: ReaderT (T.Text, ClientEnv) IO a}
-    deriving (Functor, Applicative, Monad, MonadIO, MonadReader (T.Text, ClientEnv))
+    {unBootstrapM :: ReaderT BootstrapEnv IO a}
+    deriving (Functor, Applicative, Monad, MonadIO, MonadReader BootstrapEnv)
 
 instance ApiM BootstrapM where
     runReq r = do
-        (key, env) <- ask
+        key <- asks key
+        env <- asks cenvCollections
         liftIO $ runClientM (r . ApiKey $ key) env
 
-runBootstrapM :: (T.Text, ClientEnv) -> BootstrapM a -> IO a
-runBootstrapM params BootstrapM{unBootstrapM = action} = runReaderT action params
+runBootstrapM :: BootstrapEnv -> BootstrapM a -> IO a
+runBootstrapM benv BootstrapM{unBootstrapM = action} = runReaderT action benv
