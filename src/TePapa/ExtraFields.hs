@@ -3,6 +3,13 @@
 
 module TePapa.ExtraFields (
     Extras (..),
+    ExtrasArtefact (..),
+    ExtrasOrganisation (..),
+    ExtrasPlace (..),
+    ExtrasPerson (..),
+    ExtrasSpecimen (..),
+    ExtrasTopic (..),
+    Geolocation (..),
 ) where
 
 import Data.Aeson
