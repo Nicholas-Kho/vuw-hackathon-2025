@@ -139,7 +139,7 @@ processDiscovery d = do
         FoundLink t1 t2 why -> do
             liftIO . atomically $ addEdge g t1 t2 (EdgeInfo $ edgeReasonToTxt why)
         FoundThing tref thing -> do
-            node <- tePapaThingToNode thing
+            node <- return $ tePapaThingToNode thing
             _ <- liftIO . atomically $ addNode g tref node
             return ()
 

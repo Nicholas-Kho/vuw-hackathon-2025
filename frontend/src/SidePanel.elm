@@ -22,8 +22,24 @@ import Element
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Generated.BackendApi exposing (NodeContent)
+import Generated.BackendApi exposing (NodeContent, NodeDescription(..))
 import Html.Attributes
+
+
+showNodeDescription : NodeDescription -> String
+showNodeDescription desc =
+    case desc of
+        NotAsked ->
+            "Not asked"
+
+        Loading ->
+            "Loading..."
+
+        Fail why ->
+            "Description failed: " ++ why
+
+        Generated.BackendApi.Ok d ->
+            d
 
 
 sidePanelContent : NodeContent -> NodeContent -> Int -> Element msg
@@ -65,7 +81,7 @@ showNodeInfo t con =
         ]
         [ title t
         , subtitle con.title
-        , paragraph [] [ text con.description ]
+        , paragraph [] [ text <| showNodeDescription con.description ]
         ]
 
 

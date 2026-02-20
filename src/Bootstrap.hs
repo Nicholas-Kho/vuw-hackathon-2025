@@ -27,7 +27,7 @@ fetchSeedHelp :: TePapaReference -> BootstrapM NodeContent
 fetchSeedHelp seed = do
     disc <- runFetch doQuery (getNodeById seed)
     case disc of
-        FoundThing _ t -> tePapaThingToNode t
+        FoundThing _ t -> return $ tePapaThingToNode t
         ErrorFetching tref cerr ->
             liftIO . die $
                 "Couldn't bootstrap because of error fetching "

@@ -9,6 +9,9 @@ data LinkInfo = LinkInfo
     , goesTo :: TePapaReference
     }
 
+infoFromTuple :: (TePapaReference, Text) -> LinkInfo
+infoFromTuple = uncurry (flip LinkInfo)
+
 data DescriptionBit
     = Txt Text
     | Link LinkInfo
@@ -19,3 +22,6 @@ data PostProcessResult = PostProcessResult
     { description :: Description
     , linksMissing :: S.Set LinkInfo
     }
+
+findLinks :: Text -> S.Set LinkInfo -> PostProcessResult
+findLinks haystack needles = error "todo"

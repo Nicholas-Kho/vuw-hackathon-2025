@@ -21,17 +21,10 @@ edgeReasonToTxt r =
             "Both " <> relatedHow <> " " <> catName
 
 -- TODO: May want to call this asynchronously and handle errors better.
-tePapaThingToNode :: (LlamaM m) => TePapaThing -> m NodeContent
-tePapaThingToNode thing = do
-    lenv <- llamaEnv
-    desc <-
-        liftIO $
-            runClientM (describeThis thing) lenv >>= \case
-                Left _ -> return "Llama failed :("
-                Right r -> return r.toText
-    return $
-        NodeContent
-            { thumbnailUrl = Nothing
-            , description = desc
-            , title = thing.title
-            }
+tePapaThingToNode :: TePapaThing -> NodeContent
+tePapaThingToNode thing =
+    NodeContent
+        { thumbnailUrl = Nothing
+        , description = NotAsked
+        , title = thing.title
+        }

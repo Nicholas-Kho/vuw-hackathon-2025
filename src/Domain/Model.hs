@@ -7,6 +7,7 @@ module Domain.Model (
     EdgeInfo (..),
     Node (..),
     NodeContent (..),
+    NodeDescription (..),
     NodeElm (..),
     elmify,
     mkNode,
@@ -22,9 +23,16 @@ import qualified Data.Text as T
 import GHC.Generics
 import Servant.Elm
 
+data NodeDescription
+    = NotAsked
+    | Loading
+    | Fail Text
+    | Ok Text
+    deriving (Show, Eq, Generic, Hashable)
+
 data NodeContent = NodeContent
     { title :: Text
-    , description :: Text
+    , description :: NodeDescription
     , thumbnailUrl :: Maybe Text
     }
     deriving (Show, Eq, Generic, Hashable)
@@ -75,9 +83,10 @@ prettyPrintNode :: NodeContent -> String
 prettyPrintNode nc =
     (unpack . title $ nc)
         <> ": "
-        <> (Prelude.take 15 . unpack . description $ nc)
-        <> (if (Data.Text.length . description $ nc) > 15 then "..." else "")
+        <> (Prelude.take 15 . unpack . T.show . description $ nc)
+        <> (if (Data.Text.length . T.show . description $ nc) > 15 then "..." else "")
 
 deriveBoth defaultOptions ''EdgeInfo
+deriveBoth defaultOptions ''NodeDescription
 deriveBoth defaultOptions ''NodeContent
 deriveBoth defaultOptions ''NodeElm
