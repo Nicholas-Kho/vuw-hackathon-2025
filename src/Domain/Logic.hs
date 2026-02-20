@@ -71,8 +71,7 @@ data DrunkardsWalkState = DrunkardsWalkState
     }
 
 drunkardsWalkHelper ::
-    ( MonadRandom m
-    ) =>
+    (MonadRandom m) =>
     (forall t. AppM t -> m t) ->
     StateT DrunkardsWalkState m (N.NonEmpty NodeId)
 drunkardsWalkHelper liftAppM = do
@@ -137,11 +136,12 @@ processDiscovery d = do
     g <- asks graph
     case d of
         ErrorFetching _ _ -> pure ()
-        FoundThing tref thing -> case tePapaThingToNode thing of
-            Nothing -> pure ()
-            Just c -> liftIO . atomically $ addNode g tref c >> pure ()
         FoundLink t1 t2 why -> do
             liftIO . atomically $ addEdge g t1 t2 (EdgeInfo $ edgeReasonToTxt why)
+        FoundThing tref thing -> do
+            node <- tePapaThingToNode thing
+            _ <- liftIO . atomically $ addNode g tref node
+            return ()
 
 processDiscoveries :: [Discovery] -> AppM ()
 processDiscoveries ds = do

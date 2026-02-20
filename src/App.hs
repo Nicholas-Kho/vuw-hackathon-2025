@@ -6,7 +6,7 @@ module App (
 )
 where
 
-import AiSummary.LlamaApi (llamaUrl)
+import AiSummary.LlamaApi (LlamaM (..), llamaUrl)
 import AiSummary.StartLlama (startLlamaWaitForReady)
 import Api.TePapa
 import Bootstrap (fetchSeed)
@@ -42,6 +42,9 @@ instance ApiM AppM where
         key <- asks apiKey
         cenv <- asks clientEnvCollections
         liftIO $ runClientM (needsKey key) cenv
+
+instance LlamaM AppM where
+    llamaEnv = asks clientEnvLlama
 
 makeClientEnvCollections :: IO ClientEnv
 makeClientEnvCollections = do

@@ -3,8 +3,7 @@
 
 module Bootstrap (fetchSeed) where
 
-import AiSummary.CompletionTypes (CompletionResponse (toText))
-import AiSummary.LlamaApi (describeThis)
+import AiSummary.LlamaApi (LlamaM (llamaEnv))
 import Api.TePapa (ApiKey (ApiKey))
 import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT, asks, runReaderT)
 import qualified Data.Text as T
@@ -13,7 +12,6 @@ import FetchM (runFetch)
 import Servant.Client (ClientEnv, runClientM)
 import System.Exit (die)
 import TePapa.Client (ApiM (..))
-import TePapa.CommonObject (prettyPrintThing)
 import TePapa.Convert (tePapaThingToNode)
 import TePapa.ExternalId (TePapaReference)
 import TePapa.Traverse (Discovery (..), doQuery, getNodeById)
@@ -28,8 +26,8 @@ fetchSeed key cenv lenv seed =
 fetchSeedHelp :: TePapaReference -> BootstrapM NodeContent
 fetchSeedHelp seed = do
     disc <- runFetch doQuery (getNodeById seed)
-    tthing <- case disc of
-        FoundThing _ t -> pure t
+    case disc of
+        FoundThing _ t -> tePapaThingToNode t
         ErrorFetching tref cerr ->
             liftIO . die $
                 "Couldn't bootstrap because of error fetching "
@@ -37,16 +35,6 @@ fetchSeedHelp seed = do
                     <> ": "
                     <> (show cerr)
         FoundLink _ _ _ -> liftIO . die $ "Couldn't bootstrap: found a link instead of an object."
-    case tePapaThingToNode tthing of
-        Nothing -> liftIO . die $ "Couln't bootstrap: Can't convert " <> (prettyPrintThing tthing) <> " to NodeContent."
-        Just ncon -> do
-            env <- asks cenvLlama
-            desc <-
-                liftIO $
-                    (describeThis tthing) `runClientM` env >>= \case
-                        Left _ -> return "Couldn't generate description :("
-                        Right r -> return (toText r)
-            pure (ncon{description = desc})
 
 data BootstrapEnv = BootstrapEnv
     { key :: T.Text
@@ -63,6 +51,9 @@ instance ApiM BootstrapM where
         key <- asks key
         env <- asks cenvCollections
         liftIO $ runClientM (r . ApiKey $ key) env
+
+instance LlamaM BootstrapM where
+    llamaEnv = asks cenvLlama
 
 runBootstrapM :: BootstrapEnv -> BootstrapM a -> IO a
 runBootstrapM benv BootstrapM{unBootstrapM = action} = runReaderT action benv

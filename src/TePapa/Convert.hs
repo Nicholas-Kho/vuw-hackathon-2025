@@ -4,8 +4,12 @@
 
 module TePapa.Convert (tePapaThingToNode, edgeReasonToTxt) where
 
+import AiSummary.CompletionTypes (toText)
+import AiSummary.LlamaApi (LlamaM (llamaEnv), describeThis)
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import Domain.Model
+import Servant.Client (runClientM)
 import TePapa.CommonObject
 import TePapa.Traverse
 
@@ -16,11 +20,18 @@ edgeReasonToTxt r =
         ShareCategory CategoryInfo{catTitle = catName, catId = _} relatedHow ->
             "Both " <> relatedHow <> " " <> catName
 
-tePapaThingToNode :: TePapaThing -> Maybe NodeContent
-tePapaThingToNode thing =
-    Just $
+-- TODO: May want to call this asynchronously and handle errors better.
+tePapaThingToNode :: (LlamaM m) => TePapaThing -> m NodeContent
+tePapaThingToNode thing = do
+    lenv <- llamaEnv
+    desc <-
+        liftIO $
+            runClientM (describeThis thing) lenv >>= \case
+                Left _ -> return "Llama failed :("
+                Right r -> return r.toText
+    return $
         NodeContent
-            { title = thing.title
-            , description = "TODO: Implement me!"
-            , thumbnailUrl = Nothing
+            { thumbnailUrl = Nothing
+            , description = desc
+            , title = thing.title
             }
