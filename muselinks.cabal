@@ -99,7 +99,7 @@ library
         , AiSummary.FormatRequest
         , AiSummary.Health
         , AiSummary.LlamaApi
-        , AiSummary.Preprocess
+        , AiSummary.PostProcess
         , AiSummary.StartLlama
         , Api.TePapa
         , Api.Backend
