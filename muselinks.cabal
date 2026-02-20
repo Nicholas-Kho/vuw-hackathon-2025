@@ -96,6 +96,7 @@ library
     hs-source-dirs: src
     exposed-modules:
         AiSummary.CompletionTypes
+        , AiSummary.DescriptionQueue
         , AiSummary.FormatRequest
         , AiSummary.Health
         , AiSummary.LlamaApi
