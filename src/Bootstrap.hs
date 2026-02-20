@@ -6,27 +6,26 @@ module Bootstrap (fetchSeed) where
 import Api.TePapa (ApiKey (ApiKey))
 import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT, asks, runReaderT)
 import qualified Data.Text as T
-import Domain.Model
 import FetchM (runFetch)
 import Servant.Client (ClientEnv, runClientM)
 import System.Exit (die)
 import TePapa.Client (ApiM (..))
-import TePapa.Convert (tePapaThingToNode)
+import TePapa.CommonObject (TePapaThing)
 import TePapa.ExternalId (TePapaReference)
 import TePapa.Traverse (Discovery (..), doQuery, getNodeById)
 
-fetchSeed :: T.Text -> ClientEnv -> TePapaReference -> IO NodeContent
+fetchSeed :: T.Text -> ClientEnv -> TePapaReference -> IO TePapaThing
 fetchSeed key cenv seed =
     let
         benv = BootstrapEnv key cenv
      in
         runBootstrapM benv (fetchSeedHelp seed)
 
-fetchSeedHelp :: TePapaReference -> BootstrapM NodeContent
+fetchSeedHelp :: TePapaReference -> BootstrapM TePapaThing
 fetchSeedHelp seed = do
     disc <- runFetch doQuery (getNodeById seed)
     case disc of
-        FoundThing _ t -> return $ tePapaThingToNode t
+        FoundThing _ t -> return t
         ErrorFetching tref cerr ->
             liftIO . die $
                 "Couldn't bootstrap because of error fetching "

@@ -6,7 +6,8 @@ module AppM (
 )
 where
 
-import AiSummary.DescriptionQueue (DescriptionHeap, newDescHeap)
+import AiSummary.DescriptionQueue (DescribeJob (..), DescriptionHeap, WhyFetching (UserAsked), newDescHeap, queueDescribe)
+import AiSummary.FormatRequest (getInfo)
 import AiSummary.LlamaApi (llamaUrl)
 import AiSummary.StartLlama (startLlamaWaitForReady)
 import Api.TePapa
@@ -23,6 +24,7 @@ import qualified Network.HTTP.Client as Http
 import Network.HTTP.Client.TLS
 import Servant.Client
 import TePapa.Client
+import TePapa.Convert (tePapaThingToNode)
 
 data AppEnv = AppEnv
     { graph :: Graph
@@ -70,7 +72,9 @@ setupApp = do
     seed <- getSeed
     _llamaHandle <- startLlamaWaitForReady envLlama
     rootNode <- fetchSeed key envCollections seed
-    initialGraph <- atomically (initStore seed rootNode)
+    initialGraph <- atomically (initStore seed (tePapaThingToNode rootNode))
+    (rootNodeId, _) <- atomically . getKeys $ initialGraph
+    atomically $ queueDescribe emptyQueue UserAsked (DescribeJob{updateId = rootNodeId, itemInfo = getInfo rootNode})
     pure $
         AppEnv
             { graph = initialGraph
