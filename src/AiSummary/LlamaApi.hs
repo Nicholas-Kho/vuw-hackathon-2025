@@ -1,9 +1,8 @@
-module AiSummary.LlamaApi (LlamaM (..), checkHealth, describeThis, llamaUrl) where
+module AiSummary.LlamaApi (checkHealth, describeThis, llamaUrl) where
 
 import AiSummary.CompletionTypes (CompletionParams, CompletionResponse)
 import AiSummary.FormatRequest (ThingInfo, mkDescribeParams)
 import AiSummary.Health
-import Control.Monad.IO.Class (MonadIO)
 import Data.Proxy
 import Servant.API
 import Servant.Client
@@ -11,9 +10,6 @@ import Servant.Client
 type LlamaApi =
     "health" :> Get '[JSON] HealthResponse
         :<|> "completion" :> ReqBody '[JSON] CompletionParams :> Post '[JSON] CompletionResponse
-
-class (MonadIO m) => LlamaM m where
-    llamaEnv :: m ClientEnv
 
 checkHealth :: ClientM HealthResponse
 prompt :: CompletionParams -> ClientM CompletionResponse

@@ -4,8 +4,8 @@ module App where
 
 import AiSummary.CompletionTypes (toText)
 import AiSummary.DescriptionQueue (DescribeJob (itemInfo), popDescribe, updateId)
-import AiSummary.LlamaApi (describeThis, llamaEnv)
-import AppM (AppEnv (descriptionQueue), graph, runAppM, setupApp)
+import AiSummary.LlamaApi (describeThis)
+import AppM (AppEnv (descriptionQueue), clientEnvLlama, graph, runAppM, setupApp)
 import Cache.Interface (updateContents)
 import Control.Concurrent.Async (concurrently_)
 import Control.Concurrent.STM (atomically)
@@ -37,7 +37,7 @@ startDescriptionWorker =
         ( forever $ do
             queue <- asks descriptionQueue
             store <- asks graph
-            lenv <- llamaEnv
+            lenv <- asks clientEnvLlama
             job <- liftIO . atomically $ popDescribe queue
             liftIO . atomically $ updateContents store job.updateId (\c -> c{description = Loading})
             desc <-

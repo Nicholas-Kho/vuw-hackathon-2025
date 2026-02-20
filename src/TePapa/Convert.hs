@@ -4,12 +4,8 @@
 
 module TePapa.Convert (tePapaThingToNode, edgeReasonToTxt) where
 
-import AiSummary.CompletionTypes (toText)
-import AiSummary.LlamaApi (LlamaM (llamaEnv), describeThis)
-import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import Domain.Model
-import Servant.Client (runClientM)
 import TePapa.CommonObject
 import TePapa.Traverse
 

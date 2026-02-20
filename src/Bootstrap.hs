@@ -3,7 +3,6 @@
 
 module Bootstrap (fetchSeed) where
 
-import AiSummary.LlamaApi (LlamaM (llamaEnv))
 import Api.TePapa (ApiKey (ApiKey))
 import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT, asks, runReaderT)
 import qualified Data.Text as T
@@ -51,9 +50,6 @@ instance ApiM BootstrapM where
         key <- asks key
         env <- asks cenvCollections
         liftIO $ runClientM (r . ApiKey $ key) env
-
-instance LlamaM BootstrapM where
-    llamaEnv = asks cenvLlama
 
 runBootstrapM :: BootstrapEnv -> BootstrapM a -> IO a
 runBootstrapM benv BootstrapM{unBootstrapM = action} = runReaderT action benv
