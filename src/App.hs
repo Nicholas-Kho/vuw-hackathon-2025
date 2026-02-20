@@ -6,6 +6,7 @@ module App (
 )
 where
 
+import AiSummary.DescriptionQueue (DescriptionHeap, newDescHeap)
 import AiSummary.LlamaApi (LlamaM (..), llamaUrl)
 import AiSummary.StartLlama (startLlamaWaitForReady)
 import Api.TePapa
@@ -30,6 +31,7 @@ data AppEnv = AppEnv
     , clientEnvCollections :: ClientEnv
     , clientEnvLlama :: ClientEnv
     , semaphore :: QSem
+    , descriptionQueue :: DescriptionHeap
     }
 
 newtype AppM a = AppM
@@ -64,6 +66,7 @@ setupApp = do
     loadDotEnv
     key <- getApiKey
     initialFetchStore <- atomically emptyStore
+    emptyQueue <- atomically newDescHeap
     envCollections <- makeClientEnvCollections
     envLlama <- makeClientEnvLlama
     sem <- getSemaphore
@@ -79,6 +82,7 @@ setupApp = do
             , clientEnvLlama = envLlama
             , semaphore = sem
             , fetchStore = initialFetchStore
+            , descriptionQueue = emptyQueue
             }
 
 runAppM :: AppM a -> AppEnv -> IO a

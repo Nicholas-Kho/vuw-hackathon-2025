@@ -1,5 +1,6 @@
 module AiSummary.DescriptionQueue (
     WhyFetching (..),
+    DescriptionHeap,
     newDescHeap,
     queueDescribe,
     popDescribe,
