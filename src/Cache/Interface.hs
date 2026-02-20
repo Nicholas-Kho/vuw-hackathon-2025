@@ -20,3 +20,4 @@ class (Monad (StoreM g)) => GraphStore g where
     getKeys :: g -> StoreM g (NodeId, Set NodeId)
     getNode :: g -> NodeId -> StoreM g Node
     getExternal :: g -> NodeId -> StoreM g TePapaReference
+    updateContents :: g -> NodeId -> (NodeContent -> NodeContent) -> StoreM g ()

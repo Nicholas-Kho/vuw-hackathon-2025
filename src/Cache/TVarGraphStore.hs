@@ -107,3 +107,10 @@ instance GraphStore Graph where
         M.lookup nid g.internalToExternal >>= \case
             Just nc -> pure nc
             Nothing -> error "Invarint violated: node ID not in store.internalToExternal!"
+
+    updateContents g nid fn = do
+        nodeContent <-
+            M.lookup nid (g.nodes) >>= \case
+                Just nc -> pure nc
+                Nothing -> error "Invarint violated: node ID not in store.nodes!"
+        M.insert nid (fn nodeContent) g.nodes
