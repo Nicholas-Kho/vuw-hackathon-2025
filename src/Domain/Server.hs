@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Domain.Server (runApp) where
+module Domain.Server (devCors, app) where
 
 import Api.Backend
 import AppM
@@ -14,9 +14,7 @@ import qualified Data.List.NonEmpty as N
 import qualified Data.Set as S
 import Domain.Logic (drunkardsWalk, expandNode, lookupNodes, randomFromStore, verifyNodeId)
 import Domain.Model (elmify)
-import Env (getStaticPath, getUseCors, loadDotEnv, portToServeOn)
-import Network.Wai.Handler.Warp (run)
-import Network.Wai.Middleware.Cors (CorsResourcePolicy (..), cors, simpleCorsResourcePolicy)
+import Network.Wai.Middleware.Cors (CorsResourcePolicy (..), simpleCorsResourcePolicy)
 import Servant
 import Text.Read (readMaybe)
 
@@ -40,17 +38,6 @@ devCors =
         { corsMethods = ["GET", "POST", "OPTIONS"]
         , corsRequestHeaders = ["Content-Type"]
         }
-
-runApp :: IO ()
-runApp = do
-    loadDotEnv
-    port <- portToServeOn
-    appEnv <- setupApp
-    staticPath <- getStaticPath
-    useCors <- getUseCors
-    let corsMiddleware = if useCors then cors (const $ Just devCors) else id
-    putStrLn $ "Listening on port " <> (show port)
-    run port $ corsMiddleware (app appEnv staticPath)
 
 apiServer :: ServerT ApiRoutes RAppM
 apiServer = serveStart :<|> serveExpand

@@ -1,6 +1,6 @@
 module Main where
 
-import Domain.Server (runApp)
+import App (go)
 
 main :: IO ()
-main = runApp
+main = go
