@@ -50,7 +50,7 @@ showPrompt
 data ThingInfo = ThingInfo
     { title :: Text
     , references :: M.Map Text [Text]
-    , properties :: M.Map Text Text
+    , extraProperties :: M.Map Text Text
     }
 
 mkPrompt :: ThingInfo -> Prompt
@@ -58,7 +58,7 @@ mkPrompt
     ( ThingInfo
             { title = title
             , references = references
-            , properties = properties
+            , extraProperties = extraProperties
             }
         ) =
         let
@@ -70,7 +70,7 @@ mkPrompt
                 "Title: "
                     <> title
                     <> "\n"
-                    <> intercalate "\n" (fmap (\(k, v) -> k <> ": " <> v) $ M.assocs properties)
+                    <> intercalate "\n" (fmap (\(k, v) -> k <> ": " <> v) $ M.assocs extraProperties)
                     <> "\n"
                     <> intercalate "\n" (fmap (\(k, v) -> k <> ": " <> intercalate ", " v) $ M.assocs references)
          in
@@ -95,7 +95,7 @@ getInfo
          in ThingInfo
                 { title = thingTitle
                 , references = makeAssocsMap associations
-                , properties = fromMaybe M.empty (toExtrasMap <$> extras)
+                , extraProperties = fromMaybe M.empty (toExtrasMap <$> extras)
                 }
 
 mkDescribeParams :: TePapaThing -> CompletionParams
