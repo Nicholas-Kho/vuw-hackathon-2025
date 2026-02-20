@@ -3,8 +3,9 @@
 
 module AiSummary.FormatRequest (
     Prompt (..),
+    ThingInfo (..),
     mkDescribeParams,
-    promptOf,
+    getInfo,
 ) where
 
 import AiSummary.CompletionTypes (CompletionParams (..))
@@ -98,15 +99,12 @@ getInfo
                 , extraProperties = fromMaybe M.empty (toExtrasMap <$> extras)
                 }
 
-mkDescribeParams :: TePapaThing -> CompletionParams
-mkDescribeParams thing =
+mkDescribeParams :: ThingInfo -> CompletionParams
+mkDescribeParams info =
     CompletionParams
         { topP = 0.9
         , temperature = 0.1
         , repeatPenalty = 1.1
         , maxTokens = 400
-        , prompt = promptOf $ thing
+        , prompt = showPrompt $ mkPrompt info
         }
-
-promptOf :: TePapaThing -> Text
-promptOf = showPrompt . mkPrompt . getInfo

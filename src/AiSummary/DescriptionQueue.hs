@@ -7,6 +7,7 @@ module AiSummary.DescriptionQueue (
     popDescribe,
 ) where
 
+import AiSummary.FormatRequest (ThingInfo)
 import Cache.NodeId (NodeId)
 import Control.Concurrent.STM (modifyTVar', newTVar)
 import qualified Data.Heap as H
@@ -14,6 +15,7 @@ import GHC.Conc (STM, TVar, readTVar, retry, writeTVar)
 
 data DescribeJob = DescribeJob
     { updateId :: NodeId
+    , itemInfo :: ThingInfo
     }
 
 -- NOTE: The order of these constructors matters for the Ord implementation!
