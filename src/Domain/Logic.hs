@@ -9,7 +9,7 @@ module Domain.Logic (
 )
 where
 
-import App (AppEnv (..), AppM, runAppM)
+import AppM (AppEnv (..), AppM, runAppM)
 import Cache.Interface (GraphStore (getNode), addEdge, addNode, getExternal, getKeys)
 import Cache.NodeId (NodeId, mkNodeId)
 import Control.Concurrent.Async (forConcurrently, forConcurrently_)

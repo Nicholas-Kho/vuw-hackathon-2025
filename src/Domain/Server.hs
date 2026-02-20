@@ -4,7 +4,7 @@
 module Domain.Server (runApp) where
 
 import Api.Backend
-import App
+import AppM
 import Cache.Interface (getNode)
 import Control.Concurrent.STM (atomically)
 import Control.Monad.Except (ExceptT (..))

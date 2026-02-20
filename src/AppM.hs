@@ -1,4 +1,4 @@
-module App (
+module AppM (
     AppEnv (..),
     AppM (..),
     runAppM,
