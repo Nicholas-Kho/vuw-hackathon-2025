@@ -75,6 +75,7 @@ common tepapa-client-deps
         , dotenv >= 0.7
         , free
         , hashable
+        , heap
         , http-client
         , http-client-tls
         , MonadRandom
