@@ -15,10 +15,10 @@ import TePapa.Convert (tePapaThingToNode)
 import TePapa.ExternalId (TePapaReference)
 import TePapa.Traverse (Discovery (..), doQuery, getNodeById)
 
-fetchSeed :: T.Text -> ClientEnv -> ClientEnv -> TePapaReference -> IO NodeContent
-fetchSeed key cenv lenv seed =
+fetchSeed :: T.Text -> ClientEnv -> TePapaReference -> IO NodeContent
+fetchSeed key cenv seed =
     let
-        benv = BootstrapEnv key cenv lenv
+        benv = BootstrapEnv key cenv
      in
         runBootstrapM benv (fetchSeedHelp seed)
 
@@ -38,7 +38,6 @@ fetchSeedHelp seed = do
 data BootstrapEnv = BootstrapEnv
     { key :: T.Text
     , cenvCollections :: ClientEnv
-    , cenvLlama :: ClientEnv
     }
 
 newtype BootstrapM a = BootstrapM

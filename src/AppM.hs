@@ -69,7 +69,7 @@ setupApp = do
     sem <- getSemaphore
     seed <- getSeed
     _llamaHandle <- startLlamaWaitForReady envLlama
-    rootNode <- fetchSeed key envCollections envLlama seed
+    rootNode <- fetchSeed key envCollections seed
     initialGraph <- atomically (initStore seed rootNode)
     pure $
         AppEnv
